@@ -159,7 +159,7 @@
 
     <script>
         document.getElementById('processButton').addEventListener('click', async function() {
-            // 获取表单值
+            // Obtain the form value
             const inputPath = document.getElementById('inputPath').value.trim();
             const outputPath = document.getElementById('outputPath').value.trim();
             const jobName = document.getElementById('jobName').value.trim();
@@ -167,7 +167,7 @@
             const runLocation = document.getElementById('runLocation').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
             
-            // 验证必填字段
+            // Verify the required fields
             if (!inputPath || !outputPath || !jobName || !runLocation || !githubToken) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
@@ -180,7 +180,7 @@
                 const repoName = 'code-docker-fastqc';
                 const workflowId = 'run-fastqc.yaml';
                 
-                // 触发 GitHub Action
+                // trigger GitHub Action
                 const response = await triggerGitHubAction(
                     repoOwner,
                     repoName,
@@ -195,7 +195,7 @@
                     githubToken
                 );
                 
-                // 显示成功消息
+                // Display the success message
                 const successMsg = `Workflow triggered successfully! Run ID: ${response.id}<br>
                                    工作流触发成功! 运行 ID: ${response.id}`;
                 showStatus(successMsg, 'success');
@@ -207,7 +207,7 @@
                 
                 let errorMsg = `Error: ${error.message}`;
                 
-                // 常见错误处理
+                // Common Error handling
                 if (error.message.includes('401')) {
                     errorMsg = 'Authentication failed. Please check your GitHub Token. / 认证失败，请检查GitHub Token';
                 } else if (error.message.includes('404')) {
@@ -221,7 +221,7 @@
         });
         
         /**
-         * 触发 GitHub Action 工作流
+         * Trigger GitHub Action workflow
          */
         async function triggerGitHubAction(owner, repo, workflowId, inputs, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
@@ -233,7 +233,7 @@
             };
             
             const body = {
-                ref: 'main', // 或你的默认分支
+                ref: 'main',
                 inputs: inputs
             };
             
@@ -253,12 +253,12 @@
                 throw new Error(errorData.message || `Request failed with status ${response.status}`);
             }
             
-            // GitHub API 返回 204 No Content 时
+            // GitHub API return 204 No Content
             return response.status === 204 ? { id: 'unknown', status: 'triggered' } : await response.json();
         }
         
         /**
-         * 显示状态消息
+         * Display status message
          */
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
@@ -266,7 +266,7 @@
             statusElement.className = type;
             statusElement.style.display = 'block';
             
-            // 自动隐藏成功消息
+            // Automatically hide the success message
             if (type === 'success') {
                 setTimeout(() => {
                     statusElement.style.display = 'none';
