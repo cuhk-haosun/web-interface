@@ -159,55 +159,48 @@
 
     <script>
         document.getElementById('processButton').addEventListener('click', async function() {
-            // Obtain the form value
+            // 获取表单值
             const inputPath = document.getElementById('inputPath').value.trim();
             const outputPath = document.getElementById('outputPath').value.trim();
             const jobName = document.getElementById('jobName').value.trim();
             const threadNum = document.getElementById('threadNum').value.trim();
             const runLocation = document.getElementById('runLocation').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
-            
-            // Verify the required fields
+    
+            // 验证必填字段
             if (!inputPath || !outputPath || !jobName || !runLocation || !githubToken) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
             }
-            
-            showStatus('Triggering FastQC workflow... / 正在触发 FastQC 工作流...', 'loading');
-            
+    
             try {
                 const repoOwner = 'cuhk-haosun';
                 const repoName = 'code-docker-fastqc';
                 const workflowId = 'run-fastqc.yaml';
-
-                await triggerWorkflowDispatch(repoOwner, repoName, workflowId, {
+        
+                // 1. 触发工作流
+                showStatus('Triggering workflow... / 正在触发工作流...', 'loading');
+                await triggerWorkflow(repoOwner, repoName, workflowId, {
                     INPUT_PATH: inputPath,
                     OUTPUT_PATH: outputPath,
                     JOB_NAME: jobName,
                     THREAD_NUM: threadNum,
                     RUN_LOCATION: runLocation
                 }, githubToken);
-
-                // 2. 获取最新的 run_id
-                showStatus('Getting run ID... / 正在获取运行ID...', 'loading');
-                const runId = await getLatestRunId(repoOwner, repoName, workflowId, githubToken);
         
-                // 3. 跳转到日志页面
-                const successMsg = `Workflow triggered successfully! Redirecting...<br>
-                                   工作流触发成功！正在跳转...`;
-                showStatus(successMsg, 'success');
-        
-                // 延迟2秒让用户看到成功消息
+                // 2. 获取 runId (带重试和状态更新)
+                const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
+                
+                // 3. 成功跳转
+                showStatus(`Workflow started! Redirecting to logs...<br>工作流已启动！正在跳转到日志页面...`, 'success');
                 setTimeout(() => {
                     window.location.href = `logs.html?owner=${encodeURIComponent(repoOwner)}&repo=${encodeURIComponent(repoName)}&runId=${encodeURIComponent(runId)}`;
-                }, 2000);
-
-            } catch (error) {
-                console.error('Failed to trigger GitHub Action:', error);
+                }, 1500);
                 
+            } catch (error) {
+                console.error('Error:', error);
                 let errorMsg = `Error: ${error.message}`;
                 
-                // Common Error handling
                 if (error.message.includes('401')) {
                     errorMsg = 'Authentication failed. Please check your GitHub Token. / 认证失败，请检查GitHub Token';
                 } else if (error.message.includes('404')) {
@@ -219,11 +212,9 @@
                 showStatus(errorMsg, 'error');
             }
         });
-        
-        /**
-         * Trigger GitHub Action workflow
-         */
-        async function triggerWorkflowDispatch(owner, repo, workflowId, inputs, token) {
+
+        // 触发工作流函数
+        async function triggerWorkflow(owner, repo, workflowId, inputs, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
             const headers = {
                 'Content-Type': 'application/json',
@@ -231,65 +222,69 @@
                 'Authorization': `token ${token}`
             };
             const body = { ref: 'main', inputs };
-    
+            
             const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-    
+            
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
         }
 
-        async function getLatestRunId(owner, repo, workflowId, token, maxAttempts = 10, delay = 5000) {
-            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs`;
+        // 带重试机制的runId获取函数
+        async function getRunIdWithRetry(owner, repo, workflowId, token) {
+            const MAX_RETRIES = 8;
+            const RETRY_DELAY = 3000; // 3秒
+            
+            for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                showStatus(`Getting run ID (attempt ${attempt}/${MAX_RETRIES})...<br>正在获取运行ID(尝试 ${attempt}/${MAX_RETRIES})...`, 'loading');
+                
+                try {
+                    const runId = await getLatestRunId(owner, repo, workflowId, token);
+                    if (runId) {
+                        showStatus(`Successfully got run ID: ${runId}<br>成功获取运行ID: ${runId}`, 'success');
+                        return runId;
+                    }
+                } catch (error) {
+                    console.log(`Attempt ${attempt} failed:`, error.message);
+                }
+                
+                // 不是最后一次尝试时才等待
+                if (attempt < MAX_RETRIES) {
+                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+                }
+            }
+            
+            throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
+        }
+
+        // 获取最新runId的具体实现
+        async function getLatestRunId(owner, repo, workflowId, token) {
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=1`;
             const headers = {
                 'Accept': 'application/vnd.github.v3+json',
                 'Authorization': `token ${token}`
             };
-    
-            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                try {
-                    const response = await fetch(url, { headers });
             
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-            
-                    const data = await response.json();
-                    if (data.workflow_runs?.length > 0) {
-                        // 确保找到的是我们刚刚触发的工作流
-                        const latestRun = data.workflow_runs[0];
-                        if (latestRun.status !== 'queued' || attempt === maxAttempts) {
-                            return latestRun.id;
-                        }
-                    }
-                } catch (error) {
-                    console.error(`Attempt ${attempt} failed:`, error);
-                }
-        
-        // 显示重试状态
-                showStatus(`Waiting for run ID (attempt ${attempt}/${maxAttempts})...<br>正在等待运行ID(尝试 ${attempt}/${maxAttempts})...`, 'loading');
-                await new Promise(resolve => setTimeout(resolve, delay));
+            const response = await fetch(url, { headers });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
             }
-    
-            throw new Error('Failed to get run ID after maximum attempts');
+            
+            const data = await response.json();
+            if (data.workflow_runs?.length > 0) {
+                return data.workflow_runs[0].id;
+            }
+            
+            return null;
         }
-        
-        /**
-         * Display status message
-         */
+
+        // 显示状态函数
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
             statusElement.className = type;
             statusElement.style.display = 'block';
-            
-            // Automatically hide the success message
-            if (type === 'success') {
-                setTimeout(() => {
-                    statusElement.style.display = 'none';
-                }, 10000);
-            }
         }
     </script>
 </body>
