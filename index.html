@@ -245,28 +245,35 @@
                 headers: headers,
                 body: JSON.stringify(body)
             });
-            
+
             if (!response.ok) {
-                let errorData;
-                try {
-                    errorData = await response.json();
-                } catch (e) {
-                    errorData = { message: `HTTP error! status: ${response.status}` };
-                }
-                throw new Error(errorData.message || `Request failed with status ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
 
-            const runId = response.headers.get('Location')?.match(/runs\/(\d+)/)?.[1];
-    
-            // If it is a 204 response, use the Run ID obtained from the Location header
-            return response.status === 204 
-                ? { id: runId || 'unknown', status: 'triggered' } 
-                : await response.json();
+            const runId = await getLatestRunId(owner, repo, workflowId, token);
+            return { id: runId, status: 'triggered' };
         }
-            
-        //    // GitHub API return 204 No Content
-        //    return response.status === 204 ? { id: 'unknown', status: 'triggered' } : await response.json();
-        //}
+
+        async function getLatestRunId(owner, repo, workflowId, token, maxAttempts = 5) {
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs`;
+            const headers = {
+                'Accept': 'application/vnd.github.v3+json',
+                'Authorization': `token ${token}`
+            };
+
+            for (let i = 0; i < maxAttempts; i++) {
+                const response = await fetch(url, { headers });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.workflow_runs.length > 0) {
+                        return data.workflow_runs[0].id; // 返回最新的 run_id
+                    }
+                }
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 等待3秒后重试
+            }
+            throw new Error('Failed to fetch run ID after retries');
+        }
         
         /**
          * Display status message
