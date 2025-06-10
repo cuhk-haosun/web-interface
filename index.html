@@ -252,10 +252,18 @@
                 }
                 throw new Error(errorData.message || `Request failed with status ${response.status}`);
             }
-            
-            // GitHub API return 204 No Content
-            return response.status === 204 ? { id: 'unknown', status: 'triggered' } : await response.json();
+
+            const runId = response.headers.get('Location')?.match(/runs\/(\d+)/)?.[1];
+    
+            // If it is a 204 response, use the Run ID obtained from the Location header
+            return response.status === 204 
+                ? { id: runId || 'unknown', status: 'triggered' } 
+                : await response.json();
         }
+            
+        #    // GitHub API return 204 No Content
+        #    return response.status === 204 ? { id: 'unknown', status: 'triggered' } : await response.json();
+        #}
         
         /**
          * Display status message
