@@ -170,10 +170,9 @@
             showStatus('Triggering FastQC workflow... / 正在触发 FastQC 工作流...', 'loading');
             
             try {
-                // 这里替换为你的 GitHub 仓库信息
-                const repoOwner = 'cuhk-haosun'; // 修改为你的 GitHub 用户名或组织名
-                const repoName = 'your-private-repo'; // 修改为你的私有仓库名
-                const workflowId = 'run-fastqc.yaml'; // 你的工作流文件名
+                const repoOwner = 'cuhk-haosun';
+                const repoName = 'code-docker-fastqc';
+                const workflowId = 'run-fastqc.yaml';
                 
                 // 触发 GitHub Action
                 const response = await triggerGitHubAction(
