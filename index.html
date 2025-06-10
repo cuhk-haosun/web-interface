@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastQC Workflow Trigger (Private Repo)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="password"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        button:hover {
+            background: #218838;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            display: block;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        small {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .token-guide {
+            margin-top: 5px;
+            font-size: 0.85em;
+        }
+        .required {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FastQC Workflow Trigger</h1>
+        <p style="text-align: center; color: #666;">For private repositories - 私有仓库工作流触发器 (only for test)</p>
+        
+        <div class="form-group">
+            <label for="inputPath">Input path <span class="required">*</span> (INPUT_PATH):</label>
+            <input type="text" id="inputPath" placeholder="e.g. /pool/sun.ghrunner/gh.test/fastq" value="/pool/sun.ghrunner/gh.test/fastq" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="outputPath">Output path <span class="required">*</span> (OUTPUT_PATH):</label>
+            <input type="text" id="outputPath" placeholder="e.g. /pool/sun.ghrunner/gh.test/multiqc" value="/pool/sun.ghrunner/gh.test/multiqc" required>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="jobName">Job name <span class="required">*</span> (JOB_NAME):</label>
+                <input type="text" id="jobName" placeholder="e.g. fastq.qc" value="fastq.qc" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="threadNum">Thread number (THREAD_NUM):</label>
+                <input type="number" id="threadNum" placeholder="e.g. 8" value="8" min="1">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="runLocation">Run location <span class="required">*</span> (RUN_LOCATION):</label>
+            <select id="runLocation" required>
+                <option value="pipeline" selected>pipeline</option>
+                <option value="other">other</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="githubToken">GitHub Personal Access Token <span class="required">*</span>:</label>
+            <input type="password" id="githubToken" placeholder="Enter your GitHub PAT with 'repo' scope" required>
+            <div class="token-guide">
+                <small>
+                    Required for private repositories. Create token with "repo" scope at:
+                    <a href="https://github.com/settings/tokens/new?scopes=repo&description=FastQC+Workflow+Trigger" target="_blank">
+                        GitHub Token Settings
+                    </a>
+                </small>
+                <small>
+                    私有仓库必须提供Token，请创建具有"repo"权限的Token:
+                    <a href="https://github.com/settings/tokens/new?scopes=repo&description=FastQC+Workflow+Trigger" target="_blank">
+                        GitHub Token 创建页面
+                    </a>
+                </small>
+            </div>
+        </div>
+        
+        <button id="processButton">Run FastQC / 运行 FastQC</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        document.getElementById('processButton').addEventListener('click', async function() {
+            // 获取表单值
+            const inputPath = document.getElementById('inputPath').value.trim();
+            const outputPath = document.getElementById('outputPath').value.trim();
+            const jobName = document.getElementById('jobName').value.trim();
+            const threadNum = document.getElementById('threadNum').value.trim();
+            const runLocation = document.getElementById('runLocation').value.trim();
+            const githubToken = document.getElementById('githubToken').value.trim();
+            
+            // 验证必填字段
+            if (!inputPath || !outputPath || !jobName || !runLocation || !githubToken) {
+                showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
+                return;
+            }
+            
+            showStatus('Triggering FastQC workflow... / 正在触发 FastQC 工作流...', 'loading');
+            
+            try {
+                // 这里替换为你的 GitHub 仓库信息
+                const repoOwner = 'cuhk-haosun'; // 修改为你的 GitHub 用户名或组织名
+                const repoName = 'your-private-repo'; // 修改为你的私有仓库名
+                const workflowId = 'run-fastqc.yaml'; // 你的工作流文件名
+                
+                // 触发 GitHub Action
+                const response = await triggerGitHubAction(
+                    repoOwner,
+                    repoName,
+                    workflowId,
+                    {
+                        INPUT_PATH: inputPath,
+                        OUTPUT_PATH: outputPath,
+                        JOB_NAME: jobName,
+                        THREAD_NUM: threadNum,
+                        RUN_LOCATION: runLocation
+                    },
+                    githubToken
+                );
+                
+                // 显示成功消息
+                const successMsg = `Workflow triggered successfully! Run ID: ${response.id}<br>
+                                   工作流触发成功! 运行 ID: ${response.id}`;
+                showStatus(successMsg, 'success');
+                
+                console.log('GitHub Action response:', response);
+                
+            } catch (error) {
+                console.error('Failed to trigger GitHub Action:', error);
+                
+                let errorMsg = `Error: ${error.message}`;
+                
+                // 常见错误处理
+                if (error.message.includes('401')) {
+                    errorMsg = 'Authentication failed. Please check your GitHub Token. / 认证失败，请检查GitHub Token';
+                } else if (error.message.includes('404')) {
+                    errorMsg = 'Repository or workflow not found. / 仓库或工作流未找到';
+                } else if (error.message.includes('403')) {
+                    errorMsg = 'Permission denied. Token may not have enough permissions. / 权限不足，Token可能缺少必要权限';
+                }
+                
+                showStatus(errorMsg, 'error');
+            }
+        });
+        
+        /**
+         * 触发 GitHub Action 工作流
+         */
+        async function triggerGitHubAction(owner, repo, workflowId, inputs, token) {
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json',
+                'Authorization': `token ${token}`
+            };
+            
+            const body = {
+                ref: 'main', // 或你的默认分支
+                inputs: inputs
+            };
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(body)
+            });
+            
+            if (!response.ok) {
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    errorData = { message: `HTTP error! status: ${response.status}` };
+                }
+                throw new Error(errorData.message || `Request failed with status ${response.status}`);
+            }
+            
+            // GitHub API 返回 204 No Content 时
+            return response.status === 204 ? { id: 'unknown', status: 'triggered' } : await response.json();
+        }
+        
+        /**
+         * 显示状态消息
+         */
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = message;
+            statusElement.className = type;
+            statusElement.style.display = 'block';
+            
+            // 自动隐藏成功消息
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 10000);
+            }
+        }
+    </script>
+</body>
+</html>
