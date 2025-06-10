@@ -201,6 +201,9 @@
                 showStatus(successMsg, 'success');
                 
                 console.log('GitHub Action response:', response);
+
+                const runId = response.id || 'unknown';
+                window.location.href = `logs.html?owner=${encodeURIComponent(repoOwner)}&repo=${encodeURIComponent(repoName)}&runId=${encodeURIComponent(runId)}`;
                 
             } catch (error) {
                 console.error('Failed to trigger GitHub Action:', error);
