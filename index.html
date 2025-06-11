@@ -38,7 +38,6 @@
             box-sizing: border-box;
         }
         button {
-            background: #28a745;
             color: white;
             border: none;
             padding: 10px 15px;
@@ -47,9 +46,24 @@
             font-size: 16px;
             margin-top: 10px;
             width: 100%;
+            transition: all 0.3s;
         }
         button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #processButton {
+            background: #28a745;
+        }
+        #processButton:hover {
             background: #218838;
+        }
+        #resultsButton {
+            display: none;
+            background: #17a2b8;
+        }
+        #resultsButton:hover {
+            background: #138496;
         }
         #status {
             margin-top: 20px;
@@ -151,7 +165,7 @@
         </div>
         
         <button id="processButton">Run FastQC / 运行 FastQC</button>
-        <button id="resultsButton" style="display: none; background: #17a2b8; margin-top: 10px;">
+        <button id="resultsButton">
             See Results / 查看结果
         </button>
         
@@ -159,7 +173,18 @@
     </div>
 
     <script>
+        // 存储运行信息的全局变量
+        let currentRunInfo = {
+            owner: 'cuhk-haosun',
+            repo: 'code-docker-fastqc',
+            runId: null
+        };
+
         document.getElementById('processButton').addEventListener('click', async function() {
+            // 重置结果按钮状态
+            document.getElementById('resultsButton').style.display = 'none';
+            currentRunInfo.runId = null;
+            
             // 获取表单值
             const inputPath = document.getElementById('inputPath').value.trim();
             const outputPath = document.getElementById('outputPath').value.trim();
@@ -192,11 +217,10 @@
                 // 2. 获取 runId (带重试和状态更新)
                 const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
                 
-                // 3. 成功跳转
-                showStatus(`Workflow started! Redirecting to logs...<br>工作流已启动！正在跳转到日志页面...`, 'success');
-                setTimeout(() => {
-                    window.location.href = `logs.html?owner=${encodeURIComponent(repoOwner)}&repo=${encodeURIComponent(repoName)}&runId=${encodeURIComponent(runId)}`;
-                }, 1500);
+                // 3. 存储运行信息并显示结果按钮
+                currentRunInfo = { owner: repoOwner, repo: repoName, runId };
+                showStatus(`Workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
+                document.getElementById('resultsButton').style.display = 'block';
                 
             } catch (error) {
                 console.error('Error:', error);
@@ -208,9 +232,23 @@
                     errorMsg = 'Repository or workflow not found. / 仓库或工作流未找到';
                 } else if (error.message.includes('403')) {
                     errorMsg = 'Permission denied. Token may not have enough permissions. / 权限不足，Token可能缺少必要权限';
+                } else if (error.message.includes('Failed to get run ID')) {
+                    errorMsg = 'Workflow started but failed to get run ID. Please check Actions manually. / 工作流已启动但获取ID失败，请手动检查Actions';
                 }
                 
                 showStatus(errorMsg, 'error');
+            }
+        });
+
+        // 结果按钮点击事件
+        document.getElementById('resultsButton').addEventListener('click', function() {
+            if (currentRunInfo.runId) {
+                window.open(
+                    `logs.html?owner=${encodeURIComponent(currentRunInfo.owner)}&repo=${encodeURIComponent(currentRunInfo.repo)}&runId=${encodeURIComponent(currentRunInfo.runId)}`,
+                    '_blank'
+                );
+            } else {
+                showStatus('No valid run information available / 没有有效的运行信息', 'error');
             }
         });
 
@@ -243,14 +281,12 @@
                 try {
                     const runId = await getLatestRunId(owner, repo, workflowId, token);
                     if (runId) {
-                        showStatus(`Successfully got run ID: ${runId}<br>成功获取运行ID: ${runId}`, 'success');
                         return runId;
                     }
                 } catch (error) {
                     console.log(`Attempt ${attempt} failed:`, error.message);
                 }
                 
-                // 不是最后一次尝试时才等待
                 if (attempt < MAX_RETRIES) {
                     await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
                 }
