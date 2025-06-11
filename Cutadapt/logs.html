@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastQC Workflow Logs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        #log-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background: white;
+            min-height: 300px;
+        }
+        #refresh-btn {
+            background: #0366d6;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        #back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FastQC Workflow Logs</h1>
+        <div id="log-container">
+            <p>Loading logs... / 正在加载日志...</p>
+        </div>
+        <div class="button-group">
+            <div>
+                <button id="back-btn">Back to Form / 返回表单</button>
+                <button id="refresh-btn">Refresh Logs / 刷新日志</button>
+            </div>
+            <div id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // 获取URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoOwner = urlParams.get('owner');
+        const repoName = urlParams.get('repo');
+        const runId = urlParams.get('runId');
+        
+        // 元素引用
+        const logContainer = document.getElementById('log-container');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const backBtn = document.getElementById('back-btn');
+        const statusElement = document.getElementById('status');
+        
+        // 返回按钮事件
+        backBtn.addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+        
+        // 刷新按钮事件
+        refreshBtn.addEventListener('click', fetchLogs);
+        
+        // 获取日志函数
+        async function fetchLogs() {
+            try {
+                logContainer.innerHTML = '<p>Loading logs... / 正在加载日志...</p>';
+                
+                // 直接重定向到GitHub的日志页面
+                window.location.href = `https://github.com/${repoOwner}/${repoName}/actions/runs/${runId}`;
+                
+            } catch (error) {
+                logContainer.innerHTML = `<p class="error">Error loading logs: ${error.message}</p>`;
+                console.error('Error fetching logs:', error);
+            }
+        }
+        
+        // 页面加载时自动获取日志
+        fetchLogs();
+    </script>
+</body>
+</html>
