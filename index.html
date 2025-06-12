@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CUHK 生物信息分析门户</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .logo {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .tool-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-align: left;
+        }
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .tool-title {
+            color: #6f42c1;
+            margin-top: 0;
+        }
+        .tool-description {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            background: #6f42c1;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #5a32a3;
+        }
+        .btn-fastqc {
+            background: #28a745;
+        }
+        .btn-fastqc:hover {
+            background: #218838;
+        }
+        .btn-cutadapt {
+            background: #17a2b8;
+        }
+        .btn-cutadapt:hover {
+            background: #138496;
+        }
+        footer {
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="images/cuhk_logo.png" alt="CUHK Logo" class="logo">
+        </div>
+        
+        <h1>生物信息分析工具门户</h1>
+        
+        <div class="tool-card">
+            <h2 class="tool-title">FastQC 质量控制</h2>
+            <p class="tool-description">
+                FastQC 提供对高通量测序数据的质量控制分析，帮助您快速评估原始测序数据的质量。
+            </p>
+            <a href="fastqc/index.html" class="btn btn-fastqc">进入 FastQC 分析</a>
+        </div>
+        
+        <div class="tool-card">
+            <h2 class="tool-title">Cutadapt 接头修剪</h2>
+            <p class="tool-description">
+                Cutadapt 用于从高通量测序数据中移除接头序列，提高后续分析的准确性。
+            </p>
+            <a href="cutadapt/index.html" class="btn btn-cutadapt">进入 Cutadapt 分析</a>
+        </div>
+        
+        <div class="tool-card">
+            <h2 class="tool-title">分析结果查看</h2>
+            <p class="tool-description">
+                查看已完成任务的日志和结果报告。
+            </p>
+            <a href="shared/logs.html" class="btn">查看分析结果</a>
+        </div>
+        
+        <footer>
+            <p>香港中文大学 · 生物信息学平台</p>
+            <p>© 2023 版权所有</p>
+        </footer>
+    </div>
+</body>
+</html>
