@@ -216,9 +216,9 @@
                     RUN_LOCATION: runLocation
                 }, githubToken);
         
-                // 2. 等待5秒后开始获取runId
+                // 2. 等待8秒后开始获取runId（增加等待时间）
                 showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
-                await new Promise(resolve => setTimeout(resolve, 5000)); // 等待5秒
+                await new Promise(resolve => setTimeout(resolve, 8000)); // 等待8秒
                 
                 // 3. 获取 runId (带重试和状态更新)
                 const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
@@ -279,12 +279,12 @@
 
         // 带重试机制的runId获取函数（调整初始延迟）
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
-            const MAX_RETRIES = 6; // 调整重试次数
-            const INITIAL_DELAY = 0; // 初始延迟（已在外部等待5秒）
+            const MAX_RETRIES = 5; // 减少重试次数
+            const INITIAL_DELAY = 0; // 初始延迟（已在外部等待8秒）
             const RETRY_DELAY = 3000; // 每次重试间隔3秒
             
             for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-                // 计算当前延迟（初始延迟 + 重试间隔 * (尝试次数-1)）
+                // 计算当前延迟
                 const delay = INITIAL_DELAY + (attempt - 1) * RETRY_DELAY;
                 if (delay > 0) {
                     await new Promise(resolve => setTimeout(resolve, delay));
@@ -295,6 +295,7 @@
                 try {
                     const runId = await getLatestRunId(owner, repo, workflowId, token);
                     if (runId) {
+                        console.log(`Successfully obtained run ID: ${runId}`);
                         return runId;
                     }
                 } catch (error) {
@@ -305,9 +306,9 @@
             throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
         }
 
-        // 获取最新runId的具体实现
+        // 获取最新runId的具体实现（优化版本）
         async function getLatestRunId(owner, repo, workflowId, token) {
-            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=5&sort=created&direction=desc`;
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
             const headers = {
                 'Accept': 'application/vnd.github.v3+json',
                 'Authorization': `token ${token}`
@@ -317,12 +318,43 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             
             const data = await response.json();
-            // 优先返回触发时间附近的运行记录
-            const recentRun = data.workflow_runs?.find(run => 
-                new Date(run.created_at).getTime() > workflowTriggerTime - 10000
-            );
             
-            return recentRun?.id || data.workflow_runs?.[0]?.id || null;
+            // 获取当前时间戳，而非使用触发时间
+            const currentTime = Date.now();
+            
+            // 检查API返回的运行记录
+            const runs = data.workflow_runs || [];
+            if (runs.length === 0) {
+                console.warn('No workflow runs found in the response');
+                return null;
+            }
+            
+            // 获取最新的运行记录（第一条）
+            const latestRun = runs[0];
+            const latestRunTime = new Date(latestRun.created_at).getTime();
+            const timeDifference = currentTime - latestRunTime;
+            
+            // 验证时间窗口：只接受15秒内创建的记录（避免匹配历史记录）
+            if (timeDifference < 15000) { // 15秒内的记录视为有效
+                console.log(`Found valid run: ID=${latestRun.id}, Created=${latestRun.created_at}, Age=${timeDifference/1000}s`);
+                return latestRun.id;
+            }
+            
+            console.warn(`Latest run too old (${timeDifference/1000}s ago), no valid run found`);
+            
+            // 尝试在列表中查找更符合条件的记录
+            for (const run of runs) {
+                const runTime = new Date(run.created_at).getTime();
+                const age = currentTime - runTime;
+                
+                // 寻找触发时间后创建的记录
+                if (runTime > workflowTriggerTime && age < 20000) { // 20秒内的记录
+                    console.log(`Found alternative run: ID=${run.id}, Created=${run.created_at}, Age=${age/1000}s`);
+                    return run.id;
+                }
+            }
+            
+            return null;
         }
 
         // 显示状态函数
