@@ -180,6 +180,8 @@
             runId: null
         };
 
+        let workflowTriggerTime = 0; // 全局变量
+
         document.getElementById('processButton').addEventListener('click', async function() {
             // 重置结果按钮状态
             document.getElementById('resultsButton').style.display = 'none';
@@ -254,6 +256,7 @@
 
         // 触发工作流函数
         async function triggerWorkflow(owner, repo, workflowId, inputs, token) {
+            workflowTriggerTime = Date.now(); // 记录精确触发时间
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
             const headers = {
                 'Content-Type': 'application/json',
@@ -297,23 +300,22 @@
 
         // 获取最新runId的具体实现
         async function getLatestRunId(owner, repo, workflowId, token) {
-            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=1`;
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=5&sort=created&direction=desc`;
             const headers = {
                 'Accept': 'application/vnd.github.v3+json',
                 'Authorization': `token ${token}`
             };
             
             const response = await fetch(url, { headers });
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             
             const data = await response.json();
-            if (data.workflow_runs?.length > 0) {
-                return data.workflow_runs[0].id;
-            }
+            // 优先返回10秒内触发的运行记录
+            const recentRun = data.workflow_runs?.find(run => 
+                new Date(run.created_at).getTime() > workflowTriggerTime - 10000
+            );
             
-            return null;
+            return recentRun?.id || data.workflow_runs?.[0]?.id || null;
         }
 
         // 显示状态函数
