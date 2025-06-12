@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CUHK-SZ SUN Lab Bioinformatics analysis Platform</title>
+    <title>Bioinformatics Platform / 生物信息分析平台</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,6 +12,7 @@
             padding: 20px;
             line-height: 1.6;
             background-color: #f9f9f9;
+            color: #333; /* 主文字黑色 */
         }
         .header {
             text-align: center;
@@ -22,8 +23,9 @@
             height: auto;
         }
         h1 {
-            color: #6f42c1;
+            color: #333; /* 标题黑色 */
             margin-top: 20px;
+            font-weight: normal;
         }
         .tool-card {
             background: white;
@@ -31,58 +33,53 @@
             padding: 20px;
             margin: 20px 0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            border: 1px solid #eee; /* 添加浅灰色边框 */
         }
-        .btn-fastqc {
-            background: #28a745; /* Bootstrap success green */
-        }
-        .btn-fastqc:hover {
-            background: #218838; /* 深绿色 */
-        }
-    
-        .btn-cutadapt {
-            background: #17a2b8; /* Bootstrap info blue */
-        }
-        .btn-cutadapt:hover {
-            background: #138496; /* 深蓝色 */
-        }
-        
-        .btn-results {
-            background: #6f42c1; /* 原紫色 */
-        }
-        .btn-results:hover {
-            background: #5a32a3; /* 深紫色 */
-        }
-        
-        .tool-card:hover {
-            transform: translateY(-3px);
-        }
-        .btn {   
+        .btn {
             display: inline-block;
-            color: white;
+            color: white !important; /* 强制按钮文字白色 */
             padding: 10px 20px;
             border-radius: 4px;
             text-decoration: none;
             font-weight: bold;
-            transition: background 0.3s;
-        }
-        .btn:hover {
-            background: #5a32a3;
+            border: none;
+            cursor: pointer;
         }
         .bilingual {
             margin-bottom: 5px;
         }
         .en {
             font-weight: bold;
+            color: #333; /* 英文黑色 */
         }
         .zh {
-            color: #666;
+            color: #666; /* 中文灰色 */
             font-size: 0.95em;
         }
         footer {
             margin-top: 40px;
             text-align: center;
-            color: #666;
+            color: #666; /* 页脚灰色 */
+        }
+
+        /* 按钮颜色配置 */
+        .btn-fastqc {
+            background: #28a745; /* 绿色 */
+        }
+        .btn-fastqc:hover {
+            background: #218838;
+        }
+        .btn-cutadapt {
+            background: #17a2b8; /* 蓝色 */
+        }
+        .btn-cutadapt:hover {
+            background: #138496;
+        }
+        .btn-results {
+            background: #6f42c1; /* 紫色 */
+        }
+        .btn-results:hover {
+            background: #5a32a3;
         }
     </style>
 </head>
@@ -101,8 +98,8 @@
             <div class="bilingual zh">FastQC 质量分析</div>
         </h2>
         <p>
-            <div class="bilingual en">Quality assessment and visualization for high-throughput sequencing data.</div>
-            <div class="bilingual zh">高通量测序数据的质量评估与可视化</div>
+            <div class="bilingual en">Quality assessment for sequencing data.</div>
+            <div class="bilingual zh">高通量测序数据的质量评估</div>
         </p>
         <a href="fastqc/index.html" class="btn btn-fastqc">
             <span class="en">FastQC</span> /
@@ -116,8 +113,8 @@
             <div class="bilingual zh">Cutadapt 接头修剪</div>
         </h2>
         <p>
-            <div class="bilingual en">Remove adapter sequences and low-quality fragments from sequencing data.</div>
-            <div class="bilingual zh">移除测序数据中的接头序列和低质量片段</div>
+            <div class="bilingual en">Remove adapter sequences from reads.</div>
+            <div class="bilingual zh">移除测序数据中的接头序列</div>
         </p>
         <a href="cutadapt/index.html" class="btn btn-cutadapt">
             <span class="en">Cutadapt</span> /
@@ -131,7 +128,7 @@
             <div class="bilingual zh">分析结果</div>
         </h2>
         <p>
-            <div class="bilingual en">View historical task logs and reports.</div>
+            <div class="bilingual en">View task logs and reports.</div>
             <div class="bilingual zh">查看历史任务日志与分析报告</div>
         </p>
         <a href="shared/logs.html" class="btn btn-results">
@@ -141,7 +138,8 @@
     </div>
 
     <footer>
-        <div class="bilingual en">The Chinese University of Hong Kong (Shenzhen) · SUN Lab</div>
+        <div class="bilingual en">The Chinese University of Hong Kong</div>
+        <div class="bilingual zh">香港中文大学</div>
         <div class="bilingual en">© 2023 All Rights Reserved</div>
         <div class="bilingual zh">© 2023 版权所有</div>
     </footer>
