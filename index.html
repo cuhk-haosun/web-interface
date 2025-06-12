@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bioinformatics Platform / 生物信息分析平台</title>
     <style>
+        /* 全局样式 */
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
@@ -12,8 +13,10 @@
             padding: 20px;
             line-height: 1.6;
             background-color: #f9f9f9;
-            color: #333; /* 主文字黑色 */
+            color: #333; /* 全站文字黑色 */
         }
+        
+        /* 标题样式 */
         .header {
             text-align: center;
             margin-bottom: 30px;
@@ -23,63 +26,77 @@
             height: auto;
         }
         h1 {
-            color: #333; /* 标题黑色 */
+            color: #333;
             margin-top: 20px;
-            font-weight: normal;
+            font-weight: normal; /* 主标题不加粗 */
         }
+        
+        /* 卡片样式 */
         .tool-card {
             background: white;
             border-radius: 8px;
             padding: 20px;
             margin: 20px 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border: 1px solid #eee; /* 添加浅灰色边框 */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #eee;
         }
+        
+        /* 双语文本样式 */
+        .bilingual {
+            margin-bottom: 5px;
+        }
+        .en {
+            font-weight: bold;  /* 仅英文加粗 */
+            color: #333;
+        }
+        .zh {
+            font-weight: normal; /* 中文明确不加粗 */
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        /* 按钮基础样式 */
         .btn {
             display: inline-block;
-            color: white !important; /* 强制按钮文字白色 */
+            color: white !important; /* 强制文字白色 */
             padding: 10px 20px;
             border-radius: 4px;
             text-decoration: none;
             font-weight: bold;
             border: none;
             cursor: pointer;
+            transition: all 0.3s; /* 悬停动画 */
         }
-        .bilingual {
-            margin-bottom: 5px;
+        .btn:hover {
+            transform: translateY(-2px); /* 上浮效果 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 阴影增强立体感 */
         }
-        .en {
-            font-weight: bold;
-            color: #333; /* 英文黑色 */
-        }
-        .zh {
-            color: #666; /* 中文灰色 */
-            font-size: 0.95em;
-        }
-        footer {
-            margin-top: 40px;
-            text-align: center;
-            color: #666; /* 页脚灰色 */
-        }
-
-        /* 按钮颜色配置 */
+        
+        /* 专用按钮颜色 */
         .btn-fastqc {
-            background: #28a745; /* 绿色 */
+            background: #28a745;
         }
         .btn-fastqc:hover {
             background: #218838;
         }
         .btn-cutadapt {
-            background: #17a2b8; /* 蓝色 */
+            background: #6f42c1;
         }
         .btn-cutadapt:hover {
-            background: #138496;
+            background: #5a32a3;
         }
         .btn-results {
-            background: #6f42c1; /* 紫色 */
+            background: #17a2b8;
         }
         .btn-results:hover {
-            background: #5a32a3;
+            background: #138496;
+        }
+        
+        /* 页脚 */
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #666;
         }
     </style>
 </head>
@@ -92,6 +109,7 @@
         </h1>
     </div>
 
+    <!-- FastQC 工具卡 -->
     <div class="tool-card">
         <h2>
             <div class="bilingual en">FastQC Quality Control</div>
@@ -107,6 +125,7 @@
         </a>
     </div>
 
+    <!-- Cutadapt 工具卡 -->
     <div class="tool-card">
         <h2>
             <div class="bilingual en">Cutadapt Adapter Trimming</div>
@@ -122,6 +141,7 @@
         </a>
     </div>
 
+    <!-- 结果查看卡 -->
     <div class="tool-card">
         <h2>
             <div class="bilingual en">Analysis Results</div>
