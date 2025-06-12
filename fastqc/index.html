@@ -216,10 +216,14 @@
                     RUN_LOCATION: runLocation
                 }, githubToken);
         
-                // 2. 获取 runId (带重试和状态更新)
+                // 2. 等待5秒后开始获取runId
+                showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
+                await new Promise(resolve => setTimeout(resolve, 5000)); // 等待5秒
+                
+                // 3. 获取 runId (带重试和状态更新)
                 const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
                 
-                // 3. 存储运行信息并显示结果按钮
+                // 4. 存储运行信息并显示结果按钮
                 currentRunInfo = { owner: repoOwner, repo: repoName, runId };
                 showStatus(`Workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
                 document.getElementById('resultsButton').style.display = 'block';
@@ -273,12 +277,19 @@
             }
         }
 
-        // 带重试机制的runId获取函数
+        // 带重试机制的runId获取函数（调整初始延迟）
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
-            const MAX_RETRIES = 8;
-            const RETRY_DELAY = 3000; // 3秒
+            const MAX_RETRIES = 6; // 调整重试次数
+            const INITIAL_DELAY = 0; // 初始延迟（已在外部等待5秒）
+            const RETRY_DELAY = 3000; // 每次重试间隔3秒
             
             for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                // 计算当前延迟（初始延迟 + 重试间隔 * (尝试次数-1)）
+                const delay = INITIAL_DELAY + (attempt - 1) * RETRY_DELAY;
+                if (delay > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+                
                 showStatus(`Getting run ID (attempt ${attempt}/${MAX_RETRIES})...<br>正在获取运行ID(尝试 ${attempt}/${MAX_RETRIES})...`, 'loading');
                 
                 try {
@@ -288,10 +299,6 @@
                     }
                 } catch (error) {
                     console.log(`Attempt ${attempt} failed:`, error.message);
-                }
-                
-                if (attempt < MAX_RETRIES) {
-                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
                 }
             }
             
@@ -310,7 +317,7 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             
             const data = await response.json();
-            // 优先返回10秒内触发的运行记录
+            // 优先返回触发时间附近的运行记录
             const recentRun = data.workflow_runs?.find(run => 
                 new Date(run.created_at).getTime() > workflowTriggerTime - 10000
             );
