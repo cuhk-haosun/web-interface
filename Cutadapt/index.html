@@ -220,7 +220,7 @@
             try {
                 const repoOwner = 'cuhk-haosun';
                 const repoName = 'code-docker-cutadapt';
-                const workflowId = 'run-docker-matrix.yaml';
+                const workflowId = 'run-docker-matrix.yml';
         
                 // 1. 触发工作流
                 showStatus('Triggering workflow... / 正在触发工作流...', 'loading');
@@ -261,11 +261,11 @@
             }
         });
 
-        // Result button click event
+        // Result button click event - Jump to the shared log page
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 window.open(
-                    `logs.html?owner=${encodeURIComponent(currentRunInfo.owner)}&repo=${encodeURIComponent(currentRunInfo.repo)}&runId=${encodeURIComponent(currentRunInfo.runId)}`,
+                    `../shared/logs.html?owner=${encodeURIComponent(currentRunInfo.owner)}&repo=${encodeURIComponent(currentRunInfo.repo)}&runId=${encodeURIComponent(currentRunInfo.runId)}`,
                     '_blank'
                 );
             } else {
