@@ -229,10 +229,10 @@
                     OUTPUT_PATH: outputPath,
                     JOB_NAME: jobName,
                     THREAD_NUM: threadNum,
-                    ADAPTER1: adapter1,
-                    ADAPTER2: adapter2,
+                    ADAPTER1: ADAPTER1_SEQ,
+                    ADAPTER2: ADAPTER2_SEQ,
                     RUN_LOCATION: runLocation,
-                    EXTRA_PARAMS: extraParams
+                    EXTRA_PARAMS: ADDITIONAL_RUN_PARAM
                 }, githubToken);
         
                 // 2. 获取 runId (带重试和状态更新)
