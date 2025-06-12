@@ -240,11 +240,11 @@
             }
         });
 
-        // 结果按钮点击事件
+        // 结果按钮点击事件 - 跳转到共享日志页面
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 window.open(
-                    `logs.html?owner=${encodeURIComponent(currentRunInfo.owner)}&repo=${encodeURIComponent(currentRunInfo.repo)}&runId=${encodeURIComponent(currentRunInfo.runId)}`,
+                    `../shared/logs.html?owner=${encodeURIComponent(currentRunInfo.owner)}&repo=${encodeURIComponent(currentRunInfo.repo)}&runId=${encodeURIComponent(currentRunInfo.runId)}`,
                     '_blank'
                 );
             } else {
