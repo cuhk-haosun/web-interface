@@ -53,14 +53,14 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         #processButton {
-            background: #8B4513; /* 棕色主按钮 */
+            background: #8B4513;
         }
         #processButton:hover {
-            background: #A0522D; /* 深棕色悬停 */
+            background: #A0522D;
         }
         #resultsButton {
             display: none;
-            background: #17a2b8; /* 蓝色结果按钮 */
+            background: #17a2b8;
         }
         #resultsButton:hover {
             background: #138496;
@@ -106,7 +106,6 @@
         .required {
             color: #dc3545;
         }
-        /* 响应式适配 */
         @media (max-width: 600px) {
             .form-row {
                 flex-direction: column;
@@ -203,19 +202,21 @@
     </div>
 
     <script>
-        // 存储运行信息的全局变量
+        // A global variable that stores operation information
         let currentRunInfo = {
             owner: 'cuhk-haosun',
             repo: 'code-docker-star-aligner',
             runId: null
         };
 
+        let workflowTriggerTime = 0; // Record the trigger timestamp
+
         document.getElementById('processButton').addEventListener('click', async function() {
-            // 重置结果按钮状态
+            // Reset the status of the result button
             document.getElementById('resultsButton').style.display = 'none';
             currentRunInfo.runId = null;
             
-            // 获取表单值
+            // Obtain the form value
             const inputPath = document.getElementById('inputPath').value.trim();
             const outputPath = document.getElementById('outputPath').value.trim();
             const refPath = document.getElementById('refPath').value.trim();
@@ -226,7 +227,7 @@
             const extraParams = document.getElementById('extraParams').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
     
-            // 验证必填字段
+            // Verify the required fields
             if (!inputPath || !outputPath || !refPath || !genomeIndex || !jobName || !threadNum || !runLocation || !githubToken) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
@@ -237,7 +238,7 @@
                 const repoName = 'code-docker-star-aligner';
                 const workflowId = 'action.matrix.yaml';
         
-                // 1. 触发工作流
+                // 1. Trigger the workflow
                 showStatus('Triggering Star-aligner workflow... / 正在触发Star-aligner工作流...', 'loading');
                 await triggerWorkflow(repoOwner, repoName, workflowId, {
                     INPUT_PATH: inputPath,
@@ -250,10 +251,14 @@
                     ADDITIONAL_RUN_PARAM: extraParams
                 }, githubToken);
         
-                // 2. 获取 runId (带重试和状态更新)
+                // 2. Wait for 8 seconds and then start to obtain runId (increase the waiting time).
+                showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
+                await new Promise(resolve => setTimeout(resolve, 8000)); // Wait for 8 seconds
+                
+                // 3. Obtain runId (with retry and status update)
                 const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
                 
-                // 3. 存储运行信息并显示结果按钮
+                // 4. Store the operation information and display the result button
                 currentRunInfo = { owner: repoOwner, repo: repoName, runId };
                 showStatus(`Star-aligner workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
                 document.getElementById('resultsButton').style.display = 'block';
@@ -276,7 +281,7 @@
             }
         });
 
-        // 结果按钮点击事件 - 跳转到日志页面
+        // Result button click event - Jump to the log page
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 window.open(
@@ -288,8 +293,9 @@
             }
         });
 
-        // 触发工作流的函数
+        // The function that triggers the workflow
         async function triggerWorkflow(owner, repo, workflowId, inputs, token) {
+            workflowTriggerTime = Date.now(); // Record the precise trigger time
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
             const headers = {
                 'Content-Type': 'application/json',
@@ -306,53 +312,87 @@
             }
         }
 
-        // 带重试机制的runId获取函数
+        // runId acquisition function with Retry Mechanism (Optimized Version)
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
-            const MAX_RETRIES = 8;
-            const RETRY_DELAY = 3000; // 3秒
+            const MAX_RETRIES = 5; // Reduce the number of retries
+            const INITIAL_DELAY = 0; // Initial delay (already waiting externally for 8 seconds)
+            const RETRY_DELAY = 3000; // Each retry interval is 3 seconds
             
             for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                // Calculate the current delay
+                const delay = INITIAL_DELAY + (attempt - 1) * RETRY_DELAY;
+                if (delay > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+                
                 showStatus(`Getting run ID (attempt ${attempt}/${MAX_RETRIES})...<br>正在获取运行ID(尝试 ${attempt}/${MAX_RETRIES})...`, 'loading');
                 
                 try {
                     const runId = await getLatestRunId(owner, repo, workflowId, token);
                     if (runId) {
+                        console.log(`Successfully obtained run ID: ${runId}`);
                         return runId;
                     }
                 } catch (error) {
                     console.log(`Attempt ${attempt} failed:`, error.message);
-                }
-                
-                if (attempt < MAX_RETRIES) {
-                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
                 }
             }
             
             throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
         }
 
-        // 获取最新runId的具体实现
+        // Obtain the specific implementation (optimized version) of the latest runId
         async function getLatestRunId(owner, repo, workflowId, token) {
-            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=1`;
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
             const headers = {
                 'Accept': 'application/vnd.github.v3+json',
                 'Authorization': `token ${token}`
             };
             
             const response = await fetch(url, { headers });
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             
             const data = await response.json();
-            if (data.workflow_runs?.length > 0) {
-                return data.workflow_runs[0].id;
+            
+            // Obtain the current timestamp instead of using the trigger time
+            const currentTime = Date.now();
+            
+            // Check the running records returned by the API
+            const runs = data.workflow_runs || [];
+            if (runs.length === 0) {
+                console.warn('No workflow runs found in the response');
+                return null;
+            }
+            
+            // Obtain the latest operation record (the first one)
+            const latestRun = runs[0];
+            const latestRunTime = new Date(latestRun.created_at).getTime();
+            const timeDifference = currentTime - latestRunTime;
+            
+            // Verification time window: Only records created within 15 seconds are accepted
+            if (timeDifference < 15000) { // Records within 15 seconds are considered valid
+                console.log(`Found valid run: ID=${latestRun.id}, Created=${latestRun.created_at}, Age=${timeDifference/1000}s`);
+                return latestRun.id;
+            }
+            
+            console.warn(`Latest run too old (${timeDifference/1000}s ago), no valid run found`);
+            
+            // Try to find the records that better meet the conditions in the list
+            for (const run of runs) {
+                const runTime = new Date(run.created_at).getTime();
+                const age = currentTime - runTime;
+                
+                // Look for the records created after the trigger time
+                if (runTime > workflowTriggerTime && age < 20000) { // Records within 20 seconds
+                    console.log(`Found alternative run: ID=${run.id}, Created=${run.created_at}, Age=${age/1000}s`);
+                    return run.id;
+                }
             }
             
             return null;
         }
 
-        // 显示状态信息的函数
+        // A function for displaying status information
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
@@ -362,4 +402,3 @@
     </script>
 </body>
 </html>
-
