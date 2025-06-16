@@ -31,8 +31,8 @@
             font-weight: normal;
         }
         
-        /* Tools Section */
-        .tools-section {
+        /* Section Styles */
+        .section {
             background: white;
             border-radius: 8px;
             padding: 25px;
@@ -40,7 +40,7 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             border: 1px solid #e0e0e0;
         }
-        .tools-title {
+        .section-title {
             font-size: 1.5em;
             color: #444;
             margin-bottom: 25px;
@@ -56,13 +56,20 @@
             gap: 25px;
         }
         
+        /* Workflow Container */
+        .workflow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
         /* Tool Card Style - Square */
         .tool-card {
             background: white;
             border-radius: 8px;
             padding: 20px;
             width: 250px;
-            height: 250px; /* Make it square */
+            height: 250px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.08);
             border: 1px solid #eee;
             display: flex;
@@ -71,6 +78,25 @@
             transition: transform 0.3s;
         }
         .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* Workflow Card Style - Rectangle */
+        .workflow-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            width: 100%;
+            min-height: 150px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s;
+        }
+        .workflow-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
@@ -132,6 +158,18 @@
         .btn-star:hover {
             background: #A0522D;
         }
+        .btn-rrbs {
+            background: #006400; /* Deep Green */
+        }
+        .btn-rrbs:hover {
+            background: #004d00;
+        }
+        .btn-rnaseq {
+            background: #1E4B8B; /* Deep Blue */
+        }
+        .btn-rnaseq:hover {
+            background: #153A6B;
+        }
         
         footer {
             margin-top: 40px;
@@ -152,6 +190,9 @@
                 height: auto;
                 min-height: 250px;
             }
+            .workflow-card {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -164,8 +205,9 @@
         </h1>
     </div>
 
-    <div class="tools-section">
-        <div class="tools-title">
+    <!-- Tools Section -->
+    <div class="section">
+        <div class="section-title">
             <span class="en">Tools</span>
             <span class="zh">分析工具</span>
         </div>
@@ -222,6 +264,52 @@
                 <a href="star-aligner/index.html" class="btn btn-star">
                     <span class="en">STAR Aligner</span> /
                     <span class="zh">序列比对</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Section -->
+    <div class="section">
+        <div class="section-title">
+            <span class="en">Some Helpful Workflows</span>
+            <span class="zh">常用分析流程</span>
+        </div>
+        
+        <div class="workflow-container">
+            <!-- RRBS Workflow Card -->
+            <div class="workflow-card">
+                <div>
+                    <h2>
+                        <div class="bilingual en">RRBS Workflow</div>
+                        <div class="bilingual zh">RRBS分析流程</div>
+                    </h2>
+                    <p>
+                        <div class="bilingual en">Reduced Representation Bisulfite Sequencing analysis</div>
+                        <div class="bilingual zh">简化基因组甲基化测序分析</div>
+                    </p>
+                </div>
+                <a href="rrbs/index.html" class="btn btn-rrbs">
+                    <span class="en">RRBS Workflow</span> /
+                    <span class="zh">RRBS分析流程</span>
+                </a>
+            </div>
+
+            <!-- RNAseq Workflow Card -->
+            <div class="workflow-card">
+                <div>
+                    <h2>
+                        <div class="bilingual en">RNAseq Workflow</div>
+                        <div class="bilingual zh">RNAseq分析流程</div>
+                    </h2>
+                    <p>
+                        <div class="bilingual en">RNA sequencing analysis workflow</div>
+                        <div class="bilingual zh">RNA测序分析流程</div>
+                    </p>
+                </div>
+                <a href="rnaseq/index.html" class="btn btn-rnaseq">
+                    <span class="en">RNAseq Workflow</span> /
+                    <span class="zh">RNAseq分析流程</span>
                 </a>
             </div>
         </div>
