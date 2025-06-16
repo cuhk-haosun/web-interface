@@ -19,7 +19,7 @@
         /* Header Style */
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         .logo {
             max-width: 150px;
@@ -31,25 +31,48 @@
             font-weight: normal;
         }
         
+        /* Tools Section */
+        .tools-section {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+        .tools-title {
+            font-size: 1.5em;
+            color: #444;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
         /* Tools Container */
         .tools-container {
             display: flex;
+            justify-content: space-around;
             flex-wrap: wrap;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 40px;
+            gap: 25px;
         }
         
-        /* Tool Card Style */
+        /* Tool Card Style - Square */
         .tool-card {
             background: white;
             border-radius: 8px;
             padding: 20px;
-            width: 280px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            width: 250px;
+            height: 250px; /* Make it square */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
             border: 1px solid #eee;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s;
+        }
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         
         /* Bilingual Text Style */
@@ -77,8 +100,9 @@
             border: none;
             cursor: pointer;
             transition: all 0.3s;
-            margin-top: 15px;
             text-align: center;
+            width: 100%;
+            box-sizing: border-box;
         }
         .btn:hover {
             transform: translateY(-2px);
@@ -115,14 +139,18 @@
             color: #666;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .tools-container {
-                flex-direction: column;
-                align-items: center;
+                justify-content: center;
             }
+        }
+
+        @media (max-width: 600px) {
             .tool-card {
                 width: 100%;
-                max-width: 400px;
+                max-width: 300px;
+                height: auto;
+                min-height: 250px;
             }
         }
     </style>
@@ -136,53 +164,66 @@
         </h1>
     </div>
 
-    <div class="tools-container">
-        <!-- FastQC Tool Card -->
-        <div class="tool-card">
-            <h2>
-                <div class="bilingual en">FastQC Quality Control</div>
-                <div class="bilingual zh">FastQC 质量分析</div>
-            </h2>
-            <p>
-                <div class="bilingual en">Quality assessment for sequencing data.</div>
-                <div class="bilingual zh">高通量测序数据的质量评估</div>
-            </p>
-            <a href="fastqc/index.html" class="btn btn-fastqc">
-                <span class="en">FastQC</span> /
-                <span class="zh">质量分析</span>
-            </a>
+    <div class="tools-section">
+        <div class="tools-title">
+            <span class="en">Tools</span>
+            <span class="zh">分析工具</span>
         </div>
+        
+        <div class="tools-container">
+            <!-- FastQC Tool Card -->
+            <div class="tool-card">
+                <div>
+                    <h2>
+                        <div class="bilingual en">FastQC</div>
+                        <div class="bilingual zh">质量分析</div>
+                    </h2>
+                    <p>
+                        <div class="bilingual en">Quality control for sequencing data</div>
+                        <div class="bilingual zh">测序数据质量评估</div>
+                    </p>
+                </div>
+                <a href="fastqc/index.html" class="btn btn-fastqc">
+                    <span class="en">FastQC</span> /
+                    <span class="zh">质量分析</span>
+                </a>
+            </div>
 
-        <!-- Cutadapt Tool Card -->
-        <div class="tool-card">
-            <h2>
-                <div class="bilingual en">Cutadapt Adapter Trimming</div>
-                <div class="bilingual zh">Cutadapt 接头修剪</div>
-            </h2>
-            <p>
-                <div class="bilingual en">Remove adapter sequences from reads.</div>
-                <div class="bilingual zh">移除测序数据中的接头序列</div>
-            </p>
-            <a href="cutadapt/index.html" class="btn btn-cutadapt">
-                <span class="en">Cutadapt</span> /
-                <span class="zh">接头修剪</span>
-            </a>
-        </div>
+            <!-- Cutadapt Tool Card -->
+            <div class="tool-card">
+                <div>
+                    <h2>
+                        <div class="bilingual en">Cutadapt</div>
+                        <div class="bilingual zh">接头修剪</div>
+                    </h2>
+                    <p>
+                        <div class="bilingual en">Adapter sequence trimming</div>
+                        <div class="bilingual zh">去除测序接头序列</div>
+                    </p>
+                </div>
+                <a href="cutadapt/index.html" class="btn btn-cutadapt">
+                    <span class="en">Cutadapt</span> /
+                    <span class="zh">接头修剪</span>
+                </a>
+            </div>
 
-        <!-- STAR Aligner Tool Card -->
-        <div class="tool-card">
-            <h2>
-                <div class="bilingual en">STAR Aligner</div>
-                <div class="bilingual zh">STAR 序列比对</div>
-            </h2>
-            <p>
-                <div class="bilingual en">RNA-seq read alignment to reference genome.</div>
-                <div class="bilingual zh">RNA-seq数据与参考基因组的比对</div>
-            </p>
-            <a href="star-aligner/index.html" class="btn btn-star">
-                <span class="en">STAR Aligner</span> /
-                <span class="zh">序列比对</span>
-            </a>
+            <!-- STAR Aligner Tool Card -->
+            <div class="tool-card">
+                <div>
+                    <h2>
+                        <div class="bilingual en">STAR Aligner</div>
+                        <div class="bilingual zh">序列比对</div>
+                    </h2>
+                    <p>
+                        <div class="bilingual en">RNA-seq read alignment</div>
+                        <div class="bilingual zh">RNA-seq序列比对</div>
+                    </p>
+                </div>
+                <a href="star-aligner/index.html" class="btn btn-star">
+                    <span class="en">STAR Aligner</span> /
+                    <span class="zh">序列比对</span>
+                </a>
+            </div>
         </div>
     </div>
 
