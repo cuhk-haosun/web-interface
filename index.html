@@ -129,9 +129,10 @@
       padding: 10px 15px;
       border-radius: 20px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: flex;
+      display: inline-flex;
       align-items: center;
       position: relative;
+      margin: 2px;
     }
 
     .workflow-step:not(:last-child)::after {
@@ -224,6 +225,7 @@
     /* Tool Specific Button Colors */
     .btn-fastqc {
       background: #28a745;
+      color: white;
     }
 
     .btn-fastqc:hover {
@@ -232,6 +234,7 @@
 
     .btn-cutadapt {
       background: #6f42c1;
+      color: white;
     }
 
     .btn-cutadapt:hover {
@@ -240,6 +243,7 @@
 
     .btn-star {
       background: #8B4513;
+      color: white;
     }
 
     .btn-star:hover {
@@ -248,6 +252,7 @@
 
     .btn-rrbs {
       background: #006400;
+      color: white;
     }
 
     .btn-rrbs:hover {
@@ -256,6 +261,7 @@
 
     .btn-rnaseq {
       background: #1E4B8B;
+      color: white;
     }
 
     .btn-rnaseq:hover {
@@ -522,36 +528,35 @@
       const container = document.getElementById('workflow-visualization');
       const emptyMsg = document.getElementById('empty-message');
       
+      // 防御性检查，确保元素存在
+      if (!container || !emptyMsg) {
+        console.error('Workflow container or empty message element not found');
+        return;
+      }
+      
+      // 清空容器并强制重绘
+      container.innerHTML = '';
+      void container.offsetWidth; // 强制浏览器重绘
+      
       if (workflowSteps.length === 0) {
         emptyMsg.style.display = 'block';
-        container.innerHTML = '';
         container.appendChild(emptyMsg);
         return;
       }
       
       emptyMsg.style.display = 'none';
-      container.innerHTML = '';
       
+      // 创建流程步骤
       workflowSteps.forEach(toolId => {
         const tool = toolInfo[toolId];
         const stepElement = document.createElement('div');
         stepElement.className = `workflow-step ${tool.color}`;
         
-        // Create name elements
-        const nameEn = document.createElement('span');
-        nameEn.className = 'en';
-        nameEn.textContent = tool.name;
-        
-        const separator = document.createTextNode(' / ');
-        
-        const nameZh = document.createElement('span');
-        nameZh.className = 'zh';
-        nameZh.textContent = tool.name_zh;
-        
-        // Append all elements
-        stepElement.appendChild(nameEn);
-        stepElement.appendChild(separator);
-        stepElement.appendChild(nameZh);
+        // 使用innerHTML简化创建过程
+        stepElement.innerHTML = `
+          <span class="en">${tool.name}</span> / 
+          <span class="zh">${tool.name_zh}</span>
+        `;
         
         container.appendChild(stepElement);
       });
@@ -580,6 +585,16 @@
           e.preventDefault();
         });
       });
+      
+      // 初始检查元素是否存在
+      const container = document.getElementById('workflow-visualization');
+      const emptyMsg = document.getElementById('empty-message');
+      
+      if (!container || !emptyMsg) {
+        console.error('Workflow visualization elements not found during initialization');
+      } else {
+        console.log('Workflow visualization elements found successfully');
+      }
     });
   </script>
 </body>
