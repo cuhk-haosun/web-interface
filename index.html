@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bioinformatics Platform / 生物信息分析平台</title>
   <style>
-    /* Unified box model to solve the problem of width and height calculation */
+    /* 统一盒模型，解决宽高计算问题 */
     * {
       box-sizing: border-box;
     }
@@ -57,7 +57,7 @@
       border-bottom: 2px solid #f0f0f0;
     }
 
-    /* Tools Container */
+    /* Tools Container（保持原有布局，修复按钮错位） */
     .tools-container {
       display: flex;
       justify-content: space-around;
@@ -65,26 +65,20 @@
       gap: 25px;
     }
 
-    /* Workflow Container */
-    .workflow-container {
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
-      padding: 0 15px; /* 给卡片左右留边 */
-    }
-
-    /* Tool Card Style - Square (保持不变) */
+    /* Tool Card Style - Square（关键修复：限制卡片最小高度 + 弹性布局自适应） */
     .tool-card {
       background: white;
       border-radius: 8px;
       padding: 20px;
       width: 250px;
-      height: 250px;
+      /* 保证卡片高度一致，避免按钮错位 */
+      min-height: 280px; 
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
       border: 1px solid #eee;
+      /* 让内容（标题、描述、按钮）垂直分布更均匀 */
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: space-between; 
       transition: transform 0.3s;
     }
 
@@ -93,20 +87,28 @@
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
+    /* Workflow Container */
+    .workflow-container {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      padding: 0 15px; 
+    }
+
     /* Workflow Card Style - Rectangle (优化高度和内容分布) */
     .workflow-card {
       background: white;
       border-radius: 8px;
-      padding: 25px; /* 增加内边距，提升视觉空间 */
+      padding: 25px; 
       width: 100%;
-      min-height: 180px; /* 增加最小高度 */
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); /* 轻微增强阴影 */
+      min-height: 180px; 
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); 
       border: 1px solid #e8e8e8;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       transition: transform 0.3s, box-shadow 0.3s;
-      max-width: 850px; /* 略微增加最大宽度 */
+      max-width: 850px; 
       margin: 0 auto;
     }
 
@@ -122,7 +124,7 @@
     }
 
     .workflow-card p {
-      margin-bottom: 20px; /* 增加按钮上方间距 */
+      margin-bottom: 20px; 
     }
 
     /* Bilingual Text Style */
@@ -141,12 +143,12 @@
       font-size: 0.95em;
     }
 
-    /* Button Styles */
+    /* Button Styles（统一按钮样式，避免因内容差异错位） */
     .btn {
       display: inline-block;
       color: white !important;
-      padding: 12px 20px; /* 增加按钮高度 */
-      border-radius: 5px;
+      padding: 10px 20px; 
+      border-radius: 4px;
       text-decoration: none;
       font-weight: bold;
       border: none;
@@ -155,12 +157,11 @@
       text-align: center;
       width: 100%;
       box-sizing: border-box;
-      font-size: 1em; /* 增加字体大小 */
     }
 
     .btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .btn .en,
@@ -171,7 +172,6 @@
     /* Tool Specific Button Colors */
     .btn-fastqc {
       background: #28a745;
-      /* Green */
     }
 
     .btn-fastqc:hover {
@@ -180,7 +180,6 @@
 
     .btn-cutadapt {
       background: #6f42c1;
-      /* Purple */
     }
 
     .btn-cutadapt:hover {
@@ -189,7 +188,6 @@
 
     .btn-star {
       background: #8B4513;
-      /* Brown */
     }
 
     .btn-star:hover {
@@ -198,7 +196,6 @@
 
     .btn-rrbs {
       background: #006400;
-      /* Deep Green */
     }
 
     .btn-rrbs:hover {
@@ -207,7 +204,6 @@
 
     .btn-rnaseq {
       background: #1E4B8B;
-      /* Deep Blue */
     }
 
     .btn-rnaseq:hover {
@@ -220,6 +216,7 @@
       color: #666;
     }
 
+    /* 响应式适配：小屏幕下工具卡片自动换行且居中 */
     @media (max-width: 900px) {
       .tools-container {
         justify-content: center;
@@ -237,7 +234,7 @@
       .workflow-card {
         width: 100%;
         max-width: 100%;
-        padding: 20px; /* 小屏幕减少内边距 */
+        padding: 20px; 
       }
     }
   </style>
@@ -252,7 +249,7 @@
     </h1>
   </div>
 
-  <!-- Tools Section (保持完全不变) -->
+  <!-- Tools Section（修复后：按钮不再错位） -->
   <div class="section">
     <div class="section-title">
       <span class="en">Tools</span>
