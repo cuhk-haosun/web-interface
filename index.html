@@ -133,6 +133,7 @@
       align-items: center;
       position: relative;
       margin: 2px;
+      color: white; /* 确保文本可见 */
     }
 
     .workflow-step:not(:last-child)::after {
@@ -225,7 +226,6 @@
     /* Tool Specific Button Colors */
     .btn-fastqc {
       background: #28a745;
-      color: white;
     }
 
     .btn-fastqc:hover {
@@ -234,7 +234,6 @@
 
     .btn-cutadapt {
       background: #6f42c1;
-      color: white;
     }
 
     .btn-cutadapt:hover {
@@ -243,7 +242,6 @@
 
     .btn-star {
       background: #8B4513;
-      color: white;
     }
 
     .btn-star:hover {
@@ -252,7 +250,6 @@
 
     .btn-rrbs {
       background: #006400;
-      color: white;
     }
 
     .btn-rrbs:hover {
@@ -261,7 +258,6 @@
 
     .btn-rnaseq {
       background: #1E4B8B;
-      color: white;
     }
 
     .btn-rnaseq:hover {
@@ -277,6 +273,19 @@
 
     .btn-clear:hover {
       background: #c82333;
+    }
+
+    /* Workflow Step Colors (separate from buttons) */
+    .step-fastqc {
+      background: #28a745;
+    }
+
+    .step-cutadapt {
+      background: #6f42c1;
+    }
+
+    .step-star {
+      background: #8B4513;
     }
 
     footer {
@@ -484,17 +493,17 @@
       fastqc: {
         name: "FastQC",
         name_zh: "质量分析",
-        color: "btn-fastqc"
+        color: "step-fastqc" // 改为新的工作流步骤样式类
       },
       cutadapt: {
         name: "Cutadapt",
         name_zh: "接头修剪",
-        color: "btn-cutadapt"
+        color: "step-cutadapt"
       },
       star: {
         name: "STAR Aligner",
         name_zh: "序列比对",
-        color: "btn-star"
+        color: "step-star"
       }
     };
     
@@ -550,6 +559,7 @@
       workflowSteps.forEach(toolId => {
         const tool = toolInfo[toolId];
         const stepElement = document.createElement('div');
+        // 使用新的工作流步骤样式类，避免与按钮样式冲突
         stepElement.className = `workflow-step ${tool.color}`;
         
         // 使用innerHTML简化创建过程
