@@ -538,16 +538,34 @@
         const tool = toolInfo[toolId];
         const stepElement = document.createElement('div');
         stepElement.className = `workflow-step ${tool.color}`;
-        stepElement.innerHTML = `
-          <span class="en">${tool.name}</span> / 
-          <span class="zh">${tool.name_zh}</span>
-          <span class="remove-step" data-index="${index}">×</span>
-        `;
+        
+        // 使用createElement创建内部元素，而不是innerHTML
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'en';
+        nameSpan.textContent = tool.name;
+        
+        const separatorSpan = document.createTextNode(' / ');
+        
+        const nameZhSpan = document.createElement('span');
+        nameZhSpan.className = 'zh';
+        nameZhSpan.textContent = tool.name_zh;
+        
+        const removeSpan = document.createElement('span');
+        removeSpan.className = 'remove-step';
+        removeSpan.textContent = '×';
+        removeSpan.addEventListener('click', function(e) {
+          e.stopPropagation();
+          removeStep(index);
+        });
+        
+        // 添加元素到步骤容器
+        stepElement.appendChild(nameSpan);
+        stepElement.appendChild(separatorSpan);
+        stepElement.appendChild(nameZhSpan);
+        stepElement.appendChild(removeSpan);
+        
         container.appendChild(stepElement);
       });
-      
-      // Reattach event listeners to remove buttons
-      attachRemoveEventListeners();
     }
     
     // Remove a step from workflow
@@ -564,26 +582,12 @@
       updateWorkflowVisualization();
     }
     
-    // Attach event listeners to remove buttons
-    function attachRemoveEventListeners() {
-      document.querySelectorAll('.remove-step').forEach(button => {
-        button.addEventListener('click', function(e) {
-          e.stopPropagation(); // Prevent event bubbling
-          const index = parseInt(this.getAttribute('data-index'));
-          removeStep(index);
-        });
-      });
-      
-      // Attach clear workflow button event
+    // Initialize clear workflow button event
+    document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('clear-workflow').addEventListener('click', function(e) {
         e.stopPropagation();
         clearWorkflow();
       });
-    }
-    
-    // Initialize event listeners on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      attachRemoveEventListeners();
     });
   </script>
 </body>
