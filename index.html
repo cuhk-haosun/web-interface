@@ -99,6 +99,7 @@
       font-size: 0.8em;
       cursor: pointer;
       transition: all 0.3s;
+      z-index: 10;
     }
 
     .add-to-workflow:hover {
@@ -334,7 +335,7 @@
     <div class="tools-container">
       <!-- FastQC Tool Card -->
       <div class="tool-card" data-tool="fastqc">
-        <button class="add-to-workflow" onclick="addToWorkflow('fastqc')">
+        <button class="add-to-workflow" onclick="addToWorkflow('fastqc', event)">
           <span class="zh">+</span>
         </button>
         <div>
@@ -355,7 +356,7 @@
 
       <!-- Cutadapt Tool Card -->
       <div class="tool-card" data-tool="cutadapt">
-        <button class="add-to-workflow" onclick="addToWorkflow('cutadapt')">
+        <button class="add-to-workflow" onclick="addToWorkflow('cutadapt', event)">
           <span class="zh">+</span>
         </button>
         <div>
@@ -376,7 +377,7 @@
 
       <!-- STAR Aligner Tool Card -->
       <div class="tool-card" data-tool="star">
-        <button class="add-to-workflow" onclick="addToWorkflow('star')">
+        <button class="add-to-workflow" onclick="addToWorkflow('star', event)">
           <span class="zh">+</span>
         </button>
         <div>
@@ -407,7 +408,7 @@
     <div id="workflow-builder">
       <div id="workflow-visualization" class="workflow-visualization">
         <div id="empty-message" style="color: #666; font-style: italic;">
-          Click "Add To Workflow" buttons above to build your custom workflow / 点击上方"添加到流程"按钮构建自定义流程
+          Click "+" buttons above to build your custom workflow / 点击上方"+"按钮构建自定义流程
         </div>
       </div>
       <button id="clear-workflow" class="btn btn-clear" onclick="clearWorkflow()">
@@ -492,32 +493,32 @@
     };
     
     // Add tool to workflow
-    function addToWorkflow(toolId) {
-      // Prevent triggering the card click event
-      if (event) event.stopPropagation();
-      
-      // Add to workflow if not already present
-      if (!workflowSteps.includes(toolId)) {
-        workflowSteps.push(toolId);
-        updateWorkflowVisualization();
-        
-        // Show visual feedback
-        const card = document.querySelector(`.tool-card[data-tool="${toolId}"]`);
-        card.style.border = "2px solid #1E4B8B";
-        card.style.backgroundColor = "#f0f7ff";
-        
-        // Add animation class
-        card.classList.add('added');
-        setTimeout(() => {
-          card.style.border = "1px solid #eee";
-          card.style.backgroundColor = "white";
-          card.classList.remove('added');
-        }, 500);
+    function addToWorkflow(toolId, event) {
+      // 阻止事件冒泡和默认行为
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
       }
+      
+      // Add the tool to workflow (allow duplicates)
+      workflowSteps.push(toolId);
+      console.log("Added tool:", toolId, "Workflow steps:", workflowSteps);
+      updateWorkflowVisualization();
+      
+      // Show visual feedback
+      const card = document.querySelector(`.tool-card[data-tool="${toolId}"]`);
+      card.style.border = "2px solid #1E4B8B";
+      card.style.backgroundColor = "#f0f7ff";
+      
+      setTimeout(() => {
+        card.style.border = "1px solid #eee";
+        card.style.backgroundColor = "white";
+      }, 500);
     }
     
     // Update the workflow visualization
     function updateWorkflowVisualization() {
+      console.log("Updating visualization with steps:", workflowSteps);
       const container = document.getElementById('workflow-visualization');
       const emptyMsg = document.getElementById('empty-message');
       
@@ -531,26 +532,26 @@
       emptyMsg.style.display = 'none';
       container.innerHTML = '';
       
-      workflowSteps.forEach((toolId, index) => {
+      workflowSteps.forEach(toolId => {
         const tool = toolInfo[toolId];
         const stepElement = document.createElement('div');
         stepElement.className = `workflow-step ${tool.color}`;
         
-        // 使用createElement创建内部元素，而不是innerHTML
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'en';
-        nameSpan.textContent = tool.name;
+        // Create name elements
+        const nameEn = document.createElement('span');
+        nameEn.className = 'en';
+        nameEn.textContent = tool.name;
         
-        const separatorSpan = document.createTextNode(' / ');
+        const separator = document.createTextNode(' / ');
         
-        const nameZhSpan = document.createElement('span');
-        nameZhSpan.className = 'zh';
-        nameZhSpan.textContent = tool.name_zh;
+        const nameZh = document.createElement('span');
+        nameZh.className = 'zh';
+        nameZh.textContent = tool.name_zh;
         
-        // 添加元素到步骤容器
-        stepElement.appendChild(nameSpan);
-        stepElement.appendChild(separatorSpan);
-        stepElement.appendChild(nameZhSpan);
+        // Append all elements
+        stepElement.appendChild(nameEn);
+        stepElement.appendChild(separator);
+        stepElement.appendChild(nameZh);
         
         container.appendChild(stepElement);
       });
@@ -567,6 +568,19 @@
         card.style.backgroundColor = "white";
       });
     }
+    
+    // 初始化事件处理
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("DOM loaded, workflow system initialized");
+      
+      // 为每个工具卡片添加点击事件处理
+      document.querySelectorAll('.add-to-workflow').forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+        });
+      });
+    });
   </script>
 </body>
 
