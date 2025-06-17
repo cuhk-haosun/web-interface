@@ -139,13 +139,6 @@
       color: #666;
     }
 
-    .remove-step {
-      margin-left: 8px;
-      color: #dc3545;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
     /* Workflow Container */
     .workflow-container {
       display: flex;
@@ -417,7 +410,7 @@
           Click "Add To Workflow" buttons above to build your custom workflow / 点击上方"添加到流程"按钮构建自定义流程
         </div>
       </div>
-      <button id="clear-workflow" class="btn btn-clear">
+      <button id="clear-workflow" class="btn btn-clear" onclick="clearWorkflow()">
         <span class="en">Clear Workflow</span> /
         <span class="zh">清除流程</span>
       </button>
@@ -512,9 +505,13 @@
         const card = document.querySelector(`.tool-card[data-tool="${toolId}"]`);
         card.style.border = "2px solid #1E4B8B";
         card.style.backgroundColor = "#f0f7ff";
+        
+        // Add animation class
+        card.classList.add('added');
         setTimeout(() => {
           card.style.border = "1px solid #eee";
           card.style.backgroundColor = "white";
+          card.classList.remove('added');
         }, 500);
       }
     }
@@ -550,45 +547,26 @@
         nameZhSpan.className = 'zh';
         nameZhSpan.textContent = tool.name_zh;
         
-        const removeSpan = document.createElement('span');
-        removeSpan.className = 'remove-step';
-        removeSpan.textContent = '×';
-        removeSpan.addEventListener('click', function(e) {
-          e.stopPropagation();
-          removeStep(index);
-        });
-        
         // 添加元素到步骤容器
         stepElement.appendChild(nameSpan);
         stepElement.appendChild(separatorSpan);
         stepElement.appendChild(nameZhSpan);
-        stepElement.appendChild(removeSpan);
         
         container.appendChild(stepElement);
       });
-    }
-    
-    // Remove a step from workflow
-    function removeStep(index) {
-      if (index >= 0 && index < workflowSteps.length) {
-        workflowSteps.splice(index, 1);
-        updateWorkflowVisualization();
-      }
     }
     
     // Clear the entire workflow
     function clearWorkflow() {
       workflowSteps = [];
       updateWorkflowVisualization();
-    }
-    
-    // Initialize clear workflow button event
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('clear-workflow').addEventListener('click', function(e) {
-        e.stopPropagation();
-        clearWorkflow();
+      
+      // Reset all tool cards
+      document.querySelectorAll('.tool-card').forEach(card => {
+        card.style.border = "1px solid #eee";
+        card.style.backgroundColor = "white";
       });
-    });
+    }
   </script>
 </body>
 
