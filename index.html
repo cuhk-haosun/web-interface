@@ -78,6 +78,8 @@
       flex-direction: column;
       justify-content: space-between;
       transition: transform 0.3s;
+      cursor: grab;
+      user-select: none;
       position: relative;
     }
 
@@ -86,60 +88,125 @@
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
-    /* Add to Workflow Button */
-    .add-to-workflow {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #17a2b8;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 5px 10px;
-      font-size: 0.8em;
-      cursor: pointer;
-      transition: all 0.3s;
-      z-index: 10;
-    }
-
-    .add-to-workflow:hover {
-      background: #138496;
-      transform: scale(1.05);
+    .tool-card:active {
+      cursor: grabbing;
     }
 
     /* Workflow Builder Section */
     #workflow-builder {
-      min-height: 150px;
+      min-height: 200px;
       background-color: #f8f9fa;
       border: 2px dashed #ccc;
       border-radius: 8px;
       padding: 20px;
       margin-top: 20px;
+      position: relative;
     }
 
-    .workflow-visualization {
+    /* 用于显示流程提示信息的元素样式 */
+    #workflow-info {
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    /* 拖放区域样式 */
+    #drop-zone {
+      min-height: 100px;
+      border: 1px dashed #aaa;
+      border-radius: 4px;
+      padding: 15px;
       display: flex;
-      align-items: center;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 0px; /* 修改间距为0 */
+      align-items: center;
+      justify-content: center;
     }
 
+    /* 拖放占位符样式 */
+    .drop-placeholder {
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      height: 50px;
+      width: 120px;
+      display: inline-block;
+    }
+
+    /* 工作流步骤样式 */
     .workflow-step {
       background: white;
       padding: 10px 15px;
-      border-radius: 20px;
+      border-radius: 0; /* 取消圆角，使步骤之间无缝连接 */
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: inline-flex;
+      display: flex;
       align-items: center;
+      justify-content: center;
+      min-width: 120px;
+      height: 50px;
       position: relative;
-      margin: 2px;
-      color: white; /* 确保文本可见 */
+      margin: 0; /* 取消边距 */
+      color: white; /* 文字颜色设为白色 */
+      cursor: grab;
+      transition: all 0.2s;
     }
 
-    .workflow-step:not(:last-child)::after {
-      content: "→";
-      margin: 0 5px;
-      color: #666;
+    /* 第一个步骤添加左圆角 */
+    .workflow-step:first-child {
+      border-radius: 20px 0 0 20px;
+    }
+
+    /* 最后一个步骤添加右圆角 */
+    .workflow-step:last-child {
+      border-radius: 0 20px 20px 0;
+    }
+
+    /* 只有一个步骤时添加全圆角 */
+    .workflow-step:only-child {
+      border-radius: 20px;
+    }
+
+    .workflow-step:active {
+      cursor: grabbing;
+    }
+
+    .workflow-step:hover {
+      transform: translateY(-2px);
+      z-index: 10; /* 确保悬停时显示在最上层 */
+    }
+
+    .workflow-step .remove-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background-color: #ff4d4f;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .workflow-step:hover .remove-btn {
+      opacity: 1;
+    }
+
+    /* Tool Specific Colors */
+    .step-fastqc {
+      background: #28a745;
+    }
+
+    .step-cutadapt {
+      background: #6f42c1;
+    }
+
+    .step-star {
+      background: #8B4513;
     }
 
     /* Workflow Container */
@@ -188,13 +255,19 @@
 
     .en {
       font-weight: bold;
-      color: #333;
+      color: #333; /* 恢复默认颜色 */
     }
 
     .zh {
       font-weight: normal;
-      color: #666;
+      color: #666; /* 恢复默认颜色 */
       font-size: 0.95em;
+    }
+
+    /* 仅工作流步骤中的文字使用白色 */
+    .workflow-step .en,
+    .workflow-step .zh {
+      color: white !important;
     }
 
     /* Button Styles */
@@ -275,19 +348,6 @@
       background: #c82333;
     }
 
-    /* Workflow Step Colors (separate from buttons) */
-    .step-fastqc {
-      background: #28a745;
-    }
-
-    .step-cutadapt {
-      background: #6f42c1;
-    }
-
-    .step-star {
-      background: #8B4513;
-    }
-
     footer {
       margin-top: 40px;
       text-align: center;
@@ -315,17 +375,8 @@
         padding: 20px;
       }
 
-      .workflow-step:not(:last-child)::after {
-        content: "↓";
-        display: block;
-        width: 100%;
-        text-align: center;
-        margin: 5px 0;
-      }
-
-      .workflow-visualization {
-        flex-direction: column;
-        align-items: flex-start;
+      .workflow-step {
+        min-width: 80px; /* 缩小移动设备上的步骤宽度 */
       }
     }
   </style>
@@ -349,10 +400,7 @@
 
     <div class="tools-container">
       <!-- FastQC Tool Card -->
-      <div class="tool-card" data-tool="fastqc">
-        <button class="add-to-workflow" onclick="addToWorkflow('fastqc', event)">
-          <span class="zh">+</span>
-        </button>
+      <div class="tool-card" draggable="true" data-tool="fastqc">
         <div>
           <h2>
             <div class="bilingual en">FastQC</div>
@@ -370,10 +418,7 @@
       </div>
 
       <!-- Cutadapt Tool Card -->
-      <div class="tool-card" data-tool="cutadapt">
-        <button class="add-to-workflow" onclick="addToWorkflow('cutadapt', event)">
-          <span class="zh">+</span>
-        </button>
+      <div class="tool-card" draggable="true" data-tool="cutadapt">
         <div>
           <h2>
             <div class="bilingual en">Cutadapt</div>
@@ -391,10 +436,7 @@
       </div>
 
       <!-- STAR Aligner Tool Card -->
-      <div class="tool-card" data-tool="star">
-        <button class="add-to-workflow" onclick="addToWorkflow('star', event)">
-          <span class="zh">+</span>
-        </button>
+      <div class="tool-card" draggable="true" data-tool="star">
         <div>
           <h2>
             <div class="bilingual en">STAR Aligner</div>
@@ -421,11 +463,10 @@
     </div>
     
     <div id="workflow-builder">
-      <div id="workflow-visualization" class="workflow-visualization">
-        <div id="empty-message" style="color: #666; font-style: italic;">
-          Click "+" buttons above to build your custom workflow / 点击上方"+"按钮构建自定义流程
-        </div>
+      <div id="workflow-info">
+        Drag tools from above to build your custom workflow / 从上方拖动工具来构建自定义流程
       </div>
+      <div id="drop-zone" ondragover="event.preventDefault()" ondrop="drop(event)"></div>
       <button id="clear-workflow" class="btn btn-clear" onclick="clearWorkflow()">
         <span class="en">Clear Workflow</span> /
         <span class="zh">清除流程</span>
@@ -493,7 +534,7 @@
       fastqc: {
         name: "FastQC",
         name_zh: "质量分析",
-        color: "step-fastqc" // 改为新的工作流步骤样式类
+        color: "step-fastqc"
       },
       cutadapt: {
         name: "Cutadapt",
@@ -506,106 +547,148 @@
         color: "step-star"
       }
     };
+
+    // 初始化事件处理
+    document.addEventListener('DOMContentLoaded', function() {
+      // 为工具卡片添加拖拽事件
+      document.querySelectorAll('.tool-card').forEach(card => {
+        card.addEventListener('dragstart', function(e) {
+          e.dataTransfer.setData('text/plain', this.dataset.tool);
+          this.classList.add('dragging');
+          
+          // 创建拖动时的视觉反馈元素
+          const crt = this.cloneNode(true);
+          crt.style.position = 'absolute';
+          crt.style.top = '-1000px';
+          document.body.appendChild(crt);
+          e.dataTransfer.setDragImage(crt, 125, 140);
+          
+          setTimeout(() => {
+            this.style.opacity = '0.5';
+          }, 0);
+        });
+        
+        card.addEventListener('dragend', function() {
+          this.classList.remove('dragging');
+          this.style.opacity = '1';
+        });
+      });
+      
+      // 设置放置区域
+      const dropZone = document.getElementById('drop-zone');
+      
+      dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('drag-over');
+      });
+      
+      dropZone.addEventListener('dragleave', function() {
+        this.classList.remove('drag-over');
+      });
+      
+      dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('drag-over');
+        
+        const toolId = e.dataTransfer.getData('text/plain');
+        addToWorkflow(toolId);
+      });
+    });
     
     // Add tool to workflow
-    function addToWorkflow(toolId, event) {
-      // 阻止事件冒泡和默认行为
-      if (event) {
-        event.stopPropagation();
-        event.preventDefault();
-      }
-      
-      // Add the tool to workflow (allow duplicates)
+    function addToWorkflow(toolId) {
+      // Add the tool to workflow
       workflowSteps.push(toolId);
       console.log("Added tool:", toolId, "Workflow steps:", workflowSteps);
       updateWorkflowVisualization();
       
       // Show visual feedback
       const card = document.querySelector(`.tool-card[data-tool="${toolId}"]`);
-      card.style.border = "2px solid #1E4B8B";
-      card.style.backgroundColor = "#f0f7ff";
+      card.style.transform = 'scale(1.05)';
       
       setTimeout(() => {
-        card.style.border = "1px solid #eee";
-        card.style.backgroundColor = "white";
-      }, 500);
+        card.style.transform = 'scale(1)';
+      }, 300);
     }
     
     // Update the workflow visualization
     function updateWorkflowVisualization() {
-      console.log("Updating visualization with steps:", workflowSteps);
-      const container = document.getElementById('workflow-visualization');
-      const emptyMsg = document.getElementById('empty-message');
+      const dropZone = document.getElementById('drop-zone');
       
-      // 防御性检查，确保元素存在
-      if (!container || !emptyMsg) {
-        console.error('Workflow container or empty message element not found');
-        return;
-      }
-      
-      // 清空容器并强制重绘
-      container.innerHTML = '';
-      void container.offsetWidth; // 强制浏览器重绘
+      // 清空容器
+      dropZone.innerHTML = '';
       
       if (workflowSteps.length === 0) {
-        emptyMsg.style.display = 'block';
-        container.appendChild(emptyMsg);
+        dropZone.innerHTML = '<div class="drop-placeholder"></div>';
         return;
       }
       
-      emptyMsg.style.display = 'none';
-      
       // 创建流程步骤
-      workflowSteps.forEach(toolId => {
+      workflowSteps.forEach((toolId, index) => {
         const tool = toolInfo[toolId];
         const stepElement = document.createElement('div');
-        // 使用新的工作流步骤样式类，避免与按钮样式冲突
         stepElement.className = `workflow-step ${tool.color}`;
+        stepElement.draggable = true;
+        stepElement.dataset.tool = toolId;
+        stepElement.dataset.index = index;
         
-        // 使用innerHTML简化创建过程
+        // 设置步骤内容
         stepElement.innerHTML = `
-          <span class="en">${tool.name}</span> / 
-          <span class="zh">${tool.name_zh}</span>
+          <div>
+            <div class="en" style="font-size: 0.9em;">${tool.name}</div>
+            <div class="zh" style="font-size: 0.75em;">${tool.name_zh}</div>
+          </div>
+          <div class="remove-btn" onclick="removeStep(${index}, event)">×</div>
         `;
         
-        container.appendChild(stepElement);
+        // 添加拖拽事件
+        stepElement.addEventListener('dragstart', function(e) {
+          e.dataTransfer.setData('text/plain', this.dataset.index);
+          this.classList.add('dragging');
+          setTimeout(() => {
+            this.style.opacity = '0.5';
+          }, 0);
+        });
+        
+        stepElement.addEventListener('dragend', function() {
+          this.classList.remove('dragging');
+          this.style.opacity = '1';
+        });
+        
+        stepElement.addEventListener('dragover', function(e) {
+          e.preventDefault();
+        });
+        
+        stepElement.addEventListener('drop', function(e) {
+          e.preventDefault();
+          const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+          const targetIndex = parseInt(this.dataset.index);
+          
+          if (draggedIndex !== targetIndex) {
+            // 交换位置
+            const draggedTool = workflowSteps[draggedIndex];
+            workflowSteps.splice(draggedIndex, 1);
+            workflowSteps.splice(targetIndex, 0, draggedTool);
+            updateWorkflowVisualization();
+          }
+        });
+        
+        dropZone.appendChild(stepElement);
       });
+    }
+    
+    // Remove a step from the workflow
+    function removeStep(index, event) {
+      event.stopPropagation();
+      workflowSteps.splice(index, 1);
+      updateWorkflowVisualization();
     }
     
     // Clear the entire workflow
     function clearWorkflow() {
       workflowSteps = [];
       updateWorkflowVisualization();
-      
-      // Reset all tool cards
-      document.querySelectorAll('.tool-card').forEach(card => {
-        card.style.border = "1px solid #eee";
-        card.style.backgroundColor = "white";
-      });
     }
-    
-    // 初始化事件处理
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log("DOM loaded, workflow system initialized");
-      
-      // 为每个工具卡片添加点击事件处理
-      document.querySelectorAll('.add-to-workflow').forEach(button => {
-        button.addEventListener('click', function(e) {
-          e.stopPropagation();
-          e.preventDefault();
-        });
-      });
-      
-      // 初始检查元素是否存在
-      const container = document.getElementById('workflow-visualization');
-      const emptyMsg = document.getElementById('empty-message');
-      
-      if (!container || !emptyMsg) {
-        console.error('Workflow visualization elements not found during initialization');
-      } else {
-        console.log('Workflow visualization elements found successfully');
-      }
-    });
   </script>
 </body>
 
