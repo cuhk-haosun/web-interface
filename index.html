@@ -1,323 +1,371 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bioinformatics Platform / 生物信息分析平台</title>
-    <style>
-        /* Global Style */
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-        
-        /* Header Style */
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .logo {
-            max-width: 150px;
-            height: auto;
-        }
-        h1 {
-            color: #333;
-            margin-top: 20px;
-            font-weight: normal;
-        }
-        
-        /* Section Styles */
-        .section {
-            background: white;
-            border-radius: 8px;
-            padding: 25px;
-            margin: 30px 0;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            border: 1px solid #e0e0e0;
-        }
-        .section-title {
-            font-size: 1.5em;
-            color: #444;
-            margin-bottom: 25px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        /* Tools Container */
-        .tools-container {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 25px;
-        }
-        
-        /* Workflow Container */
-        .workflow-container {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-        
-        /* Tool Card Style - Square */
-        .tool-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            width: 250px;
-            height: 250px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-            border: 1px solid #eee;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: transform 0.3s;
-        }
-        .tool-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        /* Workflow Card Style - Rectangle */
-        .workflow-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            width: 100%;
-            min-height: 150px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-            border: 1px solid #eee;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: transform 0.3s;
-        }
-        .workflow-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        /* Bilingual Text Style */
-        .bilingual {
-            margin-bottom: 5px;
-        }
-        .en {
-            font-weight: bold;
-            color: #333;
-        }
-        .zh {
-            font-weight: normal;
-            color: #666;
-            font-size: 0.95em;
-        }
-        
-        /* Button Styles */
-        .btn {
-            display: inline-block;
-            color: white !important;
-            padding: 10px 20px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .btn .en,
-        .btn .zh {
-            color: white !important;
-        }
-        
-        /* Tool Specific Button Colors */
-        .btn-fastqc {
-            background: #28a745; /* Green */
-        }
-        .btn-fastqc:hover {
-            background: #218838;
-        }
-        .btn-cutadapt {
-            background: #6f42c1; /* Purple */
-        }
-        .btn-cutadapt:hover {
-            background: #5a32a3;
-        }
-        .btn-star {
-            background: #8B4513; /* Brown */
-        }
-        .btn-star:hover {
-            background: #A0522D;
-        }
-        .btn-rrbs {
-            background: #006400; /* Deep Green */
-        }
-        .btn-rrbs:hover {
-            background: #004d00;
-        }
-        .btn-rnaseq {
-            background: #1E4B8B; /* Deep Blue */
-        }
-        .btn-rnaseq:hover {
-            background: #153A6B;
-        }
-        
-        footer {
-            margin-top: 40px;
-            text-align: center;
-            color: #666;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bioinformatics Platform / 生物信息分析平台</title>
+  <style>
+    /* Unified box model to solve the problem of width and height calculation */
+    * {
+      box-sizing: border-box;
+    }
 
-        @media (max-width: 900px) {
-            .tools-container {
-                justify-content: center;
-            }
-        }
+    /* Global Style */
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+      background-color: #f9f9f9;
+      color: #333;
+    }
 
-        @media (max-width: 600px) {
-            .tool-card {
-                width: 100%;
-                max-width: 300px;
-                height: auto;
-                min-height: 250px;
-            }
-            .workflow-card {
-                width: 100%;
-            }
-        }
-    </style>
+    /* Header Style */
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .logo {
+      max-width: 150px;
+      height: auto;
+    }
+
+    h1 {
+      color: #333;
+      margin-top: 20px;
+      font-weight: normal;
+    }
+
+    /* Section Styles */
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 25px;
+      margin: 30px 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e0e0e0;
+    }
+
+    .section-title {
+      font-size: 1.5em;
+      color: #444;
+      margin-bottom: 25px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    /* Tools Container */
+    .tools-container {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 25px;
+    }
+
+    /* Workflow Container */
+    .workflow-container {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      padding: 0 15px; /* 给卡片左右留边 */
+    }
+
+    /* Tool Card Style - Square (保持不变) */
+    .tool-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      width: 250px;
+      height: 250px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+      border: 1px solid #eee;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.3s;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Workflow Card Style - Rectangle (优化高度和内容分布) */
+    .workflow-card {
+      background: white;
+      border-radius: 8px;
+      padding: 25px; /* 增加内边距，提升视觉空间 */
+      width: 100%;
+      min-height: 180px; /* 增加最小高度 */
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); /* 轻微增强阴影 */
+      border: 1px solid #e8e8e8;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.3s, box-shadow 0.3s;
+      max-width: 850px; /* 略微增加最大宽度 */
+      margin: 0 auto;
+    }
+
+    .workflow-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    /* 优化工作流卡片的标题和内容 */
+    .workflow-card h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+
+    .workflow-card p {
+      margin-bottom: 20px; /* 增加按钮上方间距 */
+    }
+
+    /* Bilingual Text Style */
+    .bilingual {
+      margin-bottom: 5px;
+    }
+
+    .en {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .zh {
+      font-weight: normal;
+      color: #666;
+      font-size: 0.95em;
+    }
+
+    /* Button Styles */
+    .btn {
+      display: inline-block;
+      color: white !important;
+      padding: 12px 20px; /* 增加按钮高度 */
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 1em; /* 增加字体大小 */
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn .en,
+    .btn .zh {
+      color: white !important;
+    }
+
+    /* Tool Specific Button Colors */
+    .btn-fastqc {
+      background: #28a745;
+      /* Green */
+    }
+
+    .btn-fastqc:hover {
+      background: #218838;
+    }
+
+    .btn-cutadapt {
+      background: #6f42c1;
+      /* Purple */
+    }
+
+    .btn-cutadapt:hover {
+      background: #5a32a3;
+    }
+
+    .btn-star {
+      background: #8B4513;
+      /* Brown */
+    }
+
+    .btn-star:hover {
+      background: #A0522D;
+    }
+
+    .btn-rrbs {
+      background: #006400;
+      /* Deep Green */
+    }
+
+    .btn-rrbs:hover {
+      background: #004d00;
+    }
+
+    .btn-rnaseq {
+      background: #1E4B8B;
+      /* Deep Blue */
+    }
+
+    .btn-rnaseq:hover {
+      background: #153A6B;
+    }
+
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      color: #666;
+    }
+
+    @media (max-width: 900px) {
+      .tools-container {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .tool-card {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+        min-height: 250px;
+      }
+
+      .workflow-card {
+        width: 100%;
+        max-width: 100%;
+        padding: 20px; /* 小屏幕减少内边距 */
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="header">
-        <img src="images/cuhk_logo.png" alt="CUHK Logo" class="logo">
-        <h1>
-            <div class="bilingual en">Bioinformatics Platform</div>
-            <div class="bilingual zh">生物信息分析平台</div>
-        </h1>
+  <div class="header">
+    <img src="images/cuhk_logo.png" alt="CUHK Logo" class="logo">
+    <h1>
+      <div class="bilingual en">Bioinformatics Platform</div>
+      <div class="bilingual zh">生物信息分析平台</div>
+    </h1>
+  </div>
+
+  <!-- Tools Section (保持完全不变) -->
+  <div class="section">
+    <div class="section-title">
+      <span class="en">Tools</span>
+      <span class="zh">分析工具</span>
     </div>
 
-    <!-- Tools Section -->
-    <div class="section">
-        <div class="section-title">
-            <span class="en">Tools</span>
-            <span class="zh">分析工具</span>
+    <div class="tools-container">
+      <!-- FastQC Tool Card -->
+      <div class="tool-card">
+        <div>
+          <h2>
+            <div class="bilingual en">FastQC</div>
+            <div class="bilingual zh">质量分析</div>
+          </h2>
+          <p>
+            <div class="bilingual en">Quality control for sequencing data</div>
+            <div class="bilingual zh">测序数据质量评估</div>
+          </p>
         </div>
-        
-        <div class="tools-container">
-            <!-- FastQC Tool Card -->
-            <div class="tool-card">
-                <div>
-                    <h2>
-                        <div class="bilingual en">FastQC</div>
-                        <div class="bilingual zh">质量分析</div>
-                    </h2>
-                    <p>
-                        <div class="bilingual en">Quality control for sequencing data</div>
-                        <div class="bilingual zh">测序数据质量评估</div>
-                    </p>
-                </div>
-                <a href="fastqc/index.html" class="btn btn-fastqc">
-                    <span class="en">FastQC</span> /
-                    <span class="zh">质量分析</span>
-                </a>
-            </div>
+        <a href="fastqc/index.html" class="btn btn-fastqc">
+          <span class="en">FastQC</span> /
+          <span class="zh">质量分析</span>
+        </a>
+      </div>
 
-            <!-- Cutadapt Tool Card -->
-            <div class="tool-card">
-                <div>
-                    <h2>
-                        <div class="bilingual en">Cutadapt</div>
-                        <div class="bilingual zh">接头修剪</div>
-                    </h2>
-                    <p>
-                        <div class="bilingual en">Adapter sequence trimming</div>
-                        <div class="bilingual zh">去除测序接头序列</div>
-                    </p>
-                </div>
-                <a href="cutadapt/index.html" class="btn btn-cutadapt">
-                    <span class="en">Cutadapt</span> /
-                    <span class="zh">接头修剪</span>
-                </a>
-            </div>
-
-            <!-- STAR Aligner Tool Card -->
-            <div class="tool-card">
-                <div>
-                    <h2>
-                        <div class="bilingual en">STAR Aligner</div>
-                        <div class="bilingual zh">序列比对</div>
-                    </h2>
-                    <p>
-                        <div class="bilingual en">RNA-seq read alignment</div>
-                        <div class="bilingual zh">RNA-seq序列比对</div>
-                    </p>
-                </div>
-                <a href="star-aligner/index.html" class="btn btn-star">
-                    <span class="en">STAR Aligner</span> /
-                    <span class="zh">序列比对</span>
-                </a>
-            </div>
+      <!-- Cutadapt Tool Card -->
+      <div class="tool-card">
+        <div>
+          <h2>
+            <div class="bilingual en">Cutadapt</div>
+            <div class="bilingual zh">接头修剪</div>
+          </h2>
+          <p>
+            <div class="bilingual en">Adapter sequence trimming</div>
+            <div class="bilingual zh">去除测序接头序列</div>
+          </p>
         </div>
+        <a href="cutadapt/index.html" class="btn btn-cutadapt">
+          <span class="en">Cutadapt</span> /
+          <span class="zh">接头修剪</span>
+        </a>
+      </div>
+
+      <!-- STAR Aligner Tool Card -->
+      <div class="tool-card">
+        <div>
+          <h2>
+            <div class="bilingual en">STAR Aligner</div>
+            <div class="bilingual zh">序列比对</div>
+          </h2>
+          <p>
+            <div class="bilingual en">RNA-seq read alignment</div>
+            <div class="bilingual zh">RNA-seq序列比对</div>
+          </p>
+        </div>
+        <a href="star-aligner/index.html" class="btn btn-star">
+          <span class="en">STAR Aligner</span> /
+          <span class="zh">序列比对</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workflow Section (优化样式) -->
+  <div class="section">
+    <div class="section-title">
+      <span class="en">Some Helpful Workflows</span>
+      <span class="zh">常用分析流程</span>
     </div>
 
-    <!-- Workflow Section -->
-    <div class="section">
-        <div class="section-title">
-            <span class="en">Some Helpful Workflows</span>
-            <span class="zh">常用分析流程</span>
+    <div class="workflow-container">
+      <!-- RRBS Workflow Card -->
+      <div class="workflow-card">
+        <div>
+          <h2>
+            <div class="bilingual en">RRBS Workflow</div>
+            <div class="bilingual zh">RRBS分析流程</div>
+          </h2>
+          <p>
+            <div class="bilingual en">Reduced Representation Bisulfite Sequencing analysis</div>
+            <div class="bilingual zh">简化基因组甲基化测序分析</div>
+          </p>
         </div>
-        
-        <div class="workflow-container">
-            <!-- RRBS Workflow Card -->
-            <div class="workflow-card">
-                <div>
-                    <h2>
-                        <div class="bilingual en">RRBS Workflow</div>
-                        <div class="bilingual zh">RRBS分析流程</div>
-                    </h2>
-                    <p>
-                        <div class="bilingual en">Reduced Representation Bisulfite Sequencing analysis</div>
-                        <div class="bilingual zh">简化基因组甲基化测序分析</div>
-                    </p>
-                </div>
-                <a href="rrbs/index.html" class="btn btn-rrbs">
-                    <span class="en">RRBS Workflow</span> /
-                    <span class="zh">RRBS分析流程</span>
-                </a>
-            </div>
+        <a href="rrbs/index.html" class="btn btn-rrbs">
+          <span class="en">RRBS Workflow</span> /
+          <span class="zh">RRBS分析流程</span>
+        </a>
+      </div>
 
-            <!-- RNAseq Workflow Card -->
-            <div class="workflow-card">
-                <div>
-                    <h2>
-                        <div class="bilingual en">RNAseq Workflow</div>
-                        <div class="bilingual zh">RNAseq分析流程</div>
-                    </h2>
-                    <p>
-                        <div class="bilingual en">RNA sequencing analysis workflow</div>
-                        <div class="bilingual zh">RNA测序分析流程</div>
-                    </p>
-                </div>
-                <a href="rnaseq/index.html" class="btn btn-rnaseq">
-                    <span class="en">RNAseq Workflow</span> /
-                    <span class="zh">RNAseq分析流程</span>
-                </a>
-            </div>
+      <!-- RNAseq Workflow Card -->
+      <div class="workflow-card">
+        <div>
+          <h2>
+            <div class="bilingual en">RNAseq Workflow</div>
+            <div class="bilingual zh">RNAseq分析流程</div>
+          </h2>
+          <p>
+            <div class="bilingual en">RNA sequencing analysis workflow</div>
+            <div class="bilingual zh">RNA测序分析流程</div>
+          </p>
         </div>
+        <a href="rnaseq/index.html" class="btn btn-rnaseq">
+          <span class="en">RNAseq Workflow</span> /
+          <span class="zh">RNAseq分析流程</span>
+        </a>
+      </div>
     </div>
+  </div>
 
-    <footer>
-        <div class="bilingual en">SUN Lab, CUHK-Shenzhen</div>
-        <div class="bilingual en">© 2025 All Rights Reserved</div>
-    </footer>
+  <footer>
+    <div class="bilingual en">SUN Lab, CUHK-Shenzhen</div>
+    <div class="bilingual en">© 2025 All Rights Reserved</div>
+  </footer>
 </body>
+
 </html>
