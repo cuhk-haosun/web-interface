@@ -71,14 +71,14 @@
       border-radius: 8px;
       padding: 20px;
       width: 250px;
-      /* Ensure that the card heights are consistent to avoid misalignment of the buttons */
-      min-height: 280px; 
+      min-height: 280px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
       border: 1px solid #eee;
       display: flex;
       flex-direction: column;
-      justify-content: space-between; 
+      justify-content: space-between;
       transition: transform 0.3s;
+      position: relative;
     }
 
     .tool-card:hover {
@@ -86,28 +86,88 @@
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
+    /* Add to Workflow Button */
+    .add-to-workflow {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #17a2b8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 0.8em;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .add-to-workflow:hover {
+      background: #138496;
+      transform: scale(1.05);
+    }
+
+    /* Workflow Builder Section */
+    #workflow-builder {
+      min-height: 150px;
+      background-color: #f8f9fa;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .workflow-visualization {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .workflow-step {
+      background: white;
+      padding: 10px 15px;
+      border-radius: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .workflow-step:not(:last-child)::after {
+      content: "→";
+      margin: 0 5px;
+      color: #666;
+    }
+
+    .remove-step {
+      margin-left: 8px;
+      color: #dc3545;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
     /* Workflow Container */
     .workflow-container {
       display: flex;
       flex-direction: column;
       gap: 25px;
-      padding: 0 15px; 
+      padding: 0 15px;
     }
 
     /* Workflow Card Style - Rectangle */
     .workflow-card {
       background: white;
       border-radius: 8px;
-      padding: 25px; 
+      padding: 25px;
       width: 100%;
-      min-height: 180px; 
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); 
+      min-height: 180px;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
       border: 1px solid #e8e8e8;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       transition: transform 0.3s, box-shadow 0.3s;
-      max-width: 850px; 
+      max-width: 850px;
       margin: 0 auto;
     }
 
@@ -122,7 +182,7 @@
     }
 
     .workflow-card p {
-      margin-bottom: 20px; 
+      margin-bottom: 20px;
     }
 
     /* Bilingual Text Style */
@@ -145,7 +205,7 @@
     .btn {
       display: inline-block;
       color: white !important;
-      padding: 10px 20px; 
+      padding: 10px 20px;
       border-radius: 4px;
       text-decoration: none;
       font-weight: bold;
@@ -208,6 +268,17 @@
       background: #153A6B;
     }
 
+    .btn-clear {
+      background: #dc3545;
+      margin-top: 10px;
+      width: auto;
+      padding: 6px 12px;
+    }
+
+    .btn-clear:hover {
+      background: #c82333;
+    }
+
     footer {
       margin-top: 40px;
       text-align: center;
@@ -232,7 +303,20 @@
       .workflow-card {
         width: 100%;
         max-width: 100%;
-        padding: 20px; 
+        padding: 20px;
+      }
+
+      .workflow-step:not(:last-child)::after {
+        content: "↓";
+        display: block;
+        width: 100%;
+        text-align: center;
+        margin: 5px 0;
+      }
+
+      .workflow-visualization {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
@@ -256,7 +340,11 @@
 
     <div class="tools-container">
       <!-- FastQC Tool Card -->
-      <div class="tool-card">
+      <div class="tool-card" data-tool="fastqc">
+        <button class="add-to-workflow" onclick="addToWorkflow('fastqc')">
+          <span class="en">Add To Workflow</span> /
+          <span class="zh">添加到流程</span>
+        </button>
         <div>
           <h2>
             <div class="bilingual en">FastQC</div>
@@ -274,7 +362,11 @@
       </div>
 
       <!-- Cutadapt Tool Card -->
-      <div class="tool-card">
+      <div class="tool-card" data-tool="cutadapt">
+        <button class="add-to-workflow" onclick="addToWorkflow('cutadapt')">
+          <span class="en">Add To Workflow</span> /
+          <span class="zh">添加到流程</span>
+        </button>
         <div>
           <h2>
             <div class="bilingual en">Cutadapt</div>
@@ -292,7 +384,11 @@
       </div>
 
       <!-- STAR Aligner Tool Card -->
-      <div class="tool-card">
+      <div class="tool-card" data-tool="star">
+        <button class="add-to-workflow" onclick="addToWorkflow('star')">
+          <span class="en">Add To Workflow</span> /
+          <span class="zh">添加到流程</span>
+        </button>
         <div>
           <h2>
             <div class="bilingual en">STAR Aligner</div>
@@ -311,11 +407,31 @@
     </div>
   </div>
 
-  <!-- Workflow Section (优化样式) -->
+  <!-- Workflow Builder Section -->
   <div class="section">
     <div class="section-title">
-      <span class="en">Some Helpful Workflows</span>
-      <span class="zh">常用分析流程</span>
+      <span class="en">Design Your Own Workflow</span>
+      <span class="zh">自定义分析流程</span>
+    </div>
+    
+    <div id="workflow-builder">
+      <div id="workflow-visualization" class="workflow-visualization">
+        <div id="empty-message" style="color: #666; font-style: italic;">
+          Click "Add To Workflow" buttons above to build your custom workflow / 点击上方"添加到流程"按钮构建自定义流程
+        </div>
+      </div>
+      <button id="clear-workflow" class="btn btn-clear" onclick="clearWorkflow()">
+        <span class="en">Clear Workflow</span> /
+        <span class="zh">清除流程</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Predefined Workflows Section -->
+  <div class="section">
+    <div class="section-title">
+      <span class="en">Predefined Workflows</span>
+      <span class="zh">预设分析流程</span>
     </div>
 
     <div class="workflow-container">
@@ -361,6 +477,90 @@
     <div class="bilingual en">SUN Lab, CUHK-Shenzhen</div>
     <div class="bilingual en">© 2025 All Rights Reserved</div>
   </footer>
+
+  <script>
+    // Store the workflow steps
+    let workflowSteps = [];
+    
+    // Tool information mapping
+    const toolInfo = {
+      fastqc: {
+        name: "FastQC",
+        name_zh: "质量分析",
+        color: "btn-fastqc"
+      },
+      cutadapt: {
+        name: "Cutadapt",
+        name_zh: "接头修剪",
+        color: "btn-cutadapt"
+      },
+      star: {
+        name: "STAR Aligner",
+        name_zh: "序列比对",
+        color: "btn-star"
+      }
+    };
+    
+    // Add tool to workflow
+    function addToWorkflow(toolId) {
+      event.stopPropagation(); // Prevent triggering the card click event
+      
+      // Add to workflow if not already present
+      if (!workflowSteps.includes(toolId)) {
+        workflowSteps.push(toolId);
+        updateWorkflowVisualization();
+        
+        // Show visual feedback
+        const card = document.querySelector(`.tool-card[data-tool="${toolId}"]`);
+        card.style.border = "2px solid #1E4B8B";
+        card.style.backgroundColor = "#f0f7ff";
+        setTimeout(() => {
+          card.style.border = "1px solid #eee";
+          card.style.backgroundColor = "white";
+        }, 500);
+      }
+    }
+    
+    // Update the workflow visualization
+    function updateWorkflowVisualization() {
+      const container = document.getElementById('workflow-visualization');
+      const emptyMsg = document.getElementById('empty-message');
+      
+      if (workflowSteps.length === 0) {
+        emptyMsg.style.display = 'block';
+        container.innerHTML = '';
+        container.appendChild(emptyMsg);
+        return;
+      }
+      
+      emptyMsg.style.display = 'none';
+      container.innerHTML = '';
+      
+      workflowSteps.forEach((toolId, index) => {
+        const tool = toolInfo[toolId];
+        const stepElement = document.createElement('div');
+        stepElement.className = `workflow-step ${tool.color}`;
+        stepElement.innerHTML = `
+          <span class="en">${tool.name}</span> / 
+          <span class="zh">${tool.name_zh}</span>
+          <span class="remove-step" onclick="removeStep(${index})">×</span>
+        `;
+        container.appendChild(stepElement);
+      });
+    }
+    
+    // Remove a step from workflow
+    function removeStep(index) {
+      workflowSteps.splice(index, 1);
+      updateWorkflowVisualization();
+    }
+    
+    // Clear the entire workflow
+    function clearWorkflow() {
+      workflowSteps = [];
+      updateWorkflowVisualization();
+    }
+  </script>
 </body>
 
 </html>
