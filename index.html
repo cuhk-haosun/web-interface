@@ -127,7 +127,7 @@
       background: white;
       padding: 10px 15px;
       border-radius: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       display: flex;
       align-items: center;
       position: relative;
@@ -410,7 +410,7 @@
       <span class="en">Design Your Own Workflow</span>
       <span class="zh">自定义分析流程</span>
     </div>
-    
+
     <div id="workflow-builder">
       <div id="workflow-visualization" class="workflow-visualization">
         <div id="empty-message" style="color: #666; font-style: italic;">
@@ -478,7 +478,7 @@
   <script>
     // Store the workflow steps
     let workflowSteps = [];
-    
+
     // Tool information mapping
     const toolInfo = {
       fastqc: {
@@ -497,67 +497,12 @@
         color: "btn-star"
       }
     };
-    
+
     // Add tool to workflow
     function addToWorkflow(toolId) {
       event.stopPropagation(); // Prevent triggering the card click event
-      
+
       // Add to workflow if not already present
       if (!workflowSteps.includes(toolId)) {
         workflowSteps.push(toolId);
         updateWorkflowVisualization();
-        
-        // Show visual feedback
-        const card = document.querySelector(`.tool-card[data-tool="${toolId}"]`);
-        card.style.border = "2px solid #1E4B8B";
-        card.style.backgroundColor = "#f0f7ff";
-        setTimeout(() => {
-          card.style.border = "1px solid #eee";
-          card.style.backgroundColor = "white";
-        }, 500);
-      }
-    }
-    
-    // Update the workflow visualization
-    function updateWorkflowVisualization() {
-      const container = document.getElementById('workflow-visualization');
-      const emptyMsg = document.getElementById('empty-message');
-      
-      if (workflowSteps.length === 0) {
-        emptyMsg.style.display = 'block';
-        container.innerHTML = '';
-        container.appendChild(emptyMsg);
-        return;
-      }
-      
-      emptyMsg.style.display = 'none';
-      container.innerHTML = '';
-      
-      workflowSteps.forEach((toolId, index) => {
-        const tool = toolInfo[toolId];
-        const stepElement = document.createElement('div');
-        stepElement.className = `workflow-step ${tool.color}`;
-        stepElement.innerHTML = `
-          <span class="en">${tool.name}</span> / 
-          <span class="zh">${tool.name_zh}</span>
-          <span class="remove-step" onclick="removeStep(${index})">×</span>
-        `;
-        container.appendChild(stepElement);
-      });
-    }
-    
-    // Remove a step from workflow
-    function removeStep(index) {
-      workflowSteps.splice(index, 1);
-      updateWorkflowVisualization();
-    }
-    
-    // Clear the entire workflow
-    function clearWorkflow() {
-      workflowSteps = [];
-      updateWorkflowVisualization();
-    }
-  </script>
-</body>
-
-</html>
