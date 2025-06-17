@@ -414,10 +414,10 @@
     <div id="workflow-builder">
       <div id="workflow-visualization" class="workflow-visualization">
         <div id="empty-message" style="color: #666; font-style: italic;">
-          Click "+" buttons above to build your custom workflow / 点击上方"+"按钮构建自定义流程
+          Click "Add To Workflow" buttons above to build your custom workflow / 点击上方"添加到流程"按钮构建自定义流程
         </div>
       </div>
-      <button id="clear-workflow" class="btn btn-clear" onclick="clearWorkflow()">
+      <button id="clear-workflow" class="btn btn-clear">
         <span class="en">Clear Workflow</span> /
         <span class="zh">清除流程</span>
       </button>
@@ -501,7 +501,7 @@
     // Add tool to workflow
     function addToWorkflow(toolId) {
       // Prevent triggering the card click event
-      event.stopPropagation();
+      if (event) event.stopPropagation();
       
       // Add to workflow if not already present
       if (!workflowSteps.includes(toolId)) {
@@ -541,16 +541,21 @@
         stepElement.innerHTML = `
           <span class="en">${tool.name}</span> / 
           <span class="zh">${tool.name_zh}</span>
-          <span class="remove-step" onclick="removeStep(${index})">×</span>
+          <span class="remove-step" data-index="${index}">×</span>
         `;
         container.appendChild(stepElement);
       });
+      
+      // Reattach event listeners to remove buttons
+      attachRemoveEventListeners();
     }
     
     // Remove a step from workflow
     function removeStep(index) {
-      workflowSteps.splice(index, 1);
-      updateWorkflowVisualization();
+      if (index >= 0 && index < workflowSteps.length) {
+        workflowSteps.splice(index, 1);
+        updateWorkflowVisualization();
+      }
     }
     
     // Clear the entire workflow
@@ -558,6 +563,28 @@
       workflowSteps = [];
       updateWorkflowVisualization();
     }
+    
+    // Attach event listeners to remove buttons
+    function attachRemoveEventListeners() {
+      document.querySelectorAll('.remove-step').forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.stopPropagation(); // Prevent event bubbling
+          const index = parseInt(this.getAttribute('data-index'));
+          removeStep(index);
+        });
+      });
+      
+      // Attach clear workflow button event
+      document.getElementById('clear-workflow').addEventListener('click', function(e) {
+        e.stopPropagation();
+        clearWorkflow();
+      });
+    }
+    
+    // Initialize event listeners on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      attachRemoveEventListeners();
+    });
   </script>
 </body>
 
