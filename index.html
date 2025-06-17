@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bioinformatics Platform / 生物信息分析平台</title>
   <style>
-    /* 统一盒模型，解决宽高计算问题 */
+    /* Unified box model to solve the problem of width and height calculation */
     * {
       box-sizing: border-box;
     }
@@ -57,7 +57,7 @@
       border-bottom: 2px solid #f0f0f0;
     }
 
-    /* Tools Container（保持原有布局，修复按钮错位） */
+    /* Tools Container */
     .tools-container {
       display: flex;
       justify-content: space-around;
@@ -65,17 +65,16 @@
       gap: 25px;
     }
 
-    /* Tool Card Style - Square（关键修复：限制卡片最小高度 + 弹性布局自适应） */
+    /* Tool Card Style - Square */
     .tool-card {
       background: white;
       border-radius: 8px;
       padding: 20px;
       width: 250px;
-      /* 保证卡片高度一致，避免按钮错位 */
+      /* Ensure that the card heights are consistent to avoid misalignment of the buttons */
       min-height: 280px; 
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
       border: 1px solid #eee;
-      /* 让内容（标题、描述、按钮）垂直分布更均匀 */
       display: flex;
       flex-direction: column;
       justify-content: space-between; 
@@ -95,7 +94,7 @@
       padding: 0 15px; 
     }
 
-    /* Workflow Card Style - Rectangle (优化高度和内容分布) */
+    /* Workflow Card Style - Rectangle */
     .workflow-card {
       background: white;
       border-radius: 8px;
@@ -117,7 +116,6 @@
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
     }
 
-    /* 优化工作流卡片的标题和内容 */
     .workflow-card h2 {
       margin-top: 0;
       margin-bottom: 15px;
@@ -143,7 +141,7 @@
       font-size: 0.95em;
     }
 
-    /* Button Styles（统一按钮样式，避免因内容差异错位） */
+    /* Button Styles */
     .btn {
       display: inline-block;
       color: white !important;
@@ -216,7 +214,7 @@
       color: #666;
     }
 
-    /* 响应式适配：小屏幕下工具卡片自动换行且居中 */
+    /* Responsive adaptation: Tool cards automatically wrap and center on small screens */
     @media (max-width: 900px) {
       .tools-container {
         justify-content: center;
@@ -249,7 +247,7 @@
     </h1>
   </div>
 
-  <!-- Tools Section（修复后：按钮不再错位） -->
+  <!-- Tools Section -->
   <div class="section">
     <div class="section-title">
       <span class="en">Tools</span>
