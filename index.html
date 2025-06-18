@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bioinformatics Platform / 生物信息分析平台</title>
   <style>
-    /* 统一盒模型，解决宽高计算问题 */
+    /* Unified box model to solve the problem of width and height calculation */
     * {
       box-sizing: border-box;
     }
@@ -103,14 +103,14 @@
       position: relative;
     }
 
-    /* 用于显示流程提示信息的元素样式 */
+    /* The element style used to display process prompt information */
     #workflow-info {
       color: #333;
       line-height: 1.6;
       margin-bottom: 15px;
     }
 
-    /* 拖放区域样式 */
+    /* Drag-and-drop area style */
     #drop-zone {
       min-height: 100px;
       border: 1px dashed #aaa;
@@ -118,12 +118,12 @@
       padding: 15px;
       display: flex;
       flex-wrap: wrap;
-      gap: 0px; /* 修改间距为0 */
+      gap: 0px;
       align-items: center;
       justify-content: center;
     }
 
-    /* 拖放占位符样式 */
+    /* Drag and drop the placeholder style */
     .drop-placeholder {
       background-color: #e0e0e0;
       border-radius: 4px;
@@ -132,11 +132,11 @@
       display: inline-block;
     }
 
-    /* 工作流步骤样式 */
+    /* Workflow step style */
     .workflow-step {
       background: white;
       padding: 10px 15px;
-      border-radius: 0; /* 取消圆角，使步骤之间无缝连接 */
+      border-radius: 0; /* Eliminate the rounded corners to ensure seamless connection between steps */
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       display: flex;
       align-items: center;
@@ -144,23 +144,23 @@
       min-width: 120px;
       height: 50px;
       position: relative;
-      margin: 0; /* 取消边距 */
-      color: white; /* 文字颜色设为白色 */
+      margin: 0; /* Cancel the margin */
+      color: white;
       cursor: grab;
       transition: all 0.2s;
     }
 
-    /* 第一个步骤添加左圆角 */
+    /* The first step is to add the left rounded corner */
     .workflow-step:first-child {
       border-radius: 20px 0 0 20px;
     }
 
-    /* 最后一个步骤添加右圆角 */
+    /* The last step is to add the right rounded corner */
     .workflow-step:last-child {
       border-radius: 0 20px 20px 0;
     }
 
-    /* 只有一个步骤时添加全圆角 */
+    /* Add full rounded corners when there is only one step */
     .workflow-step:only-child {
       border-radius: 20px;
     }
@@ -171,7 +171,7 @@
 
     .workflow-step:hover {
       transform: translateY(-2px);
-      z-index: 10; /* 确保悬停时显示在最上层 */
+      z-index: 10; /* Make sure it is displayed on the top layer when hovering */
     }
 
     .workflow-step .remove-btn {
@@ -255,16 +255,16 @@
 
     .en {
       font-weight: bold;
-      color: #333; /* 恢复默认颜色 */
+      color: #333; /* Restore the default color */
     }
 
     .zh {
       font-weight: normal;
-      color: #666; /* 恢复默认颜色 */
+      color: #666; /* Restore the default color */
       font-size: 0.95em;
     }
 
-    /* 仅工作流步骤中的文字使用白色 */
+    /* Only the text in the workflow steps is used in white */
     .workflow-step .en,
     .workflow-step .zh {
       color: white !important;
@@ -376,7 +376,7 @@
       }
 
       .workflow-step {
-        min-width: 80px; /* 缩小移动设备上的步骤宽度 */
+        min-width: 80px; /* Reduce the step width on mobile devices */
       }
     }
   </style>
@@ -464,7 +464,7 @@
     
     <div id="workflow-builder">
       <div id="workflow-info">
-        Drag tools from above to build your custom workflow / 从上方拖动工具来构建自定义流程
+        Drag tools from above to build your custom workflow (Please drag to the back of the previous Tools) / 从上方拖动工具来构建自定义流程（请拖动到前一个工具的后方）
       </div>
       <div id="drop-zone" ondragover="event.preventDefault()" ondrop="drop(event)"></div>
       <button id="clear-workflow" class="btn btn-clear" onclick="clearWorkflow()">
@@ -477,8 +477,8 @@
   <!-- Predefined Workflows Section -->
   <div class="section">
     <div class="section-title">
-      <span class="en">Predefined Workflows</span>
-      <span class="zh">预设分析流程</span>
+      <span class="en">Don't know how to customize the analysis process? Use Our Predefined Workflows</span>
+      <span class="zh">不会自定义分析流程？使用我们的预设分析流程</span>
     </div>
 
     <div class="workflow-container">
@@ -548,15 +548,15 @@
       }
     };
 
-    // 初始化事件处理
+    // Initialize event handling
     document.addEventListener('DOMContentLoaded', function() {
-      // 为工具卡片添加拖拽事件
+      // Add a drag event to the tool card
       document.querySelectorAll('.tool-card').forEach(card => {
         card.addEventListener('dragstart', function(e) {
           e.dataTransfer.setData('text/plain', this.dataset.tool);
           this.classList.add('dragging');
           
-          // 创建拖动时的视觉反馈元素
+          // Create the visual feedback element when dragging
           const crt = this.cloneNode(true);
           crt.style.position = 'absolute';
           crt.style.top = '-1000px';
@@ -574,7 +574,7 @@
         });
       });
       
-      // 设置放置区域
+      // Set the placement area
       const dropZone = document.getElementById('drop-zone');
       
       dropZone.addEventListener('dragover', function(e) {
@@ -615,7 +615,7 @@
     function updateWorkflowVisualization() {
       const dropZone = document.getElementById('drop-zone');
       
-      // 清空容器
+      // Empty the container
       dropZone.innerHTML = '';
       
       if (workflowSteps.length === 0) {
@@ -623,7 +623,7 @@
         return;
       }
       
-      // 创建流程步骤
+      // Create process steps
       workflowSteps.forEach((toolId, index) => {
         const tool = toolInfo[toolId];
         const stepElement = document.createElement('div');
@@ -632,7 +632,7 @@
         stepElement.dataset.tool = toolId;
         stepElement.dataset.index = index;
         
-        // 设置步骤内容
+        // Set the content of the steps
         stepElement.innerHTML = `
           <div>
             <div class="en" style="font-size: 0.9em;">${tool.name}</div>
@@ -641,7 +641,7 @@
           <div class="remove-btn" onclick="removeStep(${index}, event)">×</div>
         `;
         
-        // 添加拖拽事件
+        // Add the drag event
         stepElement.addEventListener('dragstart', function(e) {
           e.dataTransfer.setData('text/plain', this.dataset.index);
           this.classList.add('dragging');
@@ -665,7 +665,7 @@
           const targetIndex = parseInt(this.dataset.index);
           
           if (draggedIndex !== targetIndex) {
-            // 交换位置
+            // interchange
             const draggedTool = workflowSteps[draggedIndex];
             workflowSteps.splice(draggedIndex, 1);
             workflowSteps.splice(targetIndex, 0, draggedTool);
