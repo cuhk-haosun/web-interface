@@ -136,7 +136,7 @@
     .workflow-step {
       background: white;
       padding: 10px 15px;
-      border-radius: 0; /* Eliminate the rounded corners to ensure seamless connection between steps */
+      border-radius: 0;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       display: flex;
       align-items: center;
@@ -144,23 +144,20 @@
       min-width: 120px;
       height: 50px;
       position: relative;
-      margin: 0; /* Cancel the margin */
+      margin: 0;
       color: white;
       cursor: grab;
       transition: all 0.2s;
     }
 
-    /* The first step is to add the left rounded corner */
     .workflow-step:first-child {
       border-radius: 20px 0 0 20px;
     }
 
-    /* The last step is to add the right rounded corner */
     .workflow-step:last-child {
       border-radius: 0 20px 20px 0;
     }
 
-    /* Add full rounded corners when there is only one step */
     .workflow-step:only-child {
       border-radius: 20px;
     }
@@ -171,7 +168,7 @@
 
     .workflow-step:hover {
       transform: translateY(-2px);
-      z-index: 10; /* Make sure it is displayed on the top layer when hovering */
+      z-index: 10;
     }
 
     .workflow-step .remove-btn {
@@ -259,16 +256,15 @@
 
     .en {
       font-weight: bold;
-      color: #333; /* Restore the default color */
+      color: #333;
     }
 
     .zh {
       font-weight: normal;
-      color: #666; /* Restore the default color */
+      color: #666;
       font-size: 0.95em;
     }
 
-    /* Only the text in the workflow steps is used in white */
     .workflow-step .en,
     .workflow-step .zh {
       color: white !important;
@@ -350,11 +346,19 @@
     }
     
     .btn-atacseq {
-      background: #fd7e14; /* Orange color */
+      background: #fd7e14;
     }
     
     .btn-atacseq:hover {
-      background: #e67312; /* Darker orange on hover */
+      background: #e67312;
+    }
+
+    .btn-cutntag {
+      background: #6F4E37; /* Coffee brown */
+    }
+    
+    .btn-cutntag:hover {
+      background: #5A3E2C; /* Darker coffee brown */
     }
 
     .btn-clear {
@@ -374,7 +378,7 @@
       color: #666;
     }
 
-    /* Responsive adaptation: Tool cards automatically wrap and center on small screens */
+    /* Responsive adaptation */
     @media (max-width: 900px) {
       .tools-container {
         justify-content: center;
@@ -396,7 +400,7 @@
       }
 
       .workflow-step {
-        min-width: 80px; /* Reduce the step width on mobile devices */
+        min-width: 80px;
       }
     }
   </style>
@@ -571,6 +575,24 @@
         <a href="atacseq/index.html" class="btn btn-atacseq">
           <span class="en">ATACseq Workflow</span> /
           <span class="zh">ATACseq分析流程</span>
+        </a>
+      </div>
+      
+      <!-- Cut&Tag Workflow Card -->
+      <div class="workflow-card">
+        <div>
+          <h2>
+            <div class="bilingual en">Cut&Tag Workflow</div>
+            <div class="bilingual zh">Cut&Tag分析流程</div>
+          </h2>
+          <p>
+            <div class="bilingual en">Cleavage Under Targets & Tagmentation workflow</div>
+            <div class="bilingual zh">靶向切割与标记分析流程</div>
+          </p>
+        </div>
+        <a href="cutntag/index.html" class="btn btn-cutntag">
+          <span class="en">Cut&Tag Workflow</span> /
+          <span class="zh">Cut&Tag分析流程</span>
         </a>
       </div>
     </div>
