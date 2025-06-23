@@ -208,6 +208,10 @@
     .step-star {
       background: #8B4513;
     }
+    
+    .step-minimap2 {
+      background: #007bff;
+    }
 
     /* Workflow Container */
     .workflow-container {
@@ -319,6 +323,14 @@
 
     .btn-star:hover {
       background: #A0522D;
+    }
+    
+    .btn-minimap2 {
+      background: #007bff;
+    }
+    
+    .btn-minimap2:hover {
+      background: #0069d9;
     }
 
     .btn-rrbs {
@@ -452,6 +464,24 @@
           <span class="zh">序列比对</span>
         </a>
       </div>
+      
+      <!-- Minimap2 Tool Card -->
+      <div class="tool-card" draggable="true" data-tool="minimap2">
+        <div>
+          <h2>
+            <div class="bilingual en">Minimap2</div>
+            <div class="bilingual zh">序列比对</div>
+          </h2>
+          <p>
+            <div class="bilingual en">Versatile sequence alignment tool</div>
+            <div class="bilingual zh">多功能序列比对工具</div>
+          </p>
+        </div>
+        <a href="minimap2/index.html" class="btn btn-minimap2">
+          <span class="en">Minimap2</span> /
+          <span class="zh">序列比对</span>
+        </a>
+      </div>
     </div>
   </div>
 
@@ -545,6 +575,11 @@
         name: "STAR Aligner",
         name_zh: "序列比对",
         color: "step-star"
+      },
+      minimap2: {
+        name: "Minimap2",
+        name_zh: "序列比对",
+        color: "step-minimap2"
       }
     };
 
