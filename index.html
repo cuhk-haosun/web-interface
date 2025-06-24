@@ -209,6 +209,10 @@
     .step-minimap2 {
       background: #007bff;
     }
+    
+    .step-guppy {
+      background: #000080;
+    }
 
     /* Workflow Container */
     .workflow-container {
@@ -327,6 +331,14 @@
     
     .btn-minimap2:hover {
       background: #0069d9;
+    }
+    
+    .btn-guppy {
+      background: #000080;
+    }
+    
+    .btn-guppy:hover {
+      background: #000060;
     }
 
     .btn-rrbs {
@@ -474,6 +486,24 @@
         <a href="star-aligner/index.html" class="btn btn-star">
           <span class="en">STAR Aligner</span> /
           <span class="zh">序列比对</span>
+        </a>
+      </div>
+      
+      <!-- Guppy Tool Card -->
+      <div class="tool-card" draggable="true" data-tool="guppy">
+        <div>
+          <h2>
+            <div class="bilingual en">Guppy</div>
+            <div class="bilingual zh">碱基识别</div>
+          </h2>
+          <p>
+            <div class="bilingual en">Oxford Nanopore basecalling</div>
+            <div class="bilingual zh">纳米孔测序碱基识别</div>
+          </p>
+        </div>
+        <a href="guppy/index.html" class="btn btn-guppy">
+          <span class="en">Guppy</span> /
+          <span class="zh">碱基识别</span>
         </a>
       </div>
       
@@ -628,6 +658,11 @@
         name: "Minimap2",
         name_zh: "序列比对",
         color: "step-minimap2"
+      },
+      guppy: {
+        name: "Guppy",
+        name_zh: "碱基识别",
+        color: "step-guppy"
       }
     };
 
