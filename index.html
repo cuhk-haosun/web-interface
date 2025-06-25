@@ -213,6 +213,10 @@
     .step-guppy {
       background: #000080;
     }
+    
+    .step-bismark {
+      background: #4B0082; /* Indigo */
+    }
 
     /* Workflow Container */
     .workflow-container {
@@ -339,6 +343,14 @@
     
     .btn-guppy:hover {
       background: #000060;
+    }
+    
+    .btn-bismark {
+      background: #4B0082; /* Indigo */
+    }
+    
+    .btn-bismark:hover {
+      background: #3A0069;
     }
 
     .btn-rrbs {
@@ -524,6 +536,24 @@
           <span class="zh">序列比对</span>
         </a>
       </div>
+      
+      <!-- Bismark Tool Card -->
+      <div class="tool-card" draggable="true" data-tool="bismark">
+        <div>
+          <h2>
+            <div class="bilingual en">Bismark</div>
+            <div class="bilingual zh">甲基化分析</div>
+          </h2>
+          <p>
+            <div class="bilingual en">Bisulfite sequencing analysis</div>
+            <div class="bilingual zh">亚硫酸氢盐测序分析</div>
+          </p>
+        </div>
+        <a href="bismark/index.html" class="btn btn-bismark">
+          <span class="en">Bismark</span> /
+          <span class="zh">甲基化分析</span>
+        </a>
+      </div>
     </div>
   </div>
 
@@ -663,6 +693,11 @@
         name: "Guppy",
         name_zh: "碱基识别",
         color: "step-guppy"
+      },
+      bismark: {
+        name: "Bismark",
+        name_zh: "甲基化分析",
+        color: "step-bismark"
       }
     };
 
