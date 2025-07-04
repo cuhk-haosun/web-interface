@@ -396,6 +396,17 @@
       background: #c82333;
     }
 
+    .btn-run {
+      background: #28a745;
+      margin-top: 10px;
+      width: auto;
+      padding: 6px 12px;
+    }
+
+    .btn-run:hover {
+      background: #218838;
+    }
+
     footer {
       margin-top: 40px;
       text-align: center;
@@ -426,6 +437,162 @@
       .workflow-step {
         min-width: 80px;
       }
+    }
+
+    /* Global Parameters Form */
+    .global-params {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f0f0f0;
+      border-radius: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    /* Tool Parameters Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 600px;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+    }
+
+    .modal-body {
+      padding: 20px 0;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+
+    /* Workflow Execution Status */
+    #workflow-execution {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f0f0f0;
+      border-radius: 4px;
+    }
+
+    .progress-container {
+      width: 100%;
+      background-color: #ddd;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 30px;
+      background-color: #28a745;
+      text-align: center;
+      line-height: 30px;
+      color: white;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .step-status {
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    .step-pending {
+      background-color: #f8f9fa;
+      color: #6c757d;
+    }
+
+    .step-running {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .step-success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .step-failed {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    /* 新增的工作流导航样式 */
+    .workflow-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    
+    .btn-next {
+      background: #1E4B8B;
+      width: 120px;
+    }
+    
+    .btn-next:hover {
+      background: #153A6B;
+    }
+    
+    .btn-back {
+      background: #6c757d;
+      width: 120px;
+    }
+    
+    .btn-back:hover {
+      background: #5a6268;
+    }
+    
+    /* 步骤容器样式 */
+    .step-container {
+      display: none;
+    }
+    
+    .step-container.active {
+      display: block;
     }
   </style>
 </head>
@@ -565,14 +732,87 @@
     </div>
     
     <div id="workflow-builder">
-      <div id="workflow-info">
-        Drag tools from above to build your custom workflow (Please drag to the back of the previous Tools) / 从上方拖动工具来构建自定义流程（请拖动到前一个工具的后方）
+      <!-- 步骤1：拖拽工作流 -->
+      <div id="step-1" class="step-container active">
+        <div id="workflow-info">
+          Drag tools from above to build your custom workflow (Please drag to the back of the previous Tools) / 从上方拖动工具来构建自定义流程（请拖动到前一个工具的后方）
+        </div>
+        <div id="drop-zone" ondragover="event.preventDefault()"></div>
+        
+        <div class="workflow-nav">
+          <button id="btn-next" class="btn btn-next">
+            <span class="en">Next</span>
+            <span class="zh">下一步</span>
+          </button>
+        </div>
       </div>
-      <div id="drop-zone" ondragover="event.preventDefault()"></div>
-      <button id="clear-workflow" class="btn btn-clear" onclick="clearWorkflow()">
-        <span class="en">Clear Workflow</span> /
-        <span class="zh">清除流程</span>
-      </button>
+      
+      <!-- 步骤2：输入全局参数 -->
+      <div id="step-2" class="step-container">
+        <div id="workflow-info">
+          <div class="en">Input Workflow Parameters</div>
+          <div class="zh">输入工作流参数</div>
+        </div>
+        
+        <!-- Global Parameters Form -->
+        <div class="global-params">
+          <h3>
+            <div class="en">Workflow Parameters</div>
+            <div class="zh">工作流参数</div>
+          </h3>
+          
+          <div class="form-group">
+            <label>
+              <span class="en">Input Path</span>
+              <span class="zh">输入路径</span>
+            </label>
+            <input type="text" id="input_path" placeholder="/path/to/input">
+          </div>
+          
+          <div class="form-group">
+            <label>
+              <span class="en">Output Path</span>
+              <span class="zh">输出路径</span>
+            </label>
+            <input type="text" id="output_path" placeholder="/path/to/output">
+          </div>
+          
+          <div class="form-group">
+            <label>
+              <span class="en">Token</span>
+              <span class="zh">令牌</span>
+            </label>
+            <input type="text" id="global_token" placeholder="输入认证Token">
+          </div>
+          
+          <div class="form-group">
+            <label>
+              <span class="en">Run Location</span>
+              <span class="zh">运行位置</span>
+            </label>
+            <input type="text" id="run_location" placeholder="pipeline">
+          </div>
+        </div>
+        
+        <div class="workflow-nav">
+          <button id="btn-back" class="btn btn-back">
+            <span class="en">Back</span>
+            <span class="zh">返回</span>
+          </button>
+          <button id="run-workflow" class="btn btn-run">
+            <span class="en">Run Workflow</span>
+            <span class="zh">运行流程</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Workflow Execution Status -->
+      <div id="workflow-execution" style="display: none;">
+        <div class="progress-container">
+          <div class="progress-bar" id="progress-bar">0%</div>
+        </div>
+        <div id="workflow-steps-status"></div>
+      </div>
     </div>
   </div>
 
@@ -663,41 +903,106 @@
     <div class="bilingual en">© 2025 All Rights Reserved</div>
   </footer>
 
+  <!-- Tool Parameters Modal -->
+  <div id="tool-params-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title">Tool Parameters</h2>
+      </div>
+      <div class="modal-body">
+        <form id="tool-params-form">
+          <!-- Parameters will be dynamically added here -->
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-tool-params" class="btn btn-clear">
+          <span class="en">Cancel</span>
+          <span class="zh">取消</span>
+        </button>
+        <button id="submit-tool-params" class="btn btn-run">
+          <span class="en">Run Tool</span>
+          <span class="zh">运行工具</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Store the workflow steps
     let workflowSteps = [];
+    // Current step index during execution
+    let currentStepIndex = 0;
+    // Tool parameters
+    let toolParameters = {};
+    // Global parameters
+    let globalParameters = {};
     
     // Tool information mapping
     const toolInfo = {
       fastqc: {
         name: "FastQC",
         name_zh: "质量分析",
-        color: "step-fastqc"
+        color: "step-fastqc",
+        params: [
+          {id: "job_name", name: "Job Name", name_zh: "作业名称", type: "text"},
+          {id: "threads", name: "Threads", name_zh: "线程数", type: "number", default: 4},
+          {id: "output_dir", name: "Output Directory", name_zh: "输出目录", type: "text"}
+        ]
       },
       cutadapt: {
         name: "Cutadapt",
         name_zh: "接头修剪",
-        color: "step-cutadapt"
+        color: "step-cutadapt",
+        params: [
+          {id: "job_name", name: "Job Name", name_zh: "作业名称", type: "text"},
+          {id: "adapter_sequence", name: "Sequence of Adapter 1", name_zh: "接头序列1", type: "text"},
+          {id: "threads", name: "Threads", name_zh: "线程数", type: "number", default: 4},
+          {id: "output_dir", name: "Output Directory", name_zh: "输出目录", type: "text"}
+        ]
       },
       star: {
         name: "STAR Aligner",
         name_zh: "序列比对",
-        color: "step-star"
+        color: "step-star",
+        params: [
+          {id: "job_name", name: "Job Name", name_zh: "作业名称", type: "text"},
+          {id: "genome_dir", name: "Genome Directory", name_zh: "基因组目录", type: "text"},
+          {id: "threads", name: "Threads", name_zh: "线程数", type: "number", default: 4},
+          {id: "output_dir", name: "Output Directory", name_zh: "输出目录", type: "text"}
+        ]
       },
       minimap2: {
         name: "Minimap2",
         name_zh: "序列比对",
-        color: "step-minimap2"
+        color: "step-minimap2",
+        params: [
+          {id: "job_name", name: "Job Name", name_zh: "作业名称", type: "text"},
+          {id: "reference", name: "Reference Genome", name_zh: "参考基因组", type: "text"},
+          {id: "threads", name: "Threads", name_zh: "线程数", type: "number", default: 4},
+          {id: "output_dir", name: "Output Directory", name_zh: "输出目录", type: "text"}
+        ]
       },
       guppy: {
         name: "Guppy",
         name_zh: "碱基识别",
-        color: "step-guppy"
+        color: "step-guppy",
+        params: [
+          {id: "job_name", name: "Job Name", name_zh: "作业名称", type: "text"},
+          {id: "config_file", name: "Config File", name_zh: "配置文件", type: "text"},
+          {id: "threads", name: "Threads", name_zh: "线程数", type: "number", default: 4},
+          {id: "output_dir", name: "Output Directory", name_zh: "输出目录", type: "text"}
+        ]
       },
       bismark: {
         name: "Bismark",
         name_zh: "甲基化分析",
-        color: "step-bismark" // 对应修改后的step-bismark样式
+        color: "step-bismark",
+        params: [
+          {id: "job_name", name: "Job Name", name_zh: "作业名称", type: "text"},
+          {id: "genome_dir", name: "Genome Directory", name_zh: "基因组目录", type: "text"},
+          {id: "threads", name: "Threads", name_zh: "线程数", type: "number", default: 4},
+          {id: "output_dir", name: "Output Directory", name_zh: "输出目录", type: "text"}
+        ]
       }
     };
 
@@ -745,6 +1050,39 @@
         
         const toolId = e.dataTransfer.getData('text/plain');
         addToWorkflow(toolId);
+      });
+      
+      // Next button
+      document.getElementById('btn-next').addEventListener('click', function() {
+        if (workflowSteps.length === 0) {
+          alert("Please add tools to your workflow first!");
+          return;
+        }
+        
+        // Switch to step 2
+        document.getElementById('step-1').classList.remove('active');
+        document.getElementById('step-2').classList.add('active');
+      });
+      
+      // Back button
+      document.getElementById('btn-back').addEventListener('click', function() {
+        // Switch to step 1
+        document.getElementById('step-2').classList.remove('active');
+        document.getElementById('step-1').classList.add('active');
+      });
+      
+      // Run workflow button
+      document.getElementById('run-workflow').addEventListener('click', runWorkflow);
+      
+      // Tool parameters modal buttons
+      document.getElementById('cancel-tool-params').addEventListener('click', function() {
+        document.getElementById('tool-params-modal').style.display = 'none';
+      });
+      
+      document.getElementById('submit-tool-params').addEventListener('click', function() {
+        saveToolParameters();
+        document.getElementById('tool-params-modal').style.display = 'none';
+        executeCurrentStep();
       });
     });
     
@@ -842,7 +1180,195 @@
       workflowSteps = [];
       updateWorkflowVisualization();
     }
+    
+    // Run the workflow
+    function runWorkflow() {
+      // Validate workflow
+      if (workflowSteps.length === 0) {
+        alert("Please add tools to your workflow first!");
+        return;
+      }
+      
+      // Get global parameters
+      globalParameters = {
+        input_path: document.getElementById('input_path').value,
+        output_path: document.getElementById('output_path').value,
+        token: document.getElementById('global_token').value,
+        run_location: document.getElementById('run_location').value
+      };
+      
+      // Validate global parameters
+      if (!globalParameters.input_path || !globalParameters.output_path || 
+          !globalParameters.token || !globalParameters.run_location) {
+        alert("Please fill in all global parameters!");
+        return;
+      }
+      
+      // Initialize workflow execution
+      currentStepIndex = 0;
+      toolParameters = {};
+      
+      // Show execution area
+      document.getElementById('workflow-execution').style.display = 'block';
+      document.getElementById('progress-bar').style.width = '0%';
+      document.getElementById('progress-bar').textContent = '0%';
+      
+      // Create status elements for each step
+      const statusContainer = document.getElementById('workflow-steps-status');
+      statusContainer.innerHTML = '';
+      
+      workflowSteps.forEach((toolId, index) => {
+        const tool = toolInfo[toolId];
+        const stepStatus = document.createElement('div');
+        stepStatus.id = `step-${index}-status`;
+        stepStatus.className = 'step-status step-pending';
+        stepStatus.innerHTML = `
+          <div class="en">${index + 1}. ${tool.name}</div>
+          <div class="zh">${index + 1}. ${tool.name_zh}</div>
+          <div class="status-text">Pending</div>
+        `;
+        statusContainer.appendChild(stepStatus);
+      });
+      
+      // Start executing the first step
+      promptToolParameters();
+    }
+    
+    // Prompt for tool-specific parameters
+    function promptToolParameters() {
+      if (currentStepIndex >= workflowSteps.length) {
+        // All steps completed
+        document.getElementById('progress-bar').style.width = '100%';
+        document.getElementById('progress-bar').textContent = '100%';
+        return;
+      }
+      
+      const toolId = workflowSteps[currentStepIndex];
+      const tool = toolInfo[toolId];
+      
+      // Set modal title
+      document.getElementById('modal-title').textContent = `${tool.name} / ${tool.name_zh} Parameters`;
+      
+      // Generate parameter form
+      const formContainer = document.getElementById('tool-params-form');
+      formContainer.innerHTML = '';
+      
+      // Add input path (automatically filled based on previous step)
+      const inputPathGroup = document.createElement('div');
+      inputPathGroup.className = 'form-group';
+      
+      let inputPathValue = globalParameters.input_path;
+      if (currentStepIndex > 0) {
+        // Get output path from previous step
+        const prevToolId = workflowSteps[currentStepIndex - 1];
+        inputPathValue = toolParameters[prevToolId]?.output_dir || '';
+      }
+      
+      inputPathGroup.innerHTML = `
+        <label>
+          <span class="en">Input Path</span>
+          <span class="zh">输入路径</span>
+        </label>
+        <input type="text" id="param-input_path" value="${inputPathValue}" readonly>
+      `;
+      formContainer.appendChild(inputPathGroup);
+      
+      // Add tool-specific parameters
+      tool.params.forEach(param => {
+        const paramGroup = document.createElement('div');
+        paramGroup.className = 'form-group';
+        
+        // Set default value if available
+        const defaultValue = param.default || '';
+        
+        // Create input field based on type
+        let inputHtml = '';
+        if (param.type === 'number') {
+          inputHtml = `<input type="number" id="param-${param.id}" value="${defaultValue}">`;
+        } else {
+          inputHtml = `<input type="text" id="param-${param.id}" value="${defaultValue}">`;
+        }
+        
+        paramGroup.innerHTML = `
+          <label>
+            <span class="en">${param.name}</span>
+            <span class="zh">${param.name_zh}</span>
+          </label>
+          ${inputHtml}
+        `;
+        formContainer.appendChild(paramGroup);
+      });
+      
+      // Show modal
+      document.getElementById('tool-params-modal').style.display = 'block';
+    }
+    
+    // Save tool parameters
+    function saveToolParameters() {
+      const toolId = workflowSteps[currentStepIndex];
+      const tool = toolInfo[toolId];
+      
+      // Initialize parameters object
+      toolParameters[toolId] = {
+        input_path: document.getElementById('param-input_path').value
+      };
+      
+      // Save each parameter
+      tool.params.forEach(param => {
+        const value = document.getElementById(`param-${param.id}`).value;
+        toolParameters[toolId][param.id] = value;
+      });
+      
+      // Automatically set output directory if not provided
+      if (!toolParameters[toolId].output_dir) {
+        // Generate output directory based on workflow output and tool name
+        const baseOutput = globalParameters.output_path;
+        toolParameters[toolId].output_dir = `${baseOutput}/${toolId}_step${currentStepIndex + 1}`;
+      }
+    }
+    
+    // Execute the current step
+    function executeCurrentStep() {
+      if (currentStepIndex >= workflowSteps.length) {
+        return;
+      }
+      
+      const toolId = workflowSteps[currentStepIndex];
+      const tool = toolInfo[toolId];
+      const params = toolParameters[toolId];
+      
+      // Update step status to running
+      const statusElement = document.getElementById(`step-${currentStepIndex}-status`);
+      statusElement.className = 'step-status step-running';
+      statusElement.querySelector('.status-text').textContent = 'Running...';
+      
+      // Simulate tool execution (replace this with actual API call)
+      console.log(`Executing ${toolId} with parameters:`, params);
+      
+      // In a real implementation, you would call the tool's API here
+      // For demonstration purposes, we'll just use a timeout
+      setTimeout(() => {
+        // Simulate success
+        statusElement.className = 'step-status step-success';
+        statusElement.querySelector('.status-text').textContent = 'Success';
+        
+        // Update progress bar
+        const progress = Math.round(((currentStepIndex + 1) / workflowSteps.length) * 100);
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+        document.getElementById('progress-bar').textContent = `${progress}%`;
+        
+        // Move to next step
+        currentStepIndex++;
+        if (currentStepIndex < workflowSteps.length) {
+          promptToolParameters();
+        } else {
+          // All steps completed
+          alert("Workflow execution completed successfully!");
+        }
+      }, 2000); // 2-second delay to simulate processing time
+    }
   </script>
 </body>
 
 </html>
+  </div>
