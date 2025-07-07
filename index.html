@@ -439,7 +439,8 @@
       font-weight: bold;
     }
 
-    .form-group input {
+    .form-group input,
+    .form-group select {
       width: 100%;
       padding: 8px;
       border: 1px solid #ddd;
@@ -576,9 +577,10 @@
     /* 新增iframe样式 */
     #tool-iframe {
       width: 100%;
-      height: 400px;
+      height: 350px; /* 调整高度以适应简化的参数表单 */
       border: none;
       border-radius: 4px;
+      background-color: white;
     }
     
     /* 工具参数导航按钮 */
@@ -598,6 +600,26 @@
     
     .modal-nav-btn:hover {
       background-color: #dee2e6;
+    }
+    
+    /* 新增步骤指示器样式 */
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+    
+    .step-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #ccc;
+      transition: background-color 0.3s;
+    }
+    
+    .step-dot.active {
+      background-color: #1E4B8B;
     }
   </style>
 </head>
@@ -737,6 +759,13 @@
     </div>
     
     <div id="workflow-builder">
+      <!-- 步骤指示器 -->
+      <div class="step-indicator">
+        <div class="step-dot active" id="step-dot-1"></div>
+        <div class="step-dot" id="step-dot-2"></div>
+        <div class="step-dot" id="step-dot-3"></div>
+      </div>
+      
       <!-- 步骤1：拖拽工作流 -->
       <div id="step-1" class="step-container active">
         <div id="workflow-info">
@@ -771,7 +800,7 @@
               <span class="en">Input Path</span>
               <span class="zh">输入路径</span>
             </label>
-            <input type="text" id="input_path" placeholder="/path/to/input">
+            <input type="text" id="input_path" placeholder="/path/to/input" required>
           </div>
           
           <div class="form-group">
@@ -779,7 +808,7 @@
               <span class="en">Output Path</span>
               <span class="zh">输出路径</span>
             </label>
-            <input type="text" id="output_path" placeholder="/path/to/output">
+            <input type="text" id="output_path" placeholder="/path/to/output" required>
           </div>
           
           <div class="form-group">
@@ -787,7 +816,7 @@
               <span class="en">Job Name</span>
               <span class="zh">作业名称</span>
             </label>
-            <input type="text" id="job_name" placeholder="e.g. my_workflow_2024">
+            <input type="text" id="job_name" placeholder="e.g. my_workflow_2024" required>
           </div>
           
           <div class="form-group">
@@ -795,7 +824,7 @@
               <span class="en">Token</span>
               <span class="zh">令牌</span>
             </label>
-            <input type="text" id="global_token" placeholder="输入认证Token">
+            <input type="text" id="global_token" placeholder="输入认证Token" required>
           </div>
           
           <div class="form-group">
@@ -803,7 +832,7 @@
               <span class="en">Run Location</span>
               <span class="zh">运行位置</span>
             </label>
-            <input type="text" id="run_location" placeholder="pipeline">
+            <input type="text" id="run_location" placeholder="pipeline" required>
           </div>
         </div>
         
@@ -1099,6 +1128,10 @@
         // 切换到步骤2（全局参数）
         document.getElementById('step-1').classList.remove('active');
         document.getElementById('step-2').classList.add('active');
+        
+        // 更新步骤指示器
+        document.getElementById('step-dot-1').classList.remove('active');
+        document.getElementById('step-dot-2').classList.add('active');
       });
       
       // 返回按钮
@@ -1106,6 +1139,10 @@
         // 切换到步骤1（拖拽工作流）
         document.getElementById('step-2').classList.remove('active');
         document.getElementById('step-1').classList.add('active');
+        
+        // 更新步骤指示器
+        document.getElementById('step-dot-2').classList.remove('active');
+        document.getElementById('step-dot-1').classList.add('active');
       });
       
       // 返回参数配置按钮
@@ -1113,6 +1150,10 @@
         // 切换到步骤2（全局参数）
         document.getElementById('step-3').classList.remove('active');
         document.getElementById('step-2').classList.add('active');
+        
+        // 更新步骤指示器
+        document.getElementById('step-dot-3').classList.remove('active');
+        document.getElementById('step-dot-2').classList.add('active');
       });
       
       // 配置工具按钮
@@ -1146,6 +1187,10 @@
         
         document.getElementById('step-2').classList.remove('active');
         document.getElementById('step-3').classList.add('active');
+        
+        // 更新步骤指示器
+        document.getElementById('step-dot-2').classList.remove('active');
+        document.getElementById('step-dot-3').classList.add('active');
       });
       
       // 上一个工具按钮
@@ -1174,6 +1219,15 @@
       document.getElementById('run-workflow').addEventListener('click', function() {
         // 保存最后一个工具的参数
         saveCurrentToolParameters();
+        
+        // 验证所有工具参数
+        for (const toolId of workflowSteps) {
+          const params = toolParameters[toolId];
+          if (!params || Object.keys(params).length === 0) {
+            alert("Please configure parameters for all tools! / 请配置所有工具的参数！");
+            return;
+          }
+        }
         
         // 显示执行确认模态框
         showExecutionConfirmation();
@@ -1310,8 +1364,9 @@
       const tool = toolInfo[toolId];
       const iframe = document.getElementById('tool-iframe');
       
-      // 设置iframe源为工具页面
-      iframe.src = tool.url;
+      // 设置iframe源为工具参数配置页面
+      // 使用简化的参数配置页面路径
+      iframe.src = `${tool.url}?simplified=true`;
       
       // 更新模态框标题
       document.title = `Configure ${tool.name} - Bioinformatics Platform`;
@@ -1395,6 +1450,34 @@
           <div>${globalParameters.output_path}</div>
         </div>
       `;
+      
+      // 添加工具参数摘要
+      summaryHtml += `<div class="form-group"><strong><span class="en">Tool Parameters:</span><span class="zh">工具参数:</span></strong></div>`;
+      
+      workflowSteps.forEach((toolId, index) => {
+        const tool = toolInfo[toolId];
+        const params = toolParameters[toolId];
+        
+        summaryHtml += `
+          <div class="form-group" style="margin-left: 20px;">
+            <strong>${index + 1}. ${tool.name} (${tool.name_zh}):</strong>
+            <div style="margin-left: 15px;">
+        `;
+        
+        for (const [paramName, paramValue] of Object.entries(params)) {
+          summaryHtml += `
+            <div class="bilingual">
+              <span class="en">${paramName}:</span>
+              <span class="zh">${paramValue}</span>
+            </div>
+          `;
+        }
+        
+        summaryHtml += `
+            </div>
+          </div>
+        `;
+      });
       
       summaryElement.innerHTML = summaryHtml;
       document.getElementById('execution-confirm-modal').style.display = 'block';
