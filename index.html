@@ -621,6 +621,31 @@
     .step-dot.active {
       background-color: #1E4B8B;
     }
+    
+    /* 自定义工具参数表单样式 */
+    .tool-params-form {
+      margin: 0;
+      padding: 0;
+    }
+    
+    .tool-params-form .form-group {
+      margin-bottom: 10px;
+    }
+    
+    .tool-params-form label {
+      font-size: 0.95em;
+    }
+    
+    .tool-params-form input,
+    .tool-params-form select {
+      padding: 6px;
+      font-size: 0.9em;
+    }
+    
+    .required-field::after {
+      content: " *";
+      color: red;
+    }
   </style>
 </head>
 
@@ -1028,7 +1053,8 @@
         color: "step-fastqc",
         url: "fastqc/index.html",
         repo: "cuhk-haosun/code-docker-fastqc",
-        workflowId: "run-fastqc.yaml"
+        workflowId: "run-fastqc.yaml",
+        requiredParams: ["input_path", "output_path"]
       },
       cutadapt: {
         name: "Cutadapt",
@@ -1036,7 +1062,8 @@
         color: "step-cutadapt",
         url: "cutadapt/index.html",
         repo: "cuhk-haosun/code-docker-cutadapt",
-        workflowId: "run-docker-matrix.yaml"
+        workflowId: "run-docker-matrix.yaml",
+        requiredParams: ["input_path", "output_path", "adapter_sequence"]
       },
       star: {
         name: "STAR Aligner",
@@ -1044,7 +1071,8 @@
         color: "step-star",
         url: "star-aligner/index.html",
         repo: "cuhk-haosun/code-docker-star-aligner",
-        workflowId: "action.matrix.yaml"
+        workflowId: "action.matrix.yaml",
+        requiredParams: ["input_path", "output_path", "genome_index", "threads"]
       },
       minimap2: {
         name: "Minimap2",
@@ -1052,7 +1080,8 @@
         color: "step-minimap2",
         url: "minimap2/index.html",
         repo: "cuhk-haosun/code-docker-minimap2",
-        workflowId: "minimap2-github-action.yaml"
+        workflowId: "minimap2-github-action.yaml",
+        requiredParams: ["input_path", "output_path", "reference_genome", "preset"]
       },
       guppy: {
         name: "Guppy",
@@ -1060,7 +1089,8 @@
         color: "step-guppy",
         url: "guppy/index.html",
         repo: "cuhk-haosun/code-docker-guppy",
-        workflowId: "guppy-github-action.yaml"
+        workflowId: "guppy-github-action.yaml",
+        requiredParams: ["input_path", "output_path", "config_file", "device"]
       },
       bismark: {
         name: "Bismark",
@@ -1068,7 +1098,8 @@
         color: "step-bismark",
         url: "bismark/index.html",
         repo: "cuhk-haosun/code-docker-bismark",
-        workflowId: "run-docker-matrix.yml"
+        workflowId: "run-docker-matrix.yml",
+        requiredParams: ["input_path", "output_path", "genome_directory", "bowtie2_mode"]
       }
     };
 
@@ -1222,10 +1253,15 @@
         
         // 验证所有工具参数
         for (const toolId of workflowSteps) {
+          const tool = toolInfo[toolId];
           const params = toolParameters[toolId];
-          if (!params || Object.keys(params).length === 0) {
-            alert("Please configure parameters for all tools! / 请配置所有工具的参数！");
-            return;
+          
+          // 检查是否所有必需参数都已设置
+          for (const param of tool.requiredParams) {
+            if (!params[param] || params[param].trim() === '') {
+              alert(`Please configure required parameter "${param}" for ${tool.name}!`);
+              return;
+            }
           }
         }
         
@@ -1365,8 +1401,8 @@
       const iframe = document.getElementById('tool-iframe');
       
       // 设置iframe源为工具参数配置页面
-      // 使用简化的参数配置页面路径
-      iframe.src = `${tool.url}?simplified=true`;
+      // 使用简化的参数配置页面路径，并添加requiredOnly参数
+      iframe.src = `${tool.url}?simplified=true&requiredOnly=true`;
       
       // 更新模态框标题
       document.title = `Configure ${tool.name} - Bioinformatics Platform`;
@@ -1396,7 +1432,8 @@
         },
         input_path: inputPath,
         output_path: `${globalParameters.output_path}/${toolId}_output`,
-        savedParams: toolParameters[toolId] || {}
+        savedParams: toolParameters[toolId] || {},
+        requiredOnly: true // 只请求必需参数
       };
       
       // 向工具页面发送参数
@@ -1606,4 +1643,4 @@
   </script>
 </body>
 
-</html>
+</html>  
