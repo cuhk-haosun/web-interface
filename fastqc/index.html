@@ -37,7 +37,6 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
-        /* 禁用状态的输入框样式 */
         input:disabled {
             background-color: #f5f5f5;
             cursor: not-allowed;
@@ -178,7 +177,7 @@
     </div>
 
     <script>
-        // 全局变量：存储运行信息
+        // 全局变量
         let currentRunInfo = {
             owner: 'cuhk-haosun',
             repo: 'code-docker-fastqc',
@@ -186,21 +185,34 @@
         };
 
         let workflowTriggerTime = 0;
-        // 标记是否通过工作流调用
         let isWorkflowMode = false;
 
-        // 监听来自主页面的消息
+        // 工具准备就绪，通知主页面
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('工具页面加载完成，通知主页面');
+            window.parent.postMessage({ action: 'toolReady' }, window.location.origin);
+        });
+
+        // 监听主页面消息
         window.addEventListener('message', function(event) {
-            // 验证消息来源（确保同域）
-            if (event.origin !== window.location.origin) return;
+            console.log('收到消息:', event.data);
+            
+            // 验证消息来源
+            if (event.origin !== window.location.origin) {
+                console.warn('拒绝来自未知源的消息:', event.origin);
+                return;
+            }
 
             const data = event.data;
             
-            // 处理主页面发送的参数
+            // 处理参数加载
             if (data.action === 'loadParameters') {
                 isWorkflowMode = true;
                 const globalParams = data.globalParameters || {};
                 const toolParams = data.parameters || {};
+
+                console.log('加载全局参数:', globalParams);
+                console.log('加载工具参数:', toolParams);
 
                 // 映射全局参数到表单
                 const paramMap = {
@@ -215,29 +227,30 @@
                 for (const [globalKey, formId] of Object.entries(paramMap)) {
                     const inputElement = document.getElementById(formId);
                     if (inputElement && globalParams[globalKey]) {
+                        console.log(`填充参数: ${formId} = ${globalParams[globalKey]}`);
                         inputElement.value = globalParams[globalKey];
                         inputElement.disabled = true;
                     }
                 }
 
-                // 填充工具特有参数（如threadNum）
+                // 填充工具特有参数
                 for (const [key, value] of Object.entries(toolParams)) {
                     const inputElement = document.getElementById(key);
                     if (inputElement) {
+                        console.log(`填充工具参数: ${key} = ${value}`);
                         inputElement.value = value;
                     }
                 }
 
-                // 通知主页面：工具页面已准备好
+                // 通知主页面：工具已填充参数
                 window.parent.postMessage({
-                    action: 'toolReady',
+                    action: 'toolParametersLoaded',
                     toolId: data.toolId
                 }, window.location.origin);
             }
 
-            // 处理主页面的"保存参数"请求
+            // 处理保存参数请求
             if (data.action === 'saveParameters') {
-                // 收集所有表单参数
                 const params = {
                     input_path: document.getElementById('inputPath').value,
                     output_path: document.getElementById('outputPath').value,
@@ -247,7 +260,7 @@
                     token: document.getElementById('githubToken').value
                 };
 
-                // 发送参数回主页面
+                console.log('保存参数:', params);
                 window.parent.postMessage({
                     action: 'parametersSaved',
                     toolId: data.toolId,
