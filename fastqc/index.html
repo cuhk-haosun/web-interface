@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastQC Workflow Trigger (Test)</title>
     <style>
+        /* 保持原有样式不变 */
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
@@ -112,6 +113,7 @@
 </head>
 <body>
     <div class="container">
+        <!-- 保持原有HTML结构不变 -->
         <div style="text-align: center; margin-bottom: 20px;">
             <img src="images/cuhk_logo.png" 
                  alt="CUHK Logo" 
@@ -193,7 +195,7 @@
             window.parent.postMessage({ action: 'toolReady' }, window.location.origin);
         });
 
-        // 监听主页面消息
+        // 监听主页面消息（核心修改：添加对 execute 动作的处理）
         window.addEventListener('message', function(event) {
             console.log('收到消息:', event.data);
             
@@ -205,7 +207,7 @@
 
             const data = event.data;
             
-            // 处理参数加载
+            // 1. 处理参数加载（原有逻辑）
             if (data.action === 'loadParameters') {
                 isWorkflowMode = true;
                 const globalParams = data.globalParameters || {};
@@ -237,19 +239,18 @@
                 for (const [key, value] of Object.entries(toolParams)) {
                     const inputElement = document.getElementById(key);
                     if (inputElement) {
-                        console.log(`填充工具参数: ${key} = ${value}`);
                         inputElement.value = value;
                     }
                 }
 
-                // 通知主页面：工具已填充参数
+                // 通知主页面：工具已准备好
                 window.parent.postMessage({
-                    action: 'toolParametersLoaded',
+                    action: 'toolReady',
                     toolId: data.toolId
                 }, window.location.origin);
             }
 
-            // 处理保存参数请求
+            // 2. 处理保存参数请求（原有逻辑）
             if (data.action === 'saveParameters') {
                 const params = {
                     input_path: document.getElementById('inputPath').value,
@@ -267,9 +268,36 @@
                     parameters: params
                 }, window.location.origin);
             }
+
+            // 3. 新增：处理执行命令（关键逻辑）
+            if (data.action === 'execute') {
+                console.log('收到执行命令:', data);
+                // 调用实际触发工作流的函数，传入参数
+                triggerFastQCWorkflow(data.parameters, data.globalParameters)
+                    .then(runId => {
+                        // 执行成功后，通知主页面
+                        window.parent.postMessage({
+                            action: 'executionComplete',
+                            toolId: data.toolId,
+                            success: true,
+                            runId: runId,
+                            message: 'Workflow executed successfully'
+                        }, window.location.origin);
+                    })
+                    .catch(error => {
+                        // 执行失败后，通知主页面
+                        window.parent.postMessage({
+                            action: 'executionComplete',
+                            toolId: data.toolId,
+                            success: false,
+                            runId: null,
+                            message: error.message
+                        }, window.location.origin);
+                    });
+            }
         });
 
-        // 处理"运行FastQC"按钮点击
+        // 处理"运行FastQC"按钮点击（原有逻辑，供独立使用）
         document.getElementById('processButton').addEventListener('click', async function() {
             // 重置结果按钮状态
             document.getElementById('resultsButton').style.display = 'none';
@@ -289,73 +317,21 @@
                 return;
             }
     
+            // 调用触发函数（复用同一个核心函数）
             try {
-                const repoOwner = 'cuhk-haosun';
-                const repoName = 'code-docker-fastqc';
-                const workflowId = 'run-fastqc.yaml';
-        
-                // 1. 触发工作流
-                showStatus('Triggering workflow... / 正在触发工作流...', 'loading');
-                await triggerWorkflow(repoOwner, repoName, workflowId, {
-                    INPUT_PATH: inputPath,
-                    OUTPUT_PATH: outputPath,
-                    JOB_NAME: jobName,
-                    THREAD_NUM: threadNum,
-                    RUN_LOCATION: runLocation
-                }, githubToken);
-        
-                // 2. 等待8秒后获取runId
-                showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
-                await new Promise(resolve => setTimeout(resolve, 8000));
-                
-                // 3. 获取runId（带重试）
-                const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
-                
-                // 4. 存储运行信息并显示结果按钮
-                currentRunInfo = { owner: repoOwner, repo: repoName, runId };
+                const runId = await triggerFastQCWorkflow(
+                    { thread_num: threadNum },  // 工具特有参数
+                    { input_path: inputPath, output_path: outputPath, job_name: jobName, run_location: runLocation, token: githubToken }  // 全局参数
+                );
+                currentRunInfo.runId = runId;
                 showStatus(`Workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
                 document.getElementById('resultsButton').style.display = 'block';
-                
-                // 如果是工作流模式，通知主页面执行完成
-                if (isWorkflowMode) {
-                    window.parent.postMessage({
-                        action: 'executionComplete',
-                        toolId: data?.toolId,
-                        success: true,
-                        runId: runId,
-                        message: 'Workflow executed successfully'
-                    }, window.location.origin);
-                }
-                
             } catch (error) {
-                console.error('Error:', error);
-                let errorMsg = `Error: ${error.message}`;
-                
-                if (error.message.includes('401')) {
-                    errorMsg = 'Authentication failed. Please check your GitHub Token. / 认证失败，请检查GitHub Token';
-                } else if (error.message.includes('404')) {
-                    errorMsg = 'Repository or workflow not found. / 仓库或工作流未找到';
-                } else if (error.message.includes('403')) {
-                    errorMsg = 'Permission denied. Token may not have enough permissions. / 权限不足，Token可能缺少必要权限';
-                } else if (error.message.includes('Failed to get run ID')) {
-                    errorMsg = 'Workflow started but failed to get run ID. Please check Actions manually. / 工作流已启动但获取ID失败，请手动检查Actions';
-                }
-                
-                showStatus(errorMsg, 'error');
-                
-                // 如果是工作流模式，通知主页面执行失败
-                if (isWorkflowMode) {
-                    window.parent.postMessage({
-                        action: 'executionComplete',
-                        toolId: data?.toolId,
-                        success: false,
-                        message: errorMsg
-                    }, window.location.origin);
-                }
+                showStatus(`Error: ${error.message}`, 'error');
             }
         });
 
-        // 结果按钮点击事件
+        // 结果按钮点击事件（原有逻辑）
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 window.open(
@@ -367,26 +343,76 @@
             }
         });
 
-        // 触发工作流函数
-        async function triggerWorkflow(owner, repo, workflowId, inputs, token) {
-            workflowTriggerTime = Date.now();
-            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
-            const headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/vnd.github.v3+json',
-                'Authorization': `token ${token}`
-            };
-            const body = { ref: 'main', inputs };
-            
-            const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
+        // 核心函数：触发FastQC工作流（复用逻辑，供按钮点击和execute命令调用）
+        async function triggerFastQCWorkflow(toolParams, globalParams) {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const repoOwner = 'cuhk-haosun';
+                    const repoName = 'code-docker-fastqc';
+                    const workflowId = 'run-fastqc.yaml';
+                    const token = globalParams.token;
+
+                    // 验证Token
+                    if (!token) {
+                        reject(new Error('Missing GitHub Token / 缺少GitHub Token'));
+                        return;
+                    }
+
+                    // 记录触发时间
+                    workflowTriggerTime = Date.now();
+
+                    // 1. 调用GitHub API触发工作流
+                    const url = `https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows/${workflowId}/dispatches`;
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Authorization': `token ${token}`
+                    };
+                    // 构建输入参数（合并工具特有参数和全局参数）
+                    const body = {
+                        ref: 'main',
+                        inputs: {
+                            INPUT_PATH: globalParams.input_path,
+                            OUTPUT_PATH: globalParams.output_path,
+                            JOB_NAME: globalParams.job_name,
+                            THREAD_NUM: toolParams.thread_num || 8,  // 默认8线程
+                            RUN_LOCATION: globalParams.run_location
+                        }
+                    };
+
+                    console.log('触发工作流的参数:', body);
+                    const response = await fetch(url, { 
+                        method: 'POST', 
+                        headers: headers, 
+                        body: JSON.stringify(body) 
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                    }
+
+                    // 2. 等待8秒后获取runId
+                    console.log('等待工作流启动...');
+                    await new Promise(resolve => setTimeout(resolve, 8000));
+
+                    // 3. 重试获取runId
+                    const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, token);
+                    if (!runId) {
+                        throw new Error('Failed to get run ID / 获取运行ID失败');
+                    }
+
+                    // 成功返回runId
+                    resolve(runId);
+
+                } catch (error) {
+                    console.error('触发工作流失败:', error);
+                    reject(error);
+                }
+            });
         }
 
-        // 获取runId（带重试）
+        // 获取runId（带重试，原有逻辑）
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
             const MAX_RETRIES = 5;
             const INITIAL_DELAY = 0;
@@ -398,23 +424,22 @@
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
                 
-                showStatus(`Getting run ID (attempt ${attempt}/${MAX_RETRIES})...<br>正在获取运行ID(尝试 ${attempt}/${MAX_RETRIES})...`, 'loading');
-                
+                console.log(`获取runId（尝试 ${attempt}/${MAX_RETRIES}）`);
                 try {
                     const runId = await getLatestRunId(owner, repo, workflowId, token);
                     if (runId) {
-                        console.log(`Successfully obtained run ID: ${runId}`);
+                        console.log(`成功获取runId: ${runId}`);
                         return runId;
                     }
                 } catch (error) {
-                    console.log(`Attempt ${attempt} failed:`, error.message);
+                    console.log(`尝试 ${attempt} 失败:`, error.message);
                 }
             }
             
             throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
         }
 
-        // 获取最新runId
+        // 获取最新runId（原有逻辑）
         async function getLatestRunId(owner, repo, workflowId, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
             const headers = {
@@ -430,7 +455,7 @@
             const runs = data.workflow_runs || [];
             
             if (runs.length === 0) {
-                console.warn('No workflow runs found in the response');
+                console.warn('No workflow runs found / 未找到工作流运行记录');
                 return null;
             }
             
@@ -441,7 +466,7 @@
             
             // 15秒内的运行视为有效
             if (timeDifference < 15000) {
-                console.log(`Found valid run: ID=${latestRun.id}, Created=${latestRun.created_at}, Age=${timeDifference/1000}s`);
+                console.log(`找到有效运行: ID=${latestRun.id}, 创建时间=${latestRun.created_at}`);
                 return latestRun.id;
             }
             
@@ -451,7 +476,7 @@
                 const age = currentTime - runTime;
                 
                 if (runTime > workflowTriggerTime && age < 20000) {
-                    console.log(`Found alternative run: ID=${run.id}, Created=${run.created_at}, Age=${age/1000}s`);
+                    console.log(`找到匹配运行: ID=${run.id}, 创建时间=${run.created_at}`);
                     return run.id;
                 }
             }
@@ -459,7 +484,7 @@
             return null;
         }
 
-        // 显示状态函数
+        // 显示状态函数（原有逻辑）
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
