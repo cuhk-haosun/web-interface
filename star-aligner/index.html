@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Star-aligner Workflow Trigger</title>
     <style>
+        /* 保持原有样式不变 */
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
@@ -36,6 +37,10 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
+        }
+        input:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
         }
         button {
             color: white;
@@ -128,24 +133,24 @@
         
         <div class="form-group">
             <label for="inputPath">Input path <span class="required">*</span>:</label>
-            <input type="text" id="inputPath" placeholder="e.g. /data/raw_fastq" value="trim.fastq" required>
+            <input type="text" id="inputPath" placeholder="e.g. /data/raw_fastq" required>
         </div>
         
         <div class="form-group">
             <label for="outputPath">Output path <span class="required">*</span>:</label>
-            <input type="text" id="outputPath" placeholder="e.g. /data/star_bam" value="bam" required>
+            <input type="text" id="outputPath" placeholder="e.g. /data/star_bam" required>
         </div>
         
         <div class="form-row">
             <div class="form-group">
                 <label for="refPath">Reference path <span class="required">*</span>:</label>
-                <input type="text" id="refPath" placeholder="e.g. /data/reference" value="ref" required>
+                <input type="text" id="refPath" placeholder="e.g. /data/reference" required>
                 <small>Path to genome reference directory / 基因组参考序列目录路径</small>
             </div>
             
             <div class="form-group">
                 <label for="genomeIndex">Genome index <span class="required">*</span>:</label>
-                <input type="text" id="genomeIndex" placeholder="e.g. star.index.readleng.150" value="star.index" required>
+                <input type="text" id="genomeIndex" placeholder="e.g. star.index.readleng.150" required>
                 <small>Name of prebuilt genome index / 预构建的基因组索引名称</small>
             </div>
         </div>
@@ -153,18 +158,18 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="jobName">Job name <span class="required">*</span>:</label>
-                <input type="text" id="jobName" placeholder="e.g. rnaseq_star_2024" value="star-rnaseq-align" required>
+                <input type="text" id="jobName" placeholder="e.g. rnaseq_star_2024" required>
             </div>
             
             <div class="form-group">
                 <label for="threadNum">Thread number <span class="required">*</span>:</label>
-                <input type="number" id="threadNum" placeholder="e.g. 16" value="96" min="1" required>
+                <input type="number" id="threadNum" placeholder="e.g. 16" min="1" required>
             </div>
         </div>
         
         <div class="form-group">
             <label for="runLocation">Run location <span class="required">*</span>:</label>
-            <input type="text" id="runLocation" placeholder="e.g. compute-01" value="pipeline" required>
+            <input type="text" id="runLocation" placeholder="e.g. compute-01" required>
             <small>Specify the runner group (pipeline) / 指定运行器组（如pipeline）</small>
         </div>
         
@@ -202,21 +207,135 @@
     </div>
 
     <script>
-        // A global variable that stores operation information
+        // 全局变量
         let currentRunInfo = {
             owner: 'cuhk-haosun',
             repo: 'code-docker-star-aligner',
             runId: null
         };
 
-        let workflowTriggerTime = 0; // Record the trigger timestamp
+        let workflowTriggerTime = 0;
+        let isWorkflowMode = false;
 
+        // 工具准备就绪，通知主页面
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Star-aligner工具页面加载完成，通知主页面');
+            window.parent.postMessage({ action: 'toolReady' }, window.location.origin);
+        });
+
+        // 监听主页面消息（添加对execute动作的处理）
+        window.addEventListener('message', function(event) {
+            console.log('Star-aligner收到消息:', event.data);
+            
+            // 验证消息来源
+            if (event.origin !== window.location.origin) {
+                console.warn('拒绝来自未知源的消息:', event.origin);
+                return;
+            }
+
+            const data = event.data;
+            
+            // 1. 处理参数加载
+            if (data.action === 'loadParameters') {
+                isWorkflowMode = true;
+                const globalParams = data.globalParameters || {};
+                const toolParams = data.parameters || {};
+
+                console.log('Star-aligner加载全局参数:', globalParams);
+                console.log('Star-aligner加载工具参数:', toolParams);
+
+                // 映射全局参数到表单
+                const paramMap = {
+                    input_path: 'inputPath',
+                    output_path: 'outputPath',
+                    job_name: 'jobName',
+                    run_location: 'runLocation',
+                    token: 'githubToken'
+                };
+
+                // 填充全局参数并禁用编辑
+                for (const [globalKey, formId] of Object.entries(paramMap)) {
+                    const inputElement = document.getElementById(formId);
+                    if (inputElement && globalParams[globalKey]) {
+                        console.log(`Star-aligner填充参数: ${formId} = ${globalParams[globalKey]}`);
+                        inputElement.value = globalParams[globalKey];
+                        inputElement.disabled = true;
+                    }
+                }
+
+                // 填充工具特有参数
+                for (const [key, value] of Object.entries(toolParams)) {
+                    const inputElement = document.getElementById(key);
+                    if (inputElement) {
+                        console.log(`Star-aligner填充工具参数: ${key} = ${value}`);
+                        inputElement.value = value;
+                    }
+                }
+
+                // 通知主页面：工具已准备好
+                window.parent.postMessage({
+                    action: 'toolReady',
+                    toolId: data.toolId
+                }, window.location.origin);
+            }
+
+            // 2. 处理保存参数请求
+            if (data.action === 'saveParameters') {
+                const params = {
+                    input_path: document.getElementById('inputPath').value,
+                    output_path: document.getElementById('outputPath').value,
+                    ref_path: document.getElementById('refPath').value,
+                    genome_index: document.getElementById('genomeIndex').value,
+                    job_name: document.getElementById('jobName').value,
+                    thread_num: document.getElementById('threadNum').value,
+                    run_location: document.getElementById('runLocation').value,
+                    extra_params: document.getElementById('extraParams').value,
+                    token: document.getElementById('githubToken').value
+                };
+
+                console.log('Star-aligner保存参数:', params);
+                window.parent.postMessage({
+                    action: 'parametersSaved',
+                    toolId: data.toolId,
+                    parameters: params
+                }, window.location.origin);
+            }
+
+            // 3. 处理执行命令
+            if (data.action === 'execute') {
+                console.log('Star-aligner收到执行命令:', data);
+                // 调用实际触发工作流的函数
+                triggerStarWorkflow(data.parameters, data.globalParameters)
+                    .then(runId => {
+                        // 执行成功后，通知主页面
+                        window.parent.postMessage({
+                            action: 'executionComplete',
+                            toolId: data.toolId,
+                            success: true,
+                            runId: runId,
+                            message: 'Workflow executed successfully'
+                        }, window.location.origin);
+                    })
+                    .catch(error => {
+                        // 执行失败后，通知主页面
+                        window.parent.postMessage({
+                            action: 'executionComplete',
+                            toolId: data.toolId,
+                            success: false,
+                            runId: null,
+                            message: error.message
+                        }, window.location.origin);
+                    });
+            }
+        });
+
+        // 处理"运行Star-aligner"按钮点击（供独立使用）
         document.getElementById('processButton').addEventListener('click', async function() {
-            // Reset the status of the result button
+            // 重置结果按钮状态
             document.getElementById('resultsButton').style.display = 'none';
             currentRunInfo.runId = null;
             
-            // Obtain the form value
+            // 获取表单值
             const inputPath = document.getElementById('inputPath').value.trim();
             const outputPath = document.getElementById('outputPath').value.trim();
             const refPath = document.getElementById('refPath').value.trim();
@@ -227,61 +346,38 @@
             const extraParams = document.getElementById('extraParams').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
     
-            // Verify the required fields
+            // 验证必填字段
             if (!inputPath || !outputPath || !refPath || !genomeIndex || !jobName || !threadNum || !runLocation || !githubToken) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
             }
     
+            // 调用触发函数
             try {
-                const repoOwner = 'cuhk-haosun';
-                const repoName = 'code-docker-star-aligner';
-                const workflowId = 'action.matrix.yaml';
-        
-                // 1. Trigger the workflow
-                showStatus('Triggering Star-aligner workflow... / 正在触发Star-aligner工作流...', 'loading');
-                await triggerWorkflow(repoOwner, repoName, workflowId, {
-                    INPUT_PATH: inputPath,
-                    OUTPUT_PATH: outputPath,
-                    REF_PATH: refPath,
-                    GENOME_INDEX: genomeIndex,
-                    JOB_NAME: jobName,
-                    THREAD_NUM: threadNum,
-                    RUN_LOCATION: runLocation,
-                    ADDITIONAL_RUN_PARAM: extraParams
-                }, githubToken);
-        
-                // 2. Wait for 8 seconds and then start to obtain runId (increase the waiting time).
-                showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
-                await new Promise(resolve => setTimeout(resolve, 8000)); // Wait for 8 seconds
-                
-                // 3. Obtain runId (with retry and status update)
-                const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
-                
-                // 4. Store the operation information and display the result button
-                currentRunInfo = { owner: repoOwner, repo: repoName, runId };
+                const runId = await triggerStarWorkflow(
+                    { 
+                        ref_path: refPath,
+                        genome_index: genomeIndex,
+                        thread_num: threadNum,
+                        extra_params: extraParams
+                    },  // 工具特有参数
+                    { 
+                        input_path: inputPath, 
+                        output_path: outputPath, 
+                        job_name: jobName, 
+                        run_location: runLocation, 
+                        token: githubToken 
+                    }  // 全局参数
+                );
+                currentRunInfo.runId = runId;
                 showStatus(`Star-aligner workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
                 document.getElementById('resultsButton').style.display = 'block';
-                
             } catch (error) {
-                console.error('Error:', error);
-                let errorMsg = `Error: ${error.message}`;
-                
-                if (error.message.includes('401')) {
-                    errorMsg = 'Authentication failed. Please check your GitHub Token. / 认证失败，请检查GitHub Token';
-                } else if (error.message.includes('404')) {
-                    errorMsg = 'Repository or workflow not found. / 仓库或工作流未找到';
-                } else if (error.message.includes('403')) {
-                    errorMsg = 'Permission denied. Token may not have enough permissions. / 权限不足，Token可能缺少必要权限';
-                } else if (error.message.includes('Failed to get run ID')) {
-                    errorMsg = 'Workflow started but failed to get run ID. Please check Actions manually. / 工作流已启动但获取ID失败，请手动检查Actions';
-                }
-                
-                showStatus(errorMsg, 'error');
+                showStatus(`Error: ${error.message}`, 'error');
             }
         });
 
-        // Result button click event - Jump to the log page
+        // 结果按钮点击事件
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 window.open(
@@ -293,55 +389,106 @@
             }
         });
 
-        // The function that triggers the workflow
-        async function triggerWorkflow(owner, repo, workflowId, inputs, token) {
-            workflowTriggerTime = Date.now(); // Record the precise trigger time
-            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
-            const headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/vnd.github.v3+json',
-                'Authorization': `token ${token}`
-            };
-            const body = { ref: 'main', inputs };
-            
-            const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
+        // 核心函数：触发Star-aligner工作流
+        async function triggerStarWorkflow(toolParams, globalParams) {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const repoOwner = 'cuhk-haosun';
+                    const repoName = 'code-docker-star-aligner';
+                    const workflowId = 'action.matrix.yaml';
+                    const token = globalParams.token;
+
+                    // 验证Token
+                    if (!token) {
+                        reject(new Error('Missing GitHub Token / 缺少GitHub Token'));
+                        return;
+                    }
+
+                    // 记录触发时间
+                    workflowTriggerTime = Date.now();
+
+                    // 1. 调用GitHub API触发工作流
+                    const url = `https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows/${workflowId}/dispatches`;
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Authorization': `token ${token}`
+                    };
+                    // 构建输入参数（合并工具特有参数和全局参数）
+                    const body = {
+                        ref: 'main',
+                        inputs: {
+                            INPUT_PATH: globalParams.input_path,
+                            OUTPUT_PATH: globalParams.output_path,
+                            REF_PATH: toolParams.ref_path,
+                            GENOME_INDEX: toolParams.genome_index,
+                            JOB_NAME: globalParams.job_name,
+                            THREAD_NUM: toolParams.thread_num || 16,  // 默认16线程
+                            RUN_LOCATION: globalParams.run_location,
+                            ADDITIONAL_RUN_PARAM: toolParams.extra_params || ''
+                        }
+                    };
+
+                    console.log('Star-aligner触发工作流的参数:', body);
+                    const response = await fetch(url, { 
+                        method: 'POST', 
+                        headers: headers, 
+                        body: JSON.stringify(body) 
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                    }
+
+                    // 2. 等待8秒后获取runId
+                    console.log('Star-aligner等待工作流启动...');
+                    await new Promise(resolve => setTimeout(resolve, 8000));
+
+                    // 3. 重试获取runId
+                    const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, token);
+                    if (!runId) {
+                        throw new Error('Failed to get run ID / 获取运行ID失败');
+                    }
+
+                    // 成功返回runId
+                    resolve(runId);
+
+                } catch (error) {
+                    console.error('Star-aligner触发工作流失败:', error);
+                    reject(error);
+                }
+            });
         }
 
-        // runId acquisition function with Retry Mechanism (Optimized Version)
+        // 获取runId（带重试）
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
-            const MAX_RETRIES = 5; // Reduce the number of retries
-            const INITIAL_DELAY = 0; // Initial delay (already waiting externally for 8 seconds)
-            const RETRY_DELAY = 3000; // Each retry interval is 3 seconds
+            const MAX_RETRIES = 5;
+            const INITIAL_DELAY = 0;
+            const RETRY_DELAY = 3000;
             
             for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-                // Calculate the current delay
                 const delay = INITIAL_DELAY + (attempt - 1) * RETRY_DELAY;
                 if (delay > 0) {
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
                 
-                showStatus(`Getting run ID (attempt ${attempt}/${MAX_RETRIES})...<br>正在获取运行ID(尝试 ${attempt}/${MAX_RETRIES})...`, 'loading');
-                
+                console.log(`Star-aligner获取runId（尝试 ${attempt}/${MAX_RETRIES}）`);
                 try {
                     const runId = await getLatestRunId(owner, repo, workflowId, token);
                     if (runId) {
-                        console.log(`Successfully obtained run ID: ${runId}`);
+                        console.log(`Star-aligner成功获取runId: ${runId}`);
                         return runId;
                     }
                 } catch (error) {
-                    console.log(`Attempt ${attempt} failed:`, error.message);
+                    console.log(`Star-aligner尝试 ${attempt} 失败:`, error.message);
                 }
             }
             
             throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
         }
 
-        // Obtain the specific implementation (optimized version) of the latest runId
+        // 获取最新runId
         async function getLatestRunId(owner, repo, workflowId, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
             const headers = {
@@ -353,38 +500,32 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             
             const data = await response.json();
-            
-            // Obtain the current timestamp instead of using the trigger time
             const currentTime = Date.now();
-            
-            // Check the running records returned by the API
             const runs = data.workflow_runs || [];
+            
             if (runs.length === 0) {
-                console.warn('No workflow runs found in the response');
+                console.warn('Star-aligner: No workflow runs found / 未找到工作流运行记录');
                 return null;
             }
             
-            // Obtain the latest operation record (the first one)
+            // 查找最近触发的运行
             const latestRun = runs[0];
             const latestRunTime = new Date(latestRun.created_at).getTime();
             const timeDifference = currentTime - latestRunTime;
             
-            // Verification time window: Only records created within 15 seconds are accepted
-            if (timeDifference < 15000) { // Records within 15 seconds are considered valid
-                console.log(`Found valid run: ID=${latestRun.id}, Created=${latestRun.created_at}, Age=${timeDifference/1000}s`);
+            // 15秒内的运行视为有效
+            if (timeDifference < 15000) {
+                console.log(`Star-aligner找到有效运行: ID=${latestRun.id}, 创建时间=${latestRun.created_at}`);
                 return latestRun.id;
             }
             
-            console.warn(`Latest run too old (${timeDifference/1000}s ago), no valid run found`);
-            
-            // Try to find the records that better meet the conditions in the list
+            // 尝试查找更符合条件的记录
             for (const run of runs) {
                 const runTime = new Date(run.created_at).getTime();
                 const age = currentTime - runTime;
                 
-                // Look for the records created after the trigger time
-                if (runTime > workflowTriggerTime && age < 20000) { // Records within 20 seconds
-                    console.log(`Found alternative run: ID=${run.id}, Created=${run.created_at}, Age=${age/1000}s`);
+                if (runTime > workflowTriggerTime && age < 20000) {
+                    console.log(`Star-aligner找到匹配运行: ID=${run.id}, 创建时间=${run.created_at}`);
                     return run.id;
                 }
             }
@@ -392,7 +533,7 @@
             return null;
         }
 
-        // A function for displaying status information
+        // 显示状态函数
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
