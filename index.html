@@ -1236,6 +1236,9 @@
           token: document.getElementById('global_token').value,
           run_location: document.getElementById('run_location').value
         };
+
+        // 调试日志：确认收集的全局参数
+        console.log('收集的全局参数:', globalParameters);
         
         // 验证全局参数
         if (!globalParameters.input_path || !globalParameters.output_path || 
@@ -1294,11 +1297,17 @@
       document.getElementById('run-workflow').addEventListener('click', function() {
         // 保存最后一个工具的参数
         saveCurrentToolParameters();
+
+        // 调试日志：记录所有工具的参数
+        console.log('所有工具的参数:', toolParameters);
         
         // 验证所有工具参数
         for (const toolId of workflowSteps) {
           const tool = toolInfo[toolId];
           const params = toolParameters[toolId];
+
+          // 调试日志：检查工具参数
+          console.log(`检查工具 ${toolId} 的参数:`, params);
           
           // 检查是否所有必需参数都已设置
           for (const param of tool.requiredParams) {
@@ -1330,6 +1339,9 @@
         if (event.origin !== window.location.origin) return;
         
         const data = event.data;
+
+        // 调试日志：记录收到的消息
+        console.log('收到来自工具页面的消息:', data);
         
         // 工具页面已加载完成并准备好接收参数
         if (data.action === 'toolReady') {
@@ -1340,6 +1352,9 @@
         // 工具页面返回的参数
         if (data.action === 'parametersSaved') {
           toolParameters[data.toolId] = data.parameters;
+
+          // 调试日志：记录收到的工具参数
+          console.log(`收到工具 ${data.toolId} 的参数:`, data.parameters);
         }
         
         // 工具执行结果
@@ -1403,6 +1418,9 @@
       const toolId = workflowSteps[index];
       const tool = toolInfo[toolId];
       const iframe = document.getElementById('tool-iframe');
+
+      // 调试日志：记录加载的工具和iframe源
+      console.log(`加载工具配置: ${toolId}, URL: ${tool.url}`);
       
       // 设置iframe源
       iframe.src = tool.url + '?toolId=' + toolId;
@@ -1423,15 +1441,30 @@
     // 向工具页面发送参数
     function sendParametersToTool(toolId) {
       const iframe = document.getElementById('tool-iframe');
-      
-      // 向iframe发送参数
-      iframe.contentWindow.postMessage({
+
+      // 构建发送的消息
+      const message = {
         action: 'loadParameters',
         toolId: toolId,
         parameters: toolParameters[toolId] || {},
         globalParameters: globalParameters
-      }, window.location.origin);
+      };
+  
+      // 调试日志：记录发送的消息内容
+      console.log(`向工具 ${toolId} 发送参数:`, message);
+      
+      // 向iframe发送参数
+      iframe.contentWindow.postMessage(message, window.location.origin);
     }
+      
+      // 向iframe发送参数
+      //iframe.contentWindow.postMessage({
+      //  action: 'loadParameters',
+      //  toolId: toolId,
+      //  parameters: toolParameters[toolId] || {},
+      //  globalParameters: globalParameters
+      //}, window.location.origin);
+    //}
     
     // 更新工具进度显示
     function updateToolProgress() {
