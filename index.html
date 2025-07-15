@@ -1559,14 +1559,6 @@
         statusDiv.className = 'step-status step-running';
         statusDiv.querySelector('.status-message').textContent = 'Running / 运行中';
         
-        // 构建执行参数
-        const executionParams = {
-          action: 'execute',
-          toolId: toolId,
-          parameters: toolParameters[toolId],
-          globalParameters: globalParameters
-        };
-        
         // 创建iframe执行工具
         const executionIframe = document.createElement('iframe');
         executionIframe.id = `execution-${toolId}`;
@@ -1574,10 +1566,31 @@
         executionIframe.style.display = 'none';
         document.body.appendChild(executionIframe);
         
+        // 新增日志：确认iframe已添加
+        console.log(`已创建执行 iframe: ${executionIframe.src}`);
+    
         // 监听iframe加载完成
         executionIframe.onload = function() {
+          // 构建执行参数
+          const executionParams = {
+            action: 'execute',
+            toolId: toolId,
+            parameters: toolParameters[toolId],
+            globalParameters: globalParameters
+          };
+          
+          // 新增日志：确认发送执行命令
+          console.log(`向 ${toolId} 发送执行命令:`, executionParams);
+          
           // 向iframe发送执行命令
           executionIframe.contentWindow.postMessage(executionParams, window.location.origin);
+        };
+        
+        // 新增：监听 iframe 加载失败
+        executionIframe.onerror = function() {
+          console.error(`工具 ${toolId} 的 iframe 加载失败`);
+          // 触发失败处理，更新前端状态
+          handleToolExecutionResult(toolId, false, null, 'IFrame load failed');
         };
       }
     }
