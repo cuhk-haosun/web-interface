@@ -471,13 +471,20 @@
                         'Accept': 'application/vnd.github.v3+json',
                         'Authorization': `token ${token}`
                     };
+
+                    let threadNum = parseInt(toolParams.thread_num, 10);
+                    if (isNaN(threadNum) || threadNum < 1) {
+                        threadNum = 8; // 默认值
+                        console.log('使用默认线程数:', threadNum);
+                    }
+                    
                     const body = {
                         ref: 'main',
                         inputs: {
                             INPUT_PATH: globalParams.input_path,
                             OUTPUT_PATH: globalParams.output_path,
                             JOB_NAME: globalParams.job_name,
-                            THREAD_NUM: toolParams.thread_num || 8,
+                            THREAD_NUM: threadNum,
                             RUN_LOCATION: globalParams.run_location
                         }
                     };
