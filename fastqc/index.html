@@ -475,10 +475,12 @@
                         'Authorization': `token ${token}`
                     };
 
-                    let threadNum = parseInt(toolParams.thread_num, 10);
-                    if (isNaN(threadNum) || threadNum < 1) {
-                        threadNum = 8; // 默认值
+                    let threadNum = toolParams.thread_num.trim();
+                    if (!threadNum || isNaN(parseInt(threadNum, 10)) || parseInt(threadNum, 10) < 1) {
+                        threadNum = "8";
                         console.log('使用默认线程数:', threadNum);
+                    } else {
+                        threadNum = threadNum.toString();
                     }
                     
                     const body = {
