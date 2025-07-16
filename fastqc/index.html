@@ -265,11 +265,14 @@
 
             // 处理保存参数请求
             if (data.action === 'saveParameters') {
+                const threadNumInput = document.getElementById('threadNum').value.trim();
+                const threadNum = threadNumInput || '8';
+                
                 const params = {
                     input_path: document.getElementById('inputPath').value,
                     output_path: document.getElementById('outputPath').value,
                     job_name: document.getElementById('jobName').value,
-                    thread_num: document.getElementById('threadNum').value,
+                    thread_num: threadNum,
                     run_location: document.getElementById('runLocation').value,
                     token: document.getElementById('githubToken').value
                 };
