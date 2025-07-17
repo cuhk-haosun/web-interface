@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predefined Workflows</title>
+    <style>
+        /* 全局设置 */
+        * {
+            box-sizing: border-box;
+        }
+        
+        /* 保持与主页面一致的样式 */
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #444;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .workflow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            padding: 0 15px;
+        }
+
+        .workflow-card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            width: calc(100% - 30px); /* 修复右侧出界问题：减去容器内边距 */
+            min-height: 180px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8e8e8;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s, box-shadow 0.3s;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        .workflow-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .workflow-card h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .workflow-card p {
+            margin-bottom: 20px;
+        }
+
+        .bilingual {
+            margin-bottom: 5px;
+        }
+
+        .en {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .zh {
+            font-weight: normal;
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .btn {
+            display: inline-block;
+            color: white !important; /* 确保按钮文字为白色 */
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 确保双语按钮文字为白色 */
+        .btn .en,
+        .btn .zh {
+            color: white !important;
+        }
+
+        .btn-rrbs {
+            background: #006400;
+        }
+
+        .btn-rrbs:hover {
+            background: #004d00;
+        }
+
+        .btn-rnaseq {
+            background: #1E4B8B;
+        }
+
+        .btn-rnaseq:hover {
+            background: #153A6B;
+        }
+        
+        .btn-atacseq {
+            background: #fd7e14;
+        }
+        
+        .btn-atacseq:hover {
+            background: #e67312;
+        }
+
+        .btn-cutntag {
+            background: #6F4E37;
+        }
+        
+        .btn-cutntag:hover {
+            background: #5A3E2C;
+        }
+
+        @media (max-width: 900px) {
+            .workflow-container {
+                padding: 0 10px;
+            }
+            
+            .workflow-card {
+                width: calc(100% - 20px); /* 适配小屏幕内边距 */
+            }
+        }
+
+        @media (max-width: 600px) {
+            .workflow-card {
+                width: 100%; /* 在超小屏幕上使用全宽 */
+                max-width: 100%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="section">
+        <div class="section-title">
+            <span class="en">Don't know how to customize the analysis process? Use Our Predefined Workflows</span>
+            <span class="zh">不会自定义分析流程？使用我们的预设分析流程</span>
+        </div>
+
+        <div class="workflow-container">
+            <!-- RRBS Workflow Card -->
+            <div class="workflow-card">
+                <div>
+                    <h2>
+                        <div class="bilingual en">RRBS Workflow</div>
+                        <div class="bilingual zh">RRBS分析流程</div>
+                    </h2>
+                    <p>
+                        <div class="bilingual en">Reduced Representation Bisulfite Sequencing analysis</div>
+                        <div class="bilingual zh">简化基因组甲基化测序分析</div>
+                    </p>
+                </div>
+                <a href="rrbs/index.html" class="btn btn-rrbs">
+                    <span class="en">RRBS Workflow</span> /
+                    <span class="zh">RRBS分析流程</span>
+                </a>
+            </div>
+
+            <!-- RNAseq Workflow Card -->
+            <div class="workflow-card">
+                <div>
+                    <h2>
+                        <div class="bilingual en">RNAseq Workflow</div>
+                        <div class="bilingual zh">RNAseq分析流程</div>
+                    </h2>
+                    <p>
+                        <div class="bilingual en">RNA sequencing analysis workflow</div>
+                        <div class="bilingual zh">RNA测序分析流程</div>
+                    </p>
+                </div>
+                <a href="rnaseq/index.html" class="btn btn-rnaseq">
+                    <span class="en">RNAseq Workflow</span> /
+                    <span class="zh">RNAseq分析流程</span>
+                </a>
+            </div>
+            
+            <!-- ATACseq Workflow Card -->
+            <div class="workflow-card">
+                <div>
+                    <h2>
+                        <div class="bilingual en">ATACseq Workflow</div>
+                        <div class="bilingual zh">ATACseq分析流程</div>
+                    </h2>
+                    <p>
+                        <div class="bilingual en">Assay for Transposase-Accessible Chromatin sequencing analysis</div>
+                        <div class="bilingual zh">染色质可及性测序分析</div>
+                    </p>
+                </div>
+                <a href="atacseq/index.html" class="btn btn-atacseq">
+                    <span class="en">ATACseq Workflow</span> /
+                    <span class="zh">ATACseq分析流程</span>
+                </a>
+            </div>
+            
+            <!-- Cut&Tag Workflow Card -->
+            <div class="workflow-card">
+                <div>
+                    <h2>
+                        <div class="bilingual en">Cut&Tag Workflow</div>
+                        <div class="bilingual zh">Cut&Tag分析流程</div>
+                    </h2>
+                    <p>
+                        <div class="bilingual en">Cleavage Under Targets & Tagmentation workflow</div>
+                        <div class="bilingual zh">靶向切割与标记分析流程</div>
+                    </p>
+                </div>
+                <a href="cutntag/index.html" class="btn btn-cutntag">
+                    <span class="en">Cut&Tag Workflow</span> /
+                    <span class="zh">Cut&Tag分析流程</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
