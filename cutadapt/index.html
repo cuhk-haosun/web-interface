@@ -62,9 +62,18 @@
         #processButton:hover {
             background: #5a32a3;
         }
+        #statusButton {
+            display: none;
+            background: #0d6efd; /* 蓝色按钮 */
+            margin-top: 10px;
+        }
+        #statusButton:hover {
+            background: #0b5ed7;
+        }
         #resultsButton {
             display: none;
             background: #17a2b8;
+            margin-top: 10px;
         }
         #resultsButton:hover {
             background: #138496;
@@ -107,6 +116,14 @@
         }
         .required {
             color: #dc3545;
+        }
+        .status-details {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            background-color: #f0f7ff;
+            border: 1px solid #cce5ff;
         }
     </style>
 </head>
@@ -184,19 +201,21 @@
         </div>
         
         <button id="processButton">Run Cutadapt / 运行 Cutadapt</button>
-        <button id="resultsButton">
-            See Results / 查看结果
-        </button>
+        <button id="statusButton">Check Run Status / 查看运行状态</button>
+        <button id="resultsButton">See Results / 查看结果</button>
         
         <div id="status"></div>
+        <div id="statusDetails" class="status-details"></div>
     </div>
 
     <script>
-        // 全局变量
+        // 全局变量（新增状态管理相关变量）
         let currentRunInfo = {
             owner: 'cuhk-haosun',
             repo: 'code-docker-cutadapt',
-            runId: null
+            runId: null,
+            token: null, // 保存Token用于状态查询
+            statusInterval: null // 轮询定时器ID
         };
 
         let workflowTriggerTime = 0;
@@ -208,11 +227,10 @@
             window.parent.postMessage({ action: 'toolReady' }, window.location.origin);
         });
 
-        // 监听主页面消息（添加对execute动作的处理）
+        // 监听主页面消息（完善动态路径处理）
         window.addEventListener('message', function(event) {
             console.log('Cutadapt收到消息:', event.data);
             
-            // 验证消息来源
             if (event.origin !== window.location.origin) {
                 console.warn('拒绝来自未知源的消息:', event.origin);
                 return;
@@ -220,16 +238,16 @@
 
             const data = event.data;
             
-            // 1. 处理参数加载
+            // 1. 处理参数加载（接收动态路径）
             if (data.action === 'loadParameters') {
                 isWorkflowMode = true;
                 const globalParams = data.globalParameters || {};
                 const toolParams = data.parameters || {};
 
                 console.log('Cutadapt加载全局参数:', globalParams);
-                console.log('Cutadapt加载工具参数:', toolParams);
+                console.log('Cutadapt加载工具参数（含动态路径）:', toolParams);
 
-                // 映射全局参数到表单
+                // 映射参数到表单（优先使用工具参数中的动态路径）
                 const paramMap = {
                     input_path: 'inputPath',
                     output_path: 'outputPath',
@@ -238,39 +256,43 @@
                     token: 'githubToken'
                 };
 
-                // 填充全局参数并禁用编辑
+                // 填充参数并禁用编辑（动态路径从toolParams获取）
                 for (const [globalKey, formId] of Object.entries(paramMap)) {
                     const inputElement = document.getElementById(formId);
-                    if (inputElement && globalParams[globalKey]) {
-                        console.log(`Cutadapt填充参数: ${formId} = ${globalParams[globalKey]}`);
-                        inputElement.value = globalParams[globalKey];
-                        inputElement.disabled = true;
+                    // 优先使用工具参数中的动态路径（如Step1/Step2）
+                    const value = toolParams[globalKey] || globalParams[globalKey];
+                    if (inputElement && value) {
+                        console.log(`Cutadapt填充动态参数: ${formId} = ${value}`);
+                        inputElement.value = value;
+                        inputElement.disabled = true; // 工作流模式下禁用手动编辑
                     }
                 }
 
-                // 填充工具特有参数
+                // 填充工具特有参数（如adapter1/adapter2）
                 for (const [key, value] of Object.entries(toolParams)) {
                     const inputElement = document.getElementById(key);
                     if (inputElement) {
-                        console.log(`Cutadapt填充工具参数: ${key} = ${value}`);
                         inputElement.value = value;
                     }
                 }
 
-                // 通知主页面：工具已准备好
                 window.parent.postMessage({
                     action: 'toolReady',
                     toolId: data.toolId
                 }, window.location.origin);
             }
 
-            // 2. 处理保存参数请求
+            // 2. 处理保存参数请求（保存动态路径）
             if (data.action === 'saveParameters') {
+                const threadNumInput = document.getElementById('threadNum').value.trim();
+                const threadNum = threadNumInput || '8';
+                
+                // 保存参数（包含动态生成的input_path和output_path）
                 const params = {
-                    input_path: document.getElementById('inputPath').value,
-                    output_path: document.getElementById('outputPath').value,
+                    input_path: document.getElementById('inputPath').value, // 动态路径
+                    output_path: document.getElementById('outputPath').value, // 动态路径
                     job_name: document.getElementById('jobName').value,
-                    thread_num: document.getElementById('threadNum').value,
+                    thread_num: threadNum,
                     adapter1: document.getElementById('adapter1').value,
                     adapter2: document.getElementById('adapter2').value,
                     run_location: document.getElementById('runLocation').value,
@@ -278,7 +300,7 @@
                     token: document.getElementById('githubToken').value
                 };
 
-                console.log('Cutadapt保存参数:', params);
+                console.log('Cutadapt保存参数（含动态路径）:', params);
                 window.parent.postMessage({
                     action: 'parametersSaved',
                     toolId: data.toolId,
@@ -286,41 +308,51 @@
                 }, window.location.origin);
             }
 
-            // 3. 处理执行命令
+            // 3. 处理执行命令（使用动态路径）
             if (data.action === 'execute') {
                 console.log('Cutadapt收到执行命令:', data);
-                // 调用实际触发工作流的函数
-                triggerCutadaptWorkflow(data.parameters, data.globalParameters)
-                    .then(runId => {
-                        // 执行成功后，通知主页面
-                        window.parent.postMessage({
-                            action: 'executionComplete',
-                            toolId: data.toolId,
-                            success: true,
-                            runId: runId,
-                            message: 'Workflow executed successfully'
-                        }, window.location.origin);
-                    })
-                    .catch(error => {
-                        // 执行失败后，通知主页面
-                        window.parent.postMessage({
-                            action: 'executionComplete',
-                            toolId: data.toolId,
-                            success: false,
-                            runId: null,
-                            message: error.message
-                        }, window.location.origin);
-                    });
+                // 从工具参数中提取动态路径
+                const { input_path: inputPath, output_path: outputPath, thread_num: threadNum, adapter1, adapter2, extra_params } = data.parameters;
+                const { token, run_location: runLocation, job_name: jobName } = data.globalParameters;
+
+                // 调用触发函数时传入动态路径
+                triggerCutadaptWorkflow(
+                    { input_path: inputPath, output_path: outputPath, thread_num: threadNum, adapter1, adapter2, extra_params },
+                    { token, run_location: runLocation, job_name: jobName }
+                )
+                .then(runId => {
+                    currentRunInfo.token = token; // 保存Token用于状态查询
+                    window.parent.postMessage({
+                        action: 'executionComplete',
+                        toolId: data.toolId,
+                        success: true,
+                        runId: runId,
+                        message: 'Workflow executed successfully'
+                    }, window.location.origin);
+                })
+                .catch(error => {
+                    window.parent.postMessage({
+                        action: 'executionComplete',
+                        toolId: data.toolId,
+                        success: false,
+                        runId: null,
+                        message: error.message
+                    }, window.location.origin);
+                });
             }
         });
 
-        // 处理"运行Cutadapt"按钮点击（供独立使用）
+        // 运行按钮点击事件（独立使用时处理动态路径）
         document.getElementById('processButton').addEventListener('click', async function() {
-            // 重置结果按钮状态
+            // 重置按钮状态和定时器
+            document.getElementById('statusButton').style.display = 'none';
             document.getElementById('resultsButton').style.display = 'none';
             currentRunInfo.runId = null;
+            if (currentRunInfo.statusInterval) {
+                clearInterval(currentRunInfo.statusInterval);
+            }
             
-            // 获取表单值
+            // 获取表单值（含手动输入的路径）
             const inputPath = document.getElementById('inputPath').value.trim();
             const outputPath = document.getElementById('outputPath').value.trim();
             const jobName = document.getElementById('jobName').value.trim();
@@ -337,29 +369,43 @@
                 return;
             }
     
-            // 调用触发函数
             try {
                 const runId = await triggerCutadaptWorkflow(
-                    { 
-                        thread_num: threadNum,
-                        adapter1: adapter1,
-                        adapter2: adapter2,
-                        extra_params: extraParams
-                    },  // 工具特有参数
-                    { 
-                        input_path: inputPath, 
-                        output_path: outputPath, 
-                        job_name: jobName, 
-                        run_location: runLocation, 
-                        token: githubToken 
-                    }  // 全局参数
+                    { input_path: inputPath, output_path: outputPath, thread_num: threadNum, adapter1, adapter2, extra_params: extraParams },
+                    { input_path: inputPath, output_path: outputPath, job_name: jobName, run_location: runLocation, token: githubToken }
                 );
+                
                 currentRunInfo.runId = runId;
+                currentRunInfo.token = githubToken; // 保存Token
                 showStatus(`Workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
+                document.getElementById('statusButton').style.display = 'block';
                 document.getElementById('resultsButton').style.display = 'block';
             } catch (error) {
                 showStatus(`Error: ${error.message}`, 'error');
             }
+        });
+
+        // 新增：状态按钮点击事件（检查运行状态）
+        document.getElementById('statusButton').addEventListener('click', async function() {
+            if (!currentRunInfo.runId || !currentRunInfo.token) {
+                showStatus('No valid run information / 没有有效的运行信息', 'error');
+                return;
+            }
+
+            // 立即查询一次状态
+            await checkRunStatus();
+            
+            // 启动轮询（每10秒一次）
+            if (currentRunInfo.statusInterval) {
+                clearInterval(currentRunInfo.statusInterval);
+            }
+            currentRunInfo.statusInterval = setInterval(async () => {
+                const status = await checkRunStatus();
+                if (status === 'completed') {
+                    clearInterval(currentRunInfo.statusInterval);
+                    currentRunInfo.statusInterval = null;
+                }
+            }, 10000);
         });
 
         // 结果按钮点击事件
@@ -374,7 +420,67 @@
             }
         });
 
-        // 核心函数：触发Cutadapt工作流
+        // 新增：检查运行状态
+        async function checkRunStatus() {
+            const { owner, repo, runId, token } = currentRunInfo;
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const status = data.status; // queued, in_progress, completed
+                const conclusion = data.conclusion; // success, failure等
+                const startTime = new Date(data.created_at).toLocaleString();
+                const updateTime = new Date(data.updated_at).toLocaleString();
+
+                // 状态文本映射
+                let statusText, statusClass;
+                switch (status) {
+                    case 'queued':
+                        statusText = '排队中 (Queued)';
+                        statusClass = 'loading';
+                        break;
+                    case 'in_progress':
+                        statusText = '运行中 (In Progress)';
+                        statusClass = 'loading';
+                        break;
+                    case 'completed':
+                        statusText = conclusion === 'success' ? '成功 (Success)' : `失败 (${conclusion})`;
+                        statusClass = conclusion === 'success' ? 'success' : 'error';
+                        break;
+                    default:
+                        statusText = `未知状态 (${status})`;
+                        statusClass = 'error';
+                }
+
+                // 显示状态和详情
+                showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
+                document.getElementById('statusDetails').innerHTML = `
+                    <strong>Run Details / 运行详情:</strong><br>
+                    - Run ID: ${runId}<br>
+                    - Start Time / 开始时间: ${startTime}<br>
+                    - Last Update / 最后更新: ${updateTime}<br>
+                    - Conclusion / 结果: ${conclusion || 'N/A'}
+                `;
+
+                return status;
+            } catch (error) {
+                showStatus(`Failed to check status: ${error.message} / 检查状态失败: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        // 核心函数：触发Cutadapt工作流（使用动态路径）
         async function triggerCutadaptWorkflow(toolParams, globalParams) {
             return new Promise(async (resolve, reject) => {
                 try {
@@ -383,30 +489,37 @@
                     const workflowId = 'run-docker-matrix.yaml';
                     const token = globalParams.token;
 
-                    // 验证Token
                     if (!token) {
                         reject(new Error('Missing GitHub Token / 缺少GitHub Token'));
                         return;
                     }
 
-                    // 记录触发时间
                     workflowTriggerTime = Date.now();
 
-                    // 1. 调用GitHub API触发工作流
                     const url = `https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows/${workflowId}/dispatches`;
                     const headers = {
                         'Content-Type': 'application/json',
                         'Accept': 'application/vnd.github.v3+json',
                         'Authorization': `token ${token}`
                     };
-                    // 构建输入参数（合并工具特有参数和全局参数）
+
+                    // 处理线程数（默认8）
+                    let threadNum = toolParams.thread_num?.trim();
+                    if (!threadNum || isNaN(parseInt(threadNum, 10)) || parseInt(threadNum, 10) < 1) {
+                        threadNum = "8";
+                        console.log('使用默认线程数:', threadNum);
+                    } else {
+                        threadNum = threadNum.toString();
+                    }
+                    
+                    // 构建请求体（使用toolParams中的动态路径）
                     const body = {
                         ref: 'main',
                         inputs: {
-                            INPUT_PATH: globalParams.input_path,
-                            OUTPUT_PATH: globalParams.output_path,
+                            INPUT_PATH: toolParams.input_path, // 动态输入路径（如Step1）
+                            OUTPUT_PATH: toolParams.output_path, // 动态输出路径（如Step2）
                             JOB_NAME: globalParams.job_name,
-                            THREAD_NUM: toolParams.thread_num || 8,  // 默认8线程
+                            THREAD_NUM: threadNum,
                             ADAPTER1_SEQ: toolParams.adapter1,
                             ADAPTER2_SEQ: toolParams.adapter2,
                             RUN_LOCATION: globalParams.run_location,
@@ -414,7 +527,7 @@
                         }
                     };
 
-                    console.log('Cutadapt触发工作流的参数:', body);
+                    console.log('Cutadapt触发工作流的参数（含动态路径）:', body);
                     const response = await fetch(url, { 
                         method: 'POST', 
                         headers: headers, 
@@ -426,19 +539,17 @@
                         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
                     }
 
-                    // 2. 等待8秒后获取runId
-                    console.log('Cutadapt等待工作流启动...');
+                    // 等待8秒后获取runId
+                    console.log('等待Cutadapt工作流启动...');
                     await new Promise(resolve => setTimeout(resolve, 8000));
 
-                    // 3. 重试获取runId
+                    // 获取runId（带重试）
                     const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, token);
                     if (!runId) {
                         throw new Error('Failed to get run ID / 获取运行ID失败');
                     }
 
-                    // 成功返回runId
                     resolve(runId);
-
                 } catch (error) {
                     console.error('Cutadapt触发工作流失败:', error);
                     reject(error);
@@ -466,7 +577,7 @@
                         return runId;
                     }
                 } catch (error) {
-                    console.log(`Cutadapt尝试 ${attempt} 失败:`, error.message);
+                    console.log(`尝试 ${attempt} 失败:`, error.message);
                 }
             }
             
@@ -493,18 +604,17 @@
                 return null;
             }
             
-            // 查找最近触发的运行
+            // 查找最近的有效运行
             const latestRun = runs[0];
             const latestRunTime = new Date(latestRun.created_at).getTime();
             const timeDifference = currentTime - latestRunTime;
             
-            // 15秒内的运行视为有效
             if (timeDifference < 15000) {
                 console.log(`Cutadapt找到有效运行: ID=${latestRun.id}, 创建时间=${latestRun.created_at}`);
                 return latestRun.id;
             }
             
-            // 尝试查找更符合条件的记录
+            // 匹配触发时间范围内的运行
             for (const run of runs) {
                 const runTime = new Date(run.created_at).getTime();
                 const age = currentTime - runTime;
