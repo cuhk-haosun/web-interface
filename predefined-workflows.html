@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Predefined Workflows</title>
     <style>
-        /* 全局设置 */
+        /* global setting */
         * {
             box-sizing: border-box;
         }
         
-        /* 保持与主页面一致的样式 */
+        /* Keep the style consistent with the main page */
         .section {
             background: white;
             border-radius: 8px;
@@ -39,7 +39,7 @@
             background: white;
             border-radius: 8px;
             padding: 25px;
-            width: calc(100% - 30px); /* 修复右侧出界问题：减去容器内边距 */
+            width: calc(100% - 30px);
             min-height: 180px;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
             border: 1px solid #e8e8e8;
@@ -82,7 +82,7 @@
 
         .btn {
             display: inline-block;
-            color: white !important; /* 确保按钮文字为白色 */
+            color: white !important; /* Make sure the button text is white */
             padding: 10px 20px;
             border-radius: 4px;
             text-decoration: none;
@@ -100,7 +100,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        /* 确保双语按钮文字为白色 */
+        /* Make sure the text on the bilingual buttons is white */
         .btn .en,
         .btn .zh {
             color: white !important;
@@ -144,13 +144,13 @@
             }
             
             .workflow-card {
-                width: calc(100% - 20px); /* 适配小屏幕内边距 */
+                width: calc(100% - 20px);
             }
         }
 
         @media (max-width: 600px) {
             .workflow-card {
-                width: 100%; /* 在超小屏幕上使用全宽 */
+                width: 100%;
                 max-width: 100%;
                 padding: 20px;
             }
