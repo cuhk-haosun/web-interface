@@ -213,7 +213,7 @@
             window.parent.postMessage({ action: 'toolReady' }, window.location.origin);
         });
 
-        // 监听主页面消息
+        // 监听主页面消息（已合并动态路径处理逻辑）
         window.addEventListener('message', function(event) {
             console.log('收到消息:', event.data);
             
@@ -246,7 +246,7 @@
                     if (inputElement && globalParams[globalKey]) {
                         console.log(`填充参数: ${formId} = ${globalParams[globalKey]}`);
                         inputElement.value = globalParams[globalKey];
-                        inputElement.disabled = true;
+                        inputElement.disabled = true; // 工作流模式下禁用手动编辑，确保使用动态路径
                     }
                 }
 
@@ -269,8 +269,8 @@
                 const threadNum = threadNumInput || '8';
                 
                 const params = {
-                    input_path: document.getElementById('inputPath').value,
-                    output_path: document.getElementById('outputPath').value,
+                    input_path: document.getElementById('inputPath').value, // 保存动态生成的输入路径
+                    output_path: document.getElementById('outputPath').value, // 保存动态生成的输出路径
                     job_name: document.getElementById('jobName').value,
                     thread_num: threadNum,
                     run_location: document.getElementById('runLocation').value,
@@ -285,34 +285,41 @@
                 }, window.location.origin);
             }
 
-            // 处理执行命令
+            // 处理执行命令（核心修改：明确使用动态生成的路径）
             if (data.action === 'execute') {
                 console.log('收到执行命令:', data);
-                triggerFastQCWorkflow(data.parameters, data.globalParameters)
-                    .then(runId => {
-                        // 保存Token用于状态查询
-                        currentRunInfo.token = data.globalParameters.token;
-                        window.parent.postMessage({
-                            action: 'executionComplete',
-                            toolId: data.toolId,
-                            success: true,
-                            runId: runId,
-                            message: 'Workflow executed successfully'
-                        }, window.location.origin);
-                    })
-                    .catch(error => {
-                        window.parent.postMessage({
-                            action: 'executionComplete',
-                            toolId: data.toolId,
-                            success: false,
-                            runId: null,
-                            message: error.message
-                        }, window.location.origin);
-                    });
+                // 从参数中提取动态生成的路径
+                const { input_path: inputPath, output_path: outputPath, thread_num: threadNum } = data.parameters;
+                const { token, run_location: runLocation, job_name: jobName } = data.globalParameters;
+
+                // 调用触发函数时直接传入动态路径
+                triggerFastQCWorkflow(
+                    { input_path: inputPath, output_path: outputPath, thread_num: threadNum },
+                    { token, run_location: runLocation, job_name: jobName }
+                )
+                .then(runId => {
+                    currentRunInfo.token = token;
+                    window.parent.postMessage({
+                        action: 'executionComplete',
+                        toolId: data.toolId,
+                        success: true,
+                        runId: runId,
+                        message: 'Workflow executed successfully'
+                    }, window.location.origin);
+                })
+                .catch(error => {
+                    window.parent.postMessage({
+                        action: 'executionComplete',
+                        toolId: data.toolId,
+                        success: false,
+                        runId: null,
+                        message: error.message
+                    }, window.location.origin);
+                });
             }
         });
 
-        // 运行按钮点击事件
+        // 运行按钮点击事件（保持不变）
         document.getElementById('processButton').addEventListener('click', async function() {
             // 重置按钮状态和定时器
             document.getElementById('statusButton').style.display = 'none';
@@ -342,7 +349,6 @@
                     { input_path: inputPath, output_path: outputPath, job_name: jobName, run_location: runLocation, token: githubToken }
                 );
                 
-                // 保存RunId和Token
                 currentRunInfo.runId = runId;
                 currentRunInfo.token = githubToken;
                 
@@ -354,17 +360,15 @@
             }
         });
 
-        // 状态按钮点击事件
+        // 状态按钮点击事件（保持不变）
         document.getElementById('statusButton').addEventListener('click', async function() {
             if (!currentRunInfo.runId || !currentRunInfo.token) {
                 showStatus('No valid run information / 没有有效的运行信息', 'error');
                 return;
             }
 
-            // 立即查询一次状态
             await checkRunStatus();
             
-            // 如果已完成则停止轮询，否则启动轮询
             if (currentRunInfo.statusInterval) {
                 clearInterval(currentRunInfo.statusInterval);
             }
@@ -374,10 +378,10 @@
                     clearInterval(currentRunInfo.statusInterval);
                     currentRunInfo.statusInterval = null;
                 }
-            }, 10000); // 每10秒查询一次
+            }, 10000);
         });
 
-        // 结果按钮点击事件
+        // 结果按钮点击事件（保持不变）
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 window.open(
@@ -389,7 +393,7 @@
             }
         });
 
-        // 核心函数：查询运行状态
+        // 核心函数：查询运行状态（保持不变）
         async function checkRunStatus() {
             const { owner, repo, runId, token } = currentRunInfo;
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
@@ -407,12 +411,11 @@
                 }
 
                 const data = await response.json();
-                const status = data.status; // queued, in_progress, completed
-                const conclusion = data.conclusion; // success, failure, cancelled等
+                const status = data.status;
+                const conclusion = data.conclusion;
                 const startTime = new Date(data.created_at).toLocaleString();
                 const updateTime = new Date(data.updated_at).toLocaleString();
 
-                // 状态文本和样式映射
                 let statusText, statusClass;
                 switch (status) {
                     case 'queued':
@@ -424,9 +427,7 @@
                         statusClass = 'loading';
                         break;
                     case 'completed':
-                        statusText = conclusion === 'success' 
-                            ? '成功 (Success)' 
-                            : `失败 (${conclusion})`;
+                        statusText = conclusion === 'success' ? '成功 (Success)' : `失败 (${conclusion})`;
                         statusClass = conclusion === 'success' ? 'success' : 'error';
                         break;
                     default:
@@ -434,7 +435,6 @@
                         statusClass = 'error';
                 }
 
-                // 显示状态和详情
                 showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
                 document.getElementById('statusDetails').innerHTML = `
                     <strong>Run Details / 运行详情:</strong><br>
@@ -451,7 +451,7 @@
             }
         }
 
-        // 触发FastQC工作流
+        // 触发FastQC工作流（保持不变）
         async function triggerFastQCWorkflow(toolParams, globalParams) {
             return new Promise(async (resolve, reject) => {
                 try {
@@ -467,7 +467,6 @@
 
                     workflowTriggerTime = Date.now();
 
-                    // 调用GitHub API触发工作流
                     const url = `https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows/${workflowId}/dispatches`;
                     const headers = {
                         'Content-Type': 'application/json',
@@ -486,8 +485,8 @@
                     const body = {
                         ref: 'main',
                         inputs: {
-                            INPUT_PATH: globalParams.input_path,
-                            OUTPUT_PATH: globalParams.output_path,
+                            INPUT_PATH: toolParams.input_path, // 使用动态生成的输入路径
+                            OUTPUT_PATH: toolParams.output_path, // 使用动态生成的输出路径
                             JOB_NAME: globalParams.job_name,
                             THREAD_NUM: threadNum,
                             RUN_LOCATION: globalParams.run_location
@@ -506,11 +505,7 @@
                         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
                     }
 
-                    // 等待8秒后获取runId
-                    console.log('等待工作流启动...');
                     await new Promise(resolve => setTimeout(resolve, 8000));
-
-                    // 获取runId
                     const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, token);
                     if (!runId) {
                         throw new Error('Failed to get run ID / 获取运行ID失败');
@@ -524,7 +519,7 @@
             });
         }
 
-        // 获取runId（带重试）
+        // 获取runId（带重试）（保持不变）
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
             const MAX_RETRIES = 5;
             const INITIAL_DELAY = 0;
@@ -551,7 +546,7 @@
             throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
         }
 
-        // 获取最新runId
+        // 获取最新runId（保持不变）
         async function getLatestRunId(owner, repo, workflowId, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
             const headers = {
@@ -593,7 +588,7 @@
             return null;
         }
 
-        // 显示状态
+        // 显示状态（保持不变）
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
