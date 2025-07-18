@@ -196,6 +196,13 @@
             <textarea id="extraParams" placeholder="e.g. --outSAMtype BAM SortedByCoordinate --outFilterMultimapNmax 10"></textarea>
         </div>
         
+        <!-- 新增：统一的独立标识符输入 -->
+        <div class="form-group">
+            <label for="uniqueId">Unique Identifier <span class="required">*</span>:</label>
+            <input type="text" id="uniqueId" placeholder="e.g. project_12345" required>
+            <small>Unique identifier for this analysis run / 此分析运行的唯一标识符</small>
+        </div>
+        
         <div class="form-group">
             <label for="githubToken">GitHub Personal Access Token <span class="required">*</span>:</label>
             <input type="password" id="githubToken" placeholder="Enter your GitHub PAT with 'repo' scope" required>
@@ -231,7 +238,8 @@
             repo: 'code-docker-star-aligner',
             runId: null,
             token: null, // 保存Token用于状态查询
-            statusInterval: null // 轮询定时器ID
+            statusInterval: null, // 轮询定时器ID
+            uniqueId: null // 新增：唯一标识符
         };
 
         let workflowTriggerTime = 0;
@@ -269,7 +277,8 @@
                     output_path: 'outputPath',
                     job_name: 'jobName',
                     run_location: 'runLocation',
-                    token: 'githubToken'
+                    token: 'githubToken',
+                    unique_id: 'uniqueId' // 新增：映射唯一标识符
                 };
 
                 // 填充参数并禁用编辑（动态路径从toolParams获取）
@@ -309,10 +318,11 @@
                     thread_num: document.getElementById('threadNum').value,
                     run_location: document.getElementById('runLocation').value,
                     extra_params: document.getElementById('extraParams').value,
-                    token: document.getElementById('githubToken').value
+                    token: document.getElementById('githubToken').value,
+                    unique_id: document.getElementById('uniqueId').value // 新增：保存唯一标识符
                 };
 
-                console.log('Star-aligner保存参数（含动态路径）:', params);
+                console.log('Star-aligner保存参数（含动态路径和唯一标识符）:', params);
                 window.parent.postMessage({
                     action: 'parametersSaved',
                     toolId: data.toolId,
@@ -330,11 +340,15 @@
                     ref_path: refPath,
                     genome_index: genomeIndex,
                     thread_num: threadNum, 
-                    extra_params: extraParams 
+                    extra_params: extraParams,
+                    unique_id: uniqueId // 新增：获取唯一标识符
                 } = data.parameters;
                 const { token, run_location: runLocation, job_name: jobName } = data.globalParameters;
 
-                // 调用触发函数时传入动态路径
+                // 保存唯一标识符
+                currentRunInfo.uniqueId = uniqueId;
+
+                // 调用触发函数时传入动态路径和唯一标识符
                 triggerStarWorkflow(
                     { 
                         input_path: inputPath, 
@@ -342,7 +356,8 @@
                         ref_path: refPath,
                         genome_index: genomeIndex,
                         thread_num: threadNum, 
-                        extra_params: extraParams 
+                        extra_params: extraParams,
+                        unique_id: uniqueId // 新增：传递唯一标识符
                     },
                     { token, run_location: runLocation, job_name: jobName }
                 )
@@ -353,7 +368,8 @@
                         toolId: data.toolId,
                         success: true,
                         runId: runId,
-                        message: 'Workflow executed successfully'
+                        message: 'Workflow executed successfully',
+                        uniqueId: uniqueId // 新增：传递唯一标识符
                     }, window.location.origin);
                 })
                 .catch(error => {
@@ -378,7 +394,7 @@
                 clearInterval(currentRunInfo.statusInterval);
             }
             
-            // 获取表单值（含手动输入的路径）
+            // 获取表单值（含手动输入的路径和唯一标识符）
             const inputPath = document.getElementById('inputPath').value.trim();
             const outputPath = document.getElementById('outputPath').value.trim();
             const refPath = document.getElementById('refPath').value.trim();
@@ -388,12 +404,22 @@
             const runLocation = document.getElementById('runLocation').value.trim();
             const extraParams = document.getElementById('extraParams').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
+            const uniqueId = document.getElementById('uniqueId').value.trim(); // 新增：获取唯一标识符
     
             // 验证必填字段
-            if (!inputPath || !outputPath || !refPath || !genomeIndex || !jobName || !threadNum || !runLocation || !githubToken) {
+            if (!inputPath || !outputPath || !refPath || !genomeIndex || !jobName || !threadNum || !runLocation || !githubToken || !uniqueId) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
             }
+    
+            // 验证唯一标识符格式（仅允许字母、数字、下划线和连字符）
+            if (!/^[a-zA-Z0-9_-]+$/.test(uniqueId)) {
+                showStatus('Unique identifier can only contain letters, numbers, underscores and hyphens / 唯一标识符只能包含字母、数字、下划线和连字符', 'error');
+                return;
+            }
+    
+            // 保存唯一标识符
+            currentRunInfo.uniqueId = uniqueId;
     
             try {
                 const runId = await triggerStarWorkflow(
@@ -403,7 +429,8 @@
                         ref_path: refPath,
                         genome_index: genomeIndex,
                         thread_num: threadNum,
-                        extra_params: extraParams
+                        extra_params: extraParams,
+                        unique_id: uniqueId // 新增：传递唯一标识符
                     },
                     { 
                         input_path: inputPath, 
@@ -506,6 +533,7 @@
                 showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
                 document.getElementById('statusDetails').innerHTML = `
                     <strong>Run Details / 运行详情:</strong><br>
+                    - Unique Identifier / 唯一标识符: ${currentRunInfo.uniqueId || 'N/A'}<br>
                     - Run ID: ${runId}<br>
                     - Start Time / 开始时间: ${startTime}<br>
                     - Last Update / 最后更新: ${updateTime}<br>
@@ -519,7 +547,7 @@
             }
         }
 
-        // 核心函数：触发Star-aligner工作流（使用动态路径）
+        // 核心函数：触发Star-aligner工作流（使用动态路径和唯一标识符）
         async function triggerStarWorkflow(toolParams, globalParams) {
             return new Promise(async (resolve, reject) => {
                 try {
@@ -551,7 +579,7 @@
                         threadNum = threadNum.toString();
                     }
                     
-                    // 构建请求体（使用toolParams中的动态路径）
+                    // 构建请求体（使用toolParams中的动态路径和唯一标识符）
                     const body = {
                         ref: 'main',
                         inputs: {
@@ -562,11 +590,12 @@
                             JOB_NAME: globalParams.job_name,
                             THREAD_NUM: threadNum,
                             RUN_LOCATION: globalParams.run_location,
-                            ADDITIONAL_RUN_PARAM: toolParams.extra_params || ''
+                            ADDITIONAL_RUN_PARAM: toolParams.extra_params || '',
+                            UNIQUE_ID: toolParams.unique_id // 新增：传递唯一标识符到工作流
                         }
                     };
 
-                    console.log('Star-aligner触发工作流的参数（含动态路径）:', body);
+                    console.log('Star-aligner触发工作流的参数（含动态路径和唯一标识符）:', body);
                     const response = await fetch(url, { 
                         method: 'POST', 
                         headers: headers, 
@@ -676,4 +705,4 @@
         }
     </script>
 </body>
-</html>
+</html>    
