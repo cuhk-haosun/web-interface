@@ -1362,17 +1362,17 @@
         const toolId = step.toolId;
         const instanceId = step.instanceId;
         const tool = toolInfo[toolId];
-        const step = document.createElement('div');
-        step.className = `workflow-step ${tool.color}`;
-        step.innerHTML = `
+        const newStep = document.createElement('div');
+        newStep.className = `workflow-step ${tool.color}`;
+        newStep.innerHTML = `
           <div class="bilingual en">${tool.name}</div>
           <div class="bilingual zh">${tool.name_zh}</div>
           <div class="remove-btn" onclick="removeStep(${index})">×</div>
           <div class="instance-id" style="font-size: 0.7em; opacity: 0.7;">ID: ${instanceId.substring(0, 8)}...</div>
         `;
-        step.dataset.tool = toolId;
-        step.dataset.instanceId = instanceId;
-        dropZone.appendChild(step);
+        newStep.dataset.tool = toolId;
+        newStep.dataset.instanceId = instanceId;
+        dropZone.appendChild(newStep);
       });
     }
     
