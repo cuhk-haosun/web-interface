@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastQC Workflow Trigger (Test)</title>
     <style>
-        /* 保持原有样式不变 */
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
@@ -213,7 +212,7 @@
             window.parent.postMessage({ action: 'toolReady' }, window.location.origin);
         });
 
-        // 监听主页面消息（已合并动态路径处理逻辑）
+        // 监听主页面消息（关键修改：完善动态路径处理）
         window.addEventListener('message', function(event) {
             console.log('收到消息:', event.data);
             
@@ -224,32 +223,35 @@
 
             const data = event.data;
             
-            // 处理参数加载
+            // 处理参数加载（关键修改：优先使用工具参数中的动态路径）
             if (data.action === 'loadParameters') {
                 isWorkflowMode = true;
                 const globalParams = data.globalParameters || {};
                 const toolParams = data.parameters || {};
 
                 console.log('加载全局参数:', globalParams);
-                console.log('加载工具参数:', toolParams);
+                console.log('加载工具参数（含动态路径）:', toolParams);
 
                 const paramMap = {
                     input_path: 'inputPath',
-                    output_path: 'outputPath',
+                    output_path: 'outputPath', // 映射输出路径
                     job_name: 'jobName',
                     run_location: 'runLocation',
                     token: 'githubToken'
                 };
 
+                // 优先使用工具参数中的动态路径
                 for (const [globalKey, formId] of Object.entries(paramMap)) {
                     const inputElement = document.getElementById(formId);
-                    if (inputElement && globalParams[globalKey]) {
-                        console.log(`填充参数: ${formId} = ${globalParams[globalKey]}`);
-                        inputElement.value = globalParams[globalKey];
-                        inputElement.disabled = true; // 工作流模式下禁用手动编辑，确保使用动态路径
+                    const value = toolParams[globalKey] || globalParams[globalKey]; // 关键修改点
+                    if (inputElement && value) {
+                        console.log(`填充动态参数: ${formId} = ${value}`);
+                        inputElement.value = value;
+                        inputElement.disabled = true; // 工作流模式下禁用手动编辑
                     }
                 }
 
+                // 填充工具特有参数
                 for (const [key, value] of Object.entries(toolParams)) {
                     const inputElement = document.getElementById(key);
                     if (inputElement) {
@@ -263,21 +265,21 @@
                 }, window.location.origin);
             }
 
-            // 处理保存参数请求
+            // 处理保存参数请求（关键修改：保存动态路径）
             if (data.action === 'saveParameters') {
                 const threadNumInput = document.getElementById('threadNum').value.trim();
                 const threadNum = threadNumInput || '8';
                 
                 const params = {
-                    input_path: document.getElementById('inputPath').value, // 保存动态生成的输入路径
-                    output_path: document.getElementById('outputPath').value, // 保存动态生成的输出路径
+                    input_path: document.getElementById('inputPath').value, // 保存动态输入路径
+                    output_path: document.getElementById('outputPath').value, // 保存动态输出路径
                     job_name: document.getElementById('jobName').value,
                     thread_num: threadNum,
                     run_location: document.getElementById('runLocation').value,
                     token: document.getElementById('githubToken').value
                 };
 
-                console.log('保存参数:', params);
+                console.log('保存参数（含动态路径）:', params);
                 window.parent.postMessage({
                     action: 'parametersSaved',
                     toolId: data.toolId,
@@ -285,17 +287,25 @@
                 }, window.location.origin);
             }
 
-            // 处理执行命令（核心修改：明确使用动态生成的路径）
+            // 处理执行命令（关键修改：明确使用动态路径）
             if (data.action === 'execute') {
                 console.log('收到执行命令:', data);
-                // 从参数中提取动态生成的路径
+                // 从参数中提取动态路径
                 const { input_path: inputPath, output_path: outputPath, thread_num: threadNum } = data.parameters;
                 const { token, run_location: runLocation, job_name: jobName } = data.globalParameters;
 
-                // 调用触发函数时直接传入动态路径
+                // 调用触发函数时明确传递动态路径
                 triggerFastQCWorkflow(
-                    { input_path: inputPath, output_path: outputPath, thread_num: threadNum },
-                    { token, run_location: runLocation, job_name: jobName }
+                    { 
+                        input_path: inputPath,
+                        output_path: outputPath,
+                        thread_num: threadNum
+                    },
+                    { 
+                        token, 
+                        run_location: runLocation, 
+                        job_name: jobName 
+                    }
                 )
                 .then(runId => {
                     currentRunInfo.token = token;
@@ -319,7 +329,7 @@
             }
         });
 
-        // 运行按钮点击事件（保持不变）
+        // 运行按钮点击事件（关键修改：传递动态路径）
         document.getElementById('processButton').addEventListener('click', async function() {
             // 重置按钮状态和定时器
             document.getElementById('statusButton').style.display = 'none';
@@ -329,9 +339,9 @@
                 clearInterval(currentRunInfo.statusInterval);
             }
             
-            // 获取表单值
+            // 获取表单值（包含动态路径）
             const inputPath = document.getElementById('inputPath').value.trim();
-            const outputPath = document.getElementById('outputPath').value.trim();
+            const outputPath = document.getElementById('outputPath').value.trim(); // 动态输出路径
             const jobName = document.getElementById('jobName').value.trim();
             const threadNum = document.getElementById('threadNum').value.trim();
             const runLocation = document.getElementById('runLocation').value.trim();
@@ -345,8 +355,18 @@
     
             try {
                 const runId = await triggerFastQCWorkflow(
-                    { thread_num: threadNum },
-                    { input_path: inputPath, output_path: outputPath, job_name: jobName, run_location: runLocation, token: githubToken }
+                    { 
+                        input_path: inputPath,  // 传递动态输入路径
+                        output_path: outputPath, // 传递动态输出路径
+                        thread_num: threadNum
+                    },
+                    { 
+                        input_path: inputPath, 
+                        output_path: outputPath, 
+                        job_name: jobName, 
+                        run_location: runLocation, 
+                        token: githubToken 
+                    }
                 );
                 
                 currentRunInfo.runId = runId;
@@ -451,7 +471,7 @@
             }
         }
 
-        // 触发FastQC工作流（保持不变）
+        // 触发FastQC工作流（关键修改：使用动态路径）
         async function triggerFastQCWorkflow(toolParams, globalParams) {
             return new Promise(async (resolve, reject) => {
                 try {
@@ -474,7 +494,8 @@
                         'Authorization': `token ${token}`
                     };
 
-                    let threadNum = toolParams.thread_num.trim();
+                    // 处理线程数（确保为有效数字）
+                    let threadNum = toolParams.thread_num?.trim();
                     if (!threadNum || isNaN(parseInt(threadNum, 10)) || parseInt(threadNum, 10) < 1) {
                         threadNum = "8";
                         console.log('使用默认线程数:', threadNum);
@@ -482,18 +503,19 @@
                         threadNum = threadNum.toString();
                     }
                     
+                    // 关键修改：使用动态路径参数
                     const body = {
                         ref: 'main',
                         inputs: {
-                            INPUT_PATH: toolParams.input_path, // 使用动态生成的输入路径
-                            OUTPUT_PATH: toolParams.output_path, // 使用动态生成的输出路径
+                            INPUT_PATH: toolParams.input_path, // 使用动态输入路径
+                            OUTPUT_PATH: toolParams.output_path, // 使用动态输出路径
                             JOB_NAME: globalParams.job_name,
                             THREAD_NUM: threadNum,
                             RUN_LOCATION: globalParams.run_location
                         }
                     };
 
-                    console.log('触发工作流的参数:', body);
+                    console.log('触发工作流的参数（含动态路径）:', body);
                     const response = await fetch(url, { 
                         method: 'POST', 
                         headers: headers, 
