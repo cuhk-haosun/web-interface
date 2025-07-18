@@ -125,6 +125,11 @@
             background-color: #f0f7ff;
             border: 1px solid #cce5ff;
         }
+        .disabled-info {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 3px;
+        }
     </style>
 </head>
 <body>
@@ -140,17 +145,26 @@
         <div class="form-group">
             <label for="inputPath">Input path <span class="required">*</span>:</label>
             <input type="text" id="inputPath" placeholder="e.g. /pool/sun.ghrunner/gh.test/fastq" required>
+            <div class="disabled-info" id="inputPathDisabledInfo" style="display: none;">
+                此路径由工作流管理器动态提供，无法手动编辑
+            </div>
         </div>
         
         <div class="form-group">
             <label for="outputPath">Output path <span class="required">*</span>:</label>
             <input type="text" id="outputPath" placeholder="e.g. /pool/sun.ghrunner/gh.test/multiqc" required>
+            <div class="disabled-info" id="outputPathDisabledInfo" style="display: none;">
+                此路径由工作流管理器动态提供，无法手动编辑
+            </div>
         </div>
         
         <div class="form-row">
             <div class="form-group">
                 <label for="jobName">Job name <span class="required">*</span>:</label>
                 <input type="text" id="jobName" placeholder="e.g. fastq.qc" required>
+                <div class="disabled-info" id="jobNameDisabledInfo" style="display: none;">
+                    此名称由工作流管理器动态提供，无法手动编辑
+                </div>
             </div>
             
             <div class="form-group">
@@ -163,6 +177,9 @@
             <label for="runLocation">Run location <span class="required">*</span>:</label>
             <input type="text" id="runLocation" placeholder="e.g. pipeline" required>
             <small>Specify the runner group (e.g. pipeline) / 指定运行器组(如 pipeline)</small>
+            <div class="disabled-info" id="runLocationDisabledInfo" style="display: none;">
+                此位置由工作流管理器动态提供，无法手动编辑
+            </div>
         </div>
         
         <div class="form-group">
@@ -212,7 +229,7 @@
             window.parent.postMessage({ action: 'toolReady' }, window.location.origin);
         });
 
-        // 监听主页面消息（关键修改：完善动态路径处理）
+        // 监听主页面消息
         window.addEventListener('message', function(event) {
             console.log('收到消息:', event.data);
             
@@ -223,7 +240,7 @@
 
             const data = event.data;
             
-            // 处理参数加载（关键修改：优先使用工具参数中的动态路径）
+            // 处理参数加载
             if (data.action === 'loadParameters') {
                 isWorkflowMode = true;
                 const globalParams = data.globalParameters || {};
@@ -234,7 +251,7 @@
 
                 const paramMap = {
                     input_path: 'inputPath',
-                    output_path: 'outputPath', // 映射输出路径
+                    output_path: 'outputPath',
                     job_name: 'jobName',
                     run_location: 'runLocation',
                     token: 'githubToken'
@@ -243,11 +260,17 @@
                 // 优先使用工具参数中的动态路径
                 for (const [globalKey, formId] of Object.entries(paramMap)) {
                     const inputElement = document.getElementById(formId);
-                    const value = toolParams[globalKey] || globalParams[globalKey]; // 关键修改点
+                    const value = toolParams[globalKey] || globalParams[globalKey];
                     if (inputElement && value) {
                         console.log(`填充动态参数: ${formId} = ${value}`);
                         inputElement.value = value;
                         inputElement.disabled = true; // 工作流模式下禁用手动编辑
+                        
+                        // 显示禁用信息
+                        const disabledInfo = document.getElementById(`${formId}DisabledInfo`);
+                        if (disabledInfo) {
+                            disabledInfo.style.display = 'block';
+                        }
                     }
                 }
 
@@ -265,14 +288,14 @@
                 }, window.location.origin);
             }
 
-            // 处理保存参数请求（关键修改：保存动态路径）
+            // 处理保存参数请求
             if (data.action === 'saveParameters') {
                 const threadNumInput = document.getElementById('threadNum').value.trim();
                 const threadNum = threadNumInput || '8';
                 
                 const params = {
-                    input_path: document.getElementById('inputPath').value, // 保存动态输入路径
-                    output_path: document.getElementById('outputPath').value, // 保存动态输出路径
+                    input_path: document.getElementById('inputPath').value,
+                    output_path: document.getElementById('outputPath').value,
                     job_name: document.getElementById('jobName').value,
                     thread_num: threadNum,
                     run_location: document.getElementById('runLocation').value,
@@ -287,7 +310,7 @@
                 }, window.location.origin);
             }
 
-            // 处理执行命令（关键修改：明确使用动态路径）
+            // 处理执行命令
             if (data.action === 'execute') {
                 console.log('收到执行命令:', data);
                 // 从参数中提取动态路径
@@ -329,7 +352,7 @@
             }
         });
 
-        // 运行按钮点击事件（关键修改：传递动态路径）
+        // 运行按钮点击事件
         document.getElementById('processButton').addEventListener('click', async function() {
             // 重置按钮状态和定时器
             document.getElementById('statusButton').style.display = 'none';
@@ -339,9 +362,9 @@
                 clearInterval(currentRunInfo.statusInterval);
             }
             
-            // 获取表单值（包含动态路径）
+            // 获取表单值
             const inputPath = document.getElementById('inputPath').value.trim();
-            const outputPath = document.getElementById('outputPath').value.trim(); // 动态输出路径
+            const outputPath = document.getElementById('outputPath').value.trim();
             const jobName = document.getElementById('jobName').value.trim();
             const threadNum = document.getElementById('threadNum').value.trim();
             const runLocation = document.getElementById('runLocation').value.trim();
@@ -356,8 +379,8 @@
             try {
                 const runId = await triggerFastQCWorkflow(
                     { 
-                        input_path: inputPath,  // 传递动态输入路径
-                        output_path: outputPath, // 传递动态输出路径
+                        input_path: inputPath,
+                        output_path: outputPath,
                         thread_num: threadNum
                     },
                     { 
@@ -380,7 +403,7 @@
             }
         });
 
-        // 状态按钮点击事件（保持不变）
+        // 状态按钮点击事件
         document.getElementById('statusButton').addEventListener('click', async function() {
             if (!currentRunInfo.runId || !currentRunInfo.token) {
                 showStatus('No valid run information / 没有有效的运行信息', 'error');
@@ -401,7 +424,7 @@
             }, 10000);
         });
 
-        // 结果按钮点击事件（保持不变）
+        // 结果按钮点击事件
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 window.open(
@@ -413,7 +436,7 @@
             }
         });
 
-        // 核心函数：查询运行状态（保持不变）
+        // 核心函数：查询运行状态
         async function checkRunStatus() {
             const { owner, repo, runId, token } = currentRunInfo;
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
@@ -471,7 +494,7 @@
             }
         }
 
-        // 触发FastQC工作流（关键修改：使用动态路径）
+        // 触发FastQC工作流
         async function triggerFastQCWorkflow(toolParams, globalParams) {
             return new Promise(async (resolve, reject) => {
                 try {
@@ -503,12 +526,12 @@
                         threadNum = threadNum.toString();
                     }
                     
-                    // 关键修改：使用动态路径参数
+                    // 使用动态路径参数
                     const body = {
                         ref: 'main',
                         inputs: {
-                            INPUT_PATH: toolParams.input_path, // 使用动态输入路径
-                            OUTPUT_PATH: toolParams.output_path, // 使用动态输出路径
+                            INPUT_PATH: toolParams.input_path,
+                            OUTPUT_PATH: toolParams.output_path,
                             JOB_NAME: globalParams.job_name,
                             THREAD_NUM: threadNum,
                             RUN_LOCATION: globalParams.run_location
@@ -541,7 +564,7 @@
             });
         }
 
-        // 获取runId（带重试）（保持不变）
+        // 获取runId（带重试）
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
             const MAX_RETRIES = 5;
             const INITIAL_DELAY = 0;
@@ -568,7 +591,7 @@
             throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
         }
 
-        // 获取最新runId（保持不变）
+        // 获取最新runId
         async function getLatestRunId(owner, repo, workflowId, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
             const headers = {
@@ -610,7 +633,7 @@
             return null;
         }
 
-        // 显示状态（保持不变）
+        // 显示状态
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
