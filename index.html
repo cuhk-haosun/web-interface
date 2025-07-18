@@ -1001,7 +1001,7 @@
   </div>
 
   <script>
-    // 存储工作流步骤
+    // 存储工作流步骤（包含实例ID）
     let workflowSteps = [];
     // 当前配置/执行的步骤索引
     let currentToolIndex = 0;
@@ -1176,22 +1176,27 @@
         
         // 初始化工具参数，动态生成输入/输出路径
         toolParameters = {};
-        workflowSteps.forEach((toolId, index) => {
+        workflowSteps.forEach((step, index) => {
+          const toolId = step.toolId;
+          const instanceId = step.instanceId;
+          
           const isFirstTool = index === 0;
           const isLastTool = index === workflowSteps.length - 1;
           
           // 动态生成输入路径
           const inputPath = isFirstTool 
             ? globalParameters.input_path  // 第一个工具使用全局输入
-            : `${globalParameters.output_path}/Step${index}`;  // 其他工具使用前一个的输出
+            : `${globalParameters.output_path}/Step${index}_${workflowSteps[index-1].toolId}_${workflowSteps[index-1].instanceId}`;  // 其他工具使用前一个的输出
           
           // 动态生成输出路径
           const outputPath = isLastTool 
             ? `${globalParameters.output_path}/Final_Output`  // 最后一个工具的特殊路径
-            : `${globalParameters.output_path}/Step${index + 1}`;  // 中间工具的输出路径
+            : `${globalParameters.output_path}/Step${index + 1}_${toolId}_${instanceId}`;  // 中间工具的输出路径
           
-          // 初始化工具参数，预设输入/输出路径
-          toolParameters[toolId] = {
+          // 初始化工具参数，预设输入/输出路径和实例ID
+          toolParameters[instanceId] = {
+            instanceId: instanceId,
+            toolId: toolId,
             input_path: inputPath,
             output_path: outputPath
           };
@@ -1246,12 +1251,13 @@
         console.log('所有工具的参数:', toolParameters);
         
         // 验证所有工具参数
-        for (const toolId of workflowSteps) {
+        for (const instanceId in toolParameters) {
+          const params = toolParameters[instanceId];
+          const toolId = params.toolId;
           const tool = toolInfo[toolId];
-          const params = toolParameters[toolId];
 
           // 调试日志：检查工具参数
-          console.log(`检查工具 ${toolId} 的参数:`, params);
+          console.log(`检查工具 ${toolId} (实例 ${instanceId}) 的参数:`, params);
           
           // 检查是否所有必需参数都已设置
           for (const param of tool.requiredParams) {
@@ -1289,30 +1295,33 @@
         
         // 工具页面已加载完成并准备好接收参数
         if (data.action === 'toolReady') {
-          const toolId = workflowSteps[currentToolIndex];
-          sendParametersToTool(toolId);
+          const instanceId = workflowSteps[currentToolIndex].instanceId;
+          sendParametersToTool(instanceId);
         }
         
         // 工具页面返回的参数
         if (data.action === 'parametersSaved') {
-          toolParameters[data.toolId] = data.parameters;
+          toolParameters[data.instanceId] = data.parameters;
 
           // 调试日志：记录收到的工具参数
-          console.log(`收到工具 ${data.toolId} 的参数:`, data.parameters);
+          console.log(`收到工具实例 ${data.instanceId} (${data.toolId}) 的参数:`, data.parameters);
         }
         
         // 工具执行结果
         if (data.action === 'executionComplete') {
-          handleToolExecutionResult(data.toolId, data.success, data.runId, data.message);
+          handleToolExecutionResult(data.instanceId, data.success, data.runId, data.message);
         }
       });
     });
     
     // 添加工具到工作流
     function addToWorkflow(toolId) {
-      // 将工具添加到工作流
-      workflowSteps.push(toolId);
-      console.log("Added tool:", toolId, "Workflow steps:", workflowSteps);
+      // 生成唯一实例ID
+      const instanceId = generateUniqueId(toolId);
+      
+      // 将工具添加到工作流（包含实例ID）
+      workflowSteps.push({toolId, instanceId});
+      console.log("Added tool:", toolId, "Instance ID:", instanceId, "Workflow steps:", workflowSteps);
       updateWorkflowVisualization();
       
       // 显示视觉反馈
@@ -1322,6 +1331,18 @@
       setTimeout(() => {
         card.style.transform = 'scale(1)';
       }, 300);
+    }
+    
+    // 生成唯一实例ID
+    function generateUniqueId(toolId) {
+      // 获取当前时间戳
+      const timestamp = Date.now();
+      
+      // 生成随机字符串
+      const randomStr = Math.random().toString(36).substring(2, 8);
+      
+      // 组合成唯一ID
+      return `${toolId}_${timestamp}_${randomStr}`;
     }
     
     // 更新工作流可视化
@@ -1337,7 +1358,9 @@
       }
       
       // 创建流程步骤
-      workflowSteps.forEach((toolId, index) => {
+      workflowSteps.forEach((step, index) => {
+        const toolId = step.toolId;
+        const instanceId = step.instanceId;
         const tool = toolInfo[toolId];
         const step = document.createElement('div');
         step.className = `workflow-step ${tool.color}`;
@@ -1345,8 +1368,10 @@
           <div class="bilingual en">${tool.name}</div>
           <div class="bilingual zh">${tool.name_zh}</div>
           <div class="remove-btn" onclick="removeStep(${index})">×</div>
+          <div class="instance-id" style="font-size: 0.7em; opacity: 0.7;">ID: ${instanceId.substring(0, 8)}...</div>
         `;
         step.dataset.tool = toolId;
+        step.dataset.instanceId = instanceId;
         dropZone.appendChild(step);
       });
     }
@@ -1359,43 +1384,49 @@
     
     // 加载工具配置页面
     function loadToolConfiguration(index) {
-      const toolId = workflowSteps[index];
+      const step = workflowSteps[index];
+      const toolId = step.toolId;
+      const instanceId = step.instanceId;
       const tool = toolInfo[toolId];
       const iframe = document.getElementById('tool-iframe');
 
       // 调试日志：记录加载的工具和iframe源
-      console.log(`加载工具配置: ${toolId}, URL: ${tool.url}`);
+      console.log(`加载工具配置: ${toolId} (实例 ${instanceId}), URL: ${tool.url}`);
       
-      // 设置iframe源
-      iframe.src = tool.url + '?toolId=' + toolId;
+      // 设置iframe源，传递实例ID
+      iframe.src = tool.url + `?toolId=${toolId}&instanceId=${instanceId}`;
     }
     
     // 保存当前工具参数
     function saveCurrentToolParameters() {
-      const toolId = workflowSteps[currentToolIndex];
+      const step = workflowSteps[currentToolIndex];
+      const instanceId = step.instanceId;
       const iframe = document.getElementById('tool-iframe');
       
       // 向iframe发送消息请求保存参数
       iframe.contentWindow.postMessage({
         action: 'saveParameters',
-        toolId: toolId
+        instanceId: instanceId
       }, window.location.origin);
     }
     
     // 向工具页面发送参数
-    function sendParametersToTool(toolId) {
+    function sendParametersToTool(instanceId) {
       const iframe = document.getElementById('tool-iframe');
+      const step = workflowSteps.find(s => s.instanceId === instanceId);
+      const toolId = step.toolId;
 
       // 构建发送的消息
       const message = {
         action: 'loadParameters',
+        instanceId: instanceId,
         toolId: toolId,
-        parameters: toolParameters[toolId] || {},
+        parameters: toolParameters[instanceId] || {},
         globalParameters: globalParameters
       };
   
       // 调试日志：记录发送的消息内容
-      console.log(`向工具 ${toolId} 发送参数:`, message);
+      console.log(`向工具实例 ${instanceId} (${toolId}) 发送参数:`, message);
       
       // 向iframe发送参数
       iframe.contentWindow.postMessage(message, window.location.origin);
@@ -1428,13 +1459,15 @@
         <ul style="margin-top: 10px;">
       `;
       
-      workflowSteps.forEach((toolId, index) => {
+      workflowSteps.forEach((step, index) => {
+        const toolId = step.toolId;
+        const instanceId = step.instanceId;
         const tool = toolInfo[toolId];
-        const params = toolParameters[toolId];
+        const params = toolParameters[instanceId];
         summaryHTML += `
           <li>
-            <span class="en">${index + 1}. ${tool.name}</span> /
-            <span class="zh">${index + 1}. ${tool.name_zh}</span><br>
+            <span class="en">${index + 1}. ${tool.name} (${instanceId.substring(0, 8)}...)</span> /
+            <span class="zh">${index + 1}. ${tool.name_zh} (${instanceId.substring(0, 8)}...)</span><br>
             <span class="en">Input: ${params.input_path}</span><br>
             <span class="en">Output: ${params.output_path}</span>
           </li>
@@ -1461,14 +1494,16 @@
       const statusContainer = document.getElementById('workflow-steps-status');
       statusContainer.innerHTML = '';
       
-      workflowSteps.forEach((toolId, index) => {
+      workflowSteps.forEach((step, index) => {
+        const toolId = step.toolId;
+        const instanceId = step.instanceId;
         const tool = toolInfo[toolId];
         const statusDiv = document.createElement('div');
-        statusDiv.id = `status-${toolId}`;
+        statusDiv.id = `status-${instanceId}`;
         statusDiv.className = 'step-status step-pending';
         statusDiv.innerHTML = `
-          <div class="bilingual en">${index + 1}. ${tool.name}</div>
-          <div class="bilingual zh">${index + 1}. ${tool.name_zh}</div>
+          <div class="bilingual en">${index + 1}. ${tool.name} (${instanceId.substring(0, 8)}...)</div>
+          <div class="bilingual zh">${index + 1}. ${tool.name_zh} (${instanceId.substring(0, 8)}...)</div>
           <div class="status-message">Pending / 等待中</div>
         `;
         statusContainer.appendChild(statusDiv);
@@ -1490,16 +1525,18 @@
     // 执行下一个工具
     function executeNextTool() {
       if (currentToolIndex < workflowSteps.length) {
-        const toolId = workflowSteps[currentToolIndex];
+        const step = workflowSteps[currentToolIndex];
+        const toolId = step.toolId;
+        const instanceId = step.instanceId;
         const tool = toolInfo[toolId];
-        const statusDiv = document.getElementById(`status-${toolId}`); // 修复：获取状态元素
+        const statusDiv = document.getElementById(`status-${instanceId}`);
 
         // 从预生成的参数中获取输入/输出路径
-        const inputPath = toolParameters[toolId].input_path;
-        const outputPath = toolParameters[toolId].output_path;
+        const inputPath = toolParameters[instanceId].input_path;
+        const outputPath = toolParameters[instanceId].output_path;
 
         // 打印调试信息，确认路径传递
-        console.log(`执行工具 ${tool.name}:`);
+        console.log(`执行工具 ${tool.name} (${instanceId}):`);
         console.log(`- 输入路径: ${inputPath}`);
         console.log(`- 输出路径: ${outputPath}`);
         
@@ -1507,18 +1544,19 @@
         statusDiv.className = 'step-status step-running';
         statusDiv.querySelector('.status-message').textContent = 'Running / 运行中';
         
-        // 构建执行参数（保持原有逻辑，但路径已自动设置）
+        // 构建执行参数
         const executionParams = {
           action: 'execute',
+          instanceId: instanceId,
           toolId: toolId,
-          parameters: toolParameters[toolId],
+          parameters: toolParameters[instanceId],
           globalParameters: globalParameters
         };
         
         // 创建iframe执行工具
         const executionIframe = document.createElement('iframe');
-        executionIframe.id = `execution-${toolId}`;
-        executionIframe.src = tool.url + '?toolId=' + toolId;
+        executionIframe.id = `execution-${instanceId}`;
+        executionIframe.src = tool.url + `?toolId=${toolId}&instanceId=${instanceId}`;
         executionIframe.style.display = 'none';
         document.body.appendChild(executionIframe);
         
@@ -1530,13 +1568,14 @@
           // 构建执行参数
           const executionParams = {
             action: 'execute',
+            instanceId: instanceId,
             toolId: toolId,
-            parameters: toolParameters[toolId],
+            parameters: toolParameters[instanceId],
             globalParameters: globalParameters
           };
           
           // 新增日志：确认发送执行命令
-          console.log(`向 ${toolId} 发送执行命令:`, executionParams);
+          console.log(`向 ${toolId} (${instanceId}) 发送执行命令:`, executionParams);
           
           // 向iframe发送执行命令
           executionIframe.contentWindow.postMessage(executionParams, window.location.origin);
@@ -1544,20 +1583,20 @@
         
         // 新增：监听 iframe 加载失败
         executionIframe.onerror = function() {
-          console.error(`工具 ${toolId} 的 iframe 加载失败`);
+          console.error(`工具 ${toolId} (${instanceId}) 的 iframe 加载失败`);
           // 触发失败处理，更新前端状态
-          handleToolExecutionResult(toolId, false, null, 'IFrame load failed');
+          handleToolExecutionResult(instanceId, false, null, 'IFrame load failed');
         };
       }
     }
     
     // 处理工具执行结果
-    function handleToolExecutionResult(toolId, success, runId, message) {
-      const statusDiv = document.getElementById(`status-${toolId}`);
+    function handleToolExecutionResult(instanceId, success, runId, message) {
+      const statusDiv = document.getElementById(`status-${instanceId}`);
       const progressBar = document.getElementById('progress-bar');
       
       // 保存runId
-      toolRunIds[toolId] = runId;
+      toolRunIds[instanceId] = runId;
       
       // 更新状态
       if (success) {
