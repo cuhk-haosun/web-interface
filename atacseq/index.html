@@ -37,6 +37,10 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
+        input:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
         button {
             color: white;
             border: none;
@@ -57,6 +61,13 @@
         }
         #processButton:hover {
             background: #e67312; /* Darker orange on hover */
+        }
+        #statusButton {
+            display: none;
+            background: #0d6efd; /* Blue status check button */
+        }
+        #statusButton:hover {
+            background: #0b5ed7;
         }
         #resultsButton {
             display: none;
@@ -89,9 +100,11 @@
         .form-row {
             display: flex;
             gap: 15px;
+            flex-wrap: wrap;
         }
         .form-row .form-group {
             flex: 1;
+            min-width: 200px;
         }
         small {
             color: #666;
@@ -103,6 +116,23 @@
         }
         .required {
             color: #dc3545;
+        }
+        /* 新增状态详情样式 */
+        .status-details {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            background-color: #f0f7ff;
+            border: 1px solid #cce5ff;
+        }
+        @media (max-width: 600px) {
+            .form-row {
+                flex-direction: column;
+            }
+            .form-row .form-group {
+                min-width: 100%;
+            }
         }
     </style>
 </head>
@@ -118,31 +148,44 @@
         
         <div class="form-group">
             <label for="inputPath">Input path (FASTQ files) <span class="required">*</span>:</label>
-            <input type="text" id="inputPath" placeholder="e.g. /pool/sun.ghrunner/zx/ylw/20250123.ATAC" value="/pool/sun.ghrunner/zx/ylw/20250123.ATAC" required>
+            <input type="text" id="inputPath" placeholder="e.g. /data/atacseq/fastq" required>
         </div>
         
         <div class="form-group">
             <label for="refPath">Reference genome path <span class="required">*</span>:</label>
-            <input type="text" id="refPath" placeholder="e.g. /pool/sun/archive/refgenome/mouse/mm39/" value="/pool/sun/archive/refgenome/mouse/mm39/" required>
+            <input type="text" id="refPath" placeholder="e.g. /data/reference/genome" required>
             <small>Path to reference genome files / 参考基因组文件路径</small>
+        </div>
+        
+        <!-- 新增：输出路径 -->
+        <div class="form-group">
+            <label for="outputPath">Output path <span class="required">*</span>:</label>
+            <input type="text" id="outputPath" placeholder="e.g. /data/atacseq/results" required>
         </div>
         
         <div class="form-row">
             <div class="form-group">
                 <label for="jobName">Job name <span class="required">*</span>:</label>
-                <input type="text" id="jobName" placeholder="e.g. 20250123.ATAC" value="20250123.ATAC" required>
+                <input type="text" id="jobName" placeholder="e.g. atacseq_analysis_2025" required>
             </div>
             
             <div class="form-group">
                 <label for="threadNum">Thread number <span class="required">*</span>:</label>
-                <input type="number" id="threadNum" placeholder="e.g. 32" value="32" min="1" required>
+                <input type="number" id="threadNum" placeholder="e.g. 32" min="1" required>
             </div>
         </div>
         
         <div class="form-group">
             <label for="runLocation">Run location <span class="required">*</span>:</label>
-            <input type="text" id="runLocation" placeholder="e.g. pipeline" value="pipeline" required>
+            <input type="text" id="runLocation" placeholder="e.g. pipeline" required>
             <small>Specify the runner group (e.g. pipeline) / 指定运行器组(如 pipeline)</small>
+        </div>
+        
+        <!-- 新增：统一的独立标识符输入 -->
+        <div class="form-group">
+            <label for="uniqueId">Unique Identifier <span class="required">*</span>:</label>
+            <input type="text" id="uniqueId" placeholder="e.g. atacseq_12345" required>
+            <small>Unique identifier for this analysis run / 此分析运行的唯一标识符</small>
         </div>
         
         <div class="form-group">
@@ -166,88 +209,246 @@
         </div>
         
         <button id="processButton">ATACseq Workflow / ATACseq分析流程</button>
-        <button id="resultsButton">
-            See Results / 查看结果
-        </button>
+        <button id="statusButton">Check Run Status / 查看运行状态</button>
+        <button id="resultsButton">See Results / 查看结果</button>
         
         <div id="status"></div>
+        <div id="statusDetails" class="status-details"></div>
     </div>
 
     <script>
-        // A global variable that stores operation information
+        // 全局变量（新增状态管理相关）
         let currentRunInfo = {
             owner: 'cuhk-haosun',
             repo: 'code-leiyong',
-            runId: null
+            runId: null,
+            token: null, // 保存Token用于状态查询
+            statusInterval: null, // 轮询定时器ID
+            uniqueId: null // 新增：唯一标识符
         };
 
-        let workflowTriggerTime = 0; // global variable
+        let workflowTriggerTime = 0;
+        let isWorkflowMode = false;
 
+        // 工具准备就绪，通知主页面
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('ATACseq工具页面加载完成，通知主页面');
+            window.parent.postMessage({ action: 'toolReady' }, window.location.origin);
+        });
+
+        // 监听主页面消息（完善动态路径处理）
+        window.addEventListener('message', function(event) {
+            console.log('ATACseq收到消息:', event.data);
+            
+            if (event.origin !== window.location.origin) {
+                console.warn('拒绝来自未知源的消息:', event.origin);
+                return;
+            }
+
+            const data = event.data;
+            
+            // 1. 处理参数加载（接收动态路径）
+            if (data.action === 'loadParameters') {
+                isWorkflowMode = true;
+                const globalParams = data.globalParameters || {};
+                const toolParams = data.parameters || {};
+
+                console.log('ATACseq加载全局参数:', globalParams);
+                console.log('ATACseq加载工具参数（含动态路径）:', toolParams);
+
+                // 映射参数到表单（优先使用工具参数中的动态路径）
+                const paramMap = {
+                    input_path: 'inputPath',
+                    output_path: 'outputPath',
+                    ref_path: 'refPath',
+                    job_name: 'jobName',
+                    run_location: 'runLocation',
+                    token: 'githubToken',
+                    unique_id: 'uniqueId' // 新增：映射唯一标识符
+                };
+
+                // 填充参数并禁用编辑（动态路径从toolParams获取）
+                for (const [globalKey, formId] of Object.entries(paramMap)) {
+                    const inputElement = document.getElementById(formId);
+                    // 优先使用工具参数中的动态路径（如Step1/Step2）
+                    const value = toolParams[globalKey] || globalParams[globalKey];
+                    if (inputElement && value) {
+                        console.log(`ATACseq填充动态参数: ${formId} = ${value}`);
+                        inputElement.value = value;
+                        inputElement.disabled = true; // 工作流模式下禁用手动编辑
+                    }
+                }
+
+                // 填充工具特有参数（线程数等）
+                for (const [key, value] of Object.entries(toolParams)) {
+                    const inputElement = document.getElementById(key);
+                    if (inputElement) {
+                        inputElement.value = value;
+                    }
+                }
+
+                window.parent.postMessage({
+                    action: 'toolReady',
+                    toolId: data.toolId
+                }, window.location.origin);
+            }
+
+            // 2. 处理保存参数请求（保存动态路径）
+            if (data.action === 'saveParameters') {
+                const params = {
+                    input_path: document.getElementById('inputPath').value, // 动态输入路径
+                    output_path: document.getElementById('outputPath').value, // 动态输出路径
+                    ref_path: document.getElementById('refPath').value,
+                    job_name: document.getElementById('jobName').value,
+                    thread_num: document.getElementById('threadNum').value,
+                    run_location: document.getElementById('runLocation').value,
+                    token: document.getElementById('githubToken').value,
+                    unique_id: document.getElementById('uniqueId').value // 新增：保存唯一标识符
+                };
+
+                console.log('ATACseq保存参数（含动态路径和唯一标识符）:', params);
+                window.parent.postMessage({
+                    action: 'parametersSaved',
+                    toolId: data.toolId,
+                    parameters: params
+                }, window.location.origin);
+            }
+
+            // 3. 处理执行命令（使用动态路径）
+            if (data.action === 'execute') {
+                console.log('ATACseq收到执行命令:', data);
+                // 从工具参数中提取动态路径
+                const { 
+                    input_path: inputPath, 
+                    output_path: outputPath, 
+                    ref_path: refPath,
+                    thread_num: threadNum, 
+                    unique_id: uniqueId // 新增：获取唯一标识符
+                } = data.parameters;
+                const { token, run_location: runLocation, job_name: jobName } = data.globalParameters;
+
+                // 保存唯一标识符
+                currentRunInfo.uniqueId = uniqueId;
+
+                // 调用触发函数时传入动态路径和唯一标识符
+                triggerATACseqWorkflow(
+                    { 
+                        input_path: inputPath, 
+                        output_path: outputPath,
+                        ref_path: refPath,
+                        thread_num: threadNum, 
+                        unique_id: uniqueId // 新增：传递唯一标识符
+                    },
+                    { token, run_location: runLocation, job_name: jobName }
+                )
+                .then(runId => {
+                    currentRunInfo.token = token; // 保存Token用于状态查询
+                    window.parent.postMessage({
+                        action: 'executionComplete',
+                        toolId: data.toolId,
+                        success: true,
+                        runId: runId,
+                        message: 'Workflow executed successfully',
+                        uniqueId: uniqueId // 新增：传递唯一标识符
+                    }, window.location.origin);
+                })
+                .catch(error => {
+                    window.parent.postMessage({
+                        action: 'executionComplete',
+                        toolId: data.toolId,
+                        success: false,
+                        runId: null,
+                        message: error.message
+                    }, window.location.origin);
+                });
+            }
+        });
+
+        // 运行按钮点击事件（独立使用时处理路径）
         document.getElementById('processButton').addEventListener('click', async function() {
-            // Reset the status of the result button
+            // 重置按钮状态和定时器
+            document.getElementById('statusButton').style.display = 'none';
             document.getElementById('resultsButton').style.display = 'none';
             currentRunInfo.runId = null;
+            if (currentRunInfo.statusInterval) {
+                clearInterval(currentRunInfo.statusInterval);
+            }
             
-            // Obtain the form value
+            // 获取表单值（含手动输入的路径和唯一标识符）
             const inputPath = document.getElementById('inputPath').value.trim();
+            const outputPath = document.getElementById('outputPath').value.trim(); // 新增：获取输出路径
             const refPath = document.getElementById('refPath').value.trim();
             const jobName = document.getElementById('jobName').value.trim();
             const threadNum = document.getElementById('threadNum').value.trim();
             const runLocation = document.getElementById('runLocation').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
+            const uniqueId = document.getElementById('uniqueId').value.trim(); // 新增：获取唯一标识符
     
-            // Verify the required fields
-            if (!inputPath || !refPath || !jobName || !threadNum || !runLocation || !githubToken) {
+            // 验证必填字段
+            if (!inputPath || !outputPath || !refPath || !jobName || !threadNum || !runLocation || !githubToken || !uniqueId) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
             }
     
+            // 验证唯一标识符格式（仅允许字母、数字、下划线和连字符）
+            if (!/^[a-zA-Z0-9_-]+$/.test(uniqueId)) {
+                showStatus('Unique identifier can only contain letters, numbers, underscores and hyphens / 唯一标识符只能包含字母、数字、下划线和连字符', 'error');
+                return;
+            }
+    
+            // 保存唯一标识符
+            currentRunInfo.uniqueId = uniqueId;
+    
             try {
-                const repoOwner = 'cuhk-haosun';
-                const repoName = 'code-leiyong';
-                const workflowId = 'atacseq.yaml';
-        
-                // 1. Trigger the workflow
-                showStatus('Triggering workflow... / 正在触发工作流...', 'loading');
-                await triggerWorkflow(repoOwner, repoName, workflowId, {
-                    INPUT_PATH: inputPath,
-                    REF_PATH: refPath,
-                    JOB_NAME: jobName,
-                    THREAD_NUM: threadNum,
-                    RUN_LOCATION: runLocation
-                }, githubToken);
-        
-                // 2. Wait for 8 seconds and then start to obtain runId (increase the waiting time).
-                showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
-                await new Promise(resolve => setTimeout(resolve, 8000)); // Wait for 8 seconds
+                const runId = await triggerATACseqWorkflow(
+                    { 
+                        input_path: inputPath,
+                        output_path: outputPath, // 新增：传递输出路径
+                        ref_path: refPath,
+                        thread_num: threadNum,
+                        unique_id: uniqueId // 新增：传递唯一标识符
+                    },
+                    { 
+                        job_name: jobName, 
+                        run_location: runLocation, 
+                        token: githubToken 
+                    }
+                );
                 
-                // 3. Obtain runId (with retry and status update)
-                const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
-                
-                // 4. Store the operation information and display the result button
-                currentRunInfo = { owner: repoOwner, repo: repoName, runId };
-                showStatus(`Workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
+                currentRunInfo.runId = runId;
+                currentRunInfo.token = githubToken; // 保存Token
+                showStatus(`ATACseq workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
+                document.getElementById('statusButton').style.display = 'block';
                 document.getElementById('resultsButton').style.display = 'block';
-                
             } catch (error) {
-                console.error('Error:', error);
-                let errorMsg = `Error: ${error.message}`;
-                
-                if (error.message.includes('401')) {
-                    errorMsg = 'Authentication failed. Please check your GitHub Token. / 认证失败，请检查GitHub Token';
-                } else if (error.message.includes('404')) {
-                    errorMsg = 'Repository or workflow not found. / 仓库或工作流未找到';
-                } else if (error.message.includes('403')) {
-                    errorMsg = 'Permission denied. Token may not have enough permissions. / 权限不足，Token可能缺少必要权限';
-                } else if (error.message.includes('Failed to get run ID')) {
-                    errorMsg = 'Workflow started but failed to get run ID. Please check Actions manually. / 工作流已启动但获取ID失败，请手动检查Actions';
-                }
-                
-                showStatus(errorMsg, 'error');
+                showStatus(`Error: ${error.message}`, 'error');
             }
         });
 
-        // Result button click event - Jump to the shared log page
+        // 新增：状态按钮点击事件（检查运行状态）
+        document.getElementById('statusButton').addEventListener('click', async function() {
+            if (!currentRunInfo.runId || !currentRunInfo.token) {
+                showStatus('No valid run information / 没有有效的运行信息', 'error');
+                return;
+            }
+
+            // 立即查询一次状态
+            await checkRunStatus();
+            
+            // 启动轮询（每10秒一次）
+            if (currentRunInfo.statusInterval) {
+                clearInterval(currentRunInfo.statusInterval);
+            }
+            currentRunInfo.statusInterval = setInterval(async () => {
+                const status = await checkRunStatus();
+                if (status === 'completed') {
+                    clearInterval(currentRunInfo.statusInterval);
+                    currentRunInfo.statusInterval = null;
+                }
+            }, 10000);
+        });
+
+        // 结果按钮点击事件
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 window.open(
@@ -259,55 +460,171 @@
             }
         });
 
-        // Trigger the workflow function
-        async function triggerWorkflow(owner, repo, workflowId, inputs, token) {
-            workflowTriggerTime = Date.now(); // Record the precise trigger time
-            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
-            const headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/vnd.github.v3+json',
-                'Authorization': `token ${token}`
-            };
-            const body = { ref: 'main', inputs };
-            
-            const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        // 新增：检查运行状态
+        async function checkRunStatus() {
+            const { owner, repo, runId, token } = currentRunInfo;
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const status = data.status; // queued, in_progress, completed
+                const conclusion = data.conclusion; // success, failure等
+                const startTime = new Date(data.created_at).toLocaleString();
+                const updateTime = new Date(data.updated_at).toLocaleString();
+
+                // 状态文本映射
+                let statusText, statusClass;
+                switch (status) {
+                    case 'queued':
+                        statusText = '排队中 (Queued)';
+                        statusClass = 'loading';
+                        break;
+                    case 'in_progress':
+                        statusText = '运行中 (In Progress)';
+                        statusClass = 'loading';
+                        break;
+                    case 'completed':
+                        statusText = conclusion === 'success' ? '成功 (Success)' : `失败 (${conclusion})`;
+                        statusClass = conclusion === 'success' ? 'success' : 'error';
+                        break;
+                    default:
+                        statusText = `未知状态 (${status})`;
+                        statusClass = 'error';
+                }
+
+                // 显示状态和详情
+                showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
+                document.getElementById('statusDetails').innerHTML = `
+                    <strong>Run Details / 运行详情:</strong><br>
+                    - Unique Identifier / 唯一标识符: ${currentRunInfo.uniqueId || 'N/A'}<br>
+                    - Run ID: ${runId}<br>
+                    - Start Time / 开始时间: ${startTime}<br>
+                    - Last Update / 最后更新: ${updateTime}<br>
+                    - Conclusion / 结果: ${conclusion || 'N/A'}
+                `;
+
+                return status;
+            } catch (error) {
+                showStatus(`Failed to check status: ${error.message} / 检查状态失败: ${error.message}`, 'error');
+                return null;
             }
         }
 
-        // runId acquisition function with retry mechanism (adjusting the initial delay)
+        // 核心函数：触发ATACseq工作流（使用动态路径和唯一标识符）
+        async function triggerATACseqWorkflow(toolParams, globalParams) {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const repoOwner = 'cuhk-haosun';
+                    const repoName = 'code-leiyong';
+                    const workflowId = 'atacseq.yaml';
+                    const token = globalParams.token;
+
+                    if (!token) {
+                        reject(new Error('Missing GitHub Token / 缺少GitHub Token'));
+                        return;
+                    }
+
+                    workflowTriggerTime = Date.now();
+
+                    const url = `https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows/${workflowId}/dispatches`;
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Authorization': `token ${token}`
+                    };
+
+                    // 处理线程数（确保为数字）
+                    let threadNum = toolParams.thread_num?.trim();
+                    if (!threadNum || isNaN(parseInt(threadNum, 10)) || parseInt(threadNum, 10) < 1) {
+                        threadNum = "32"; // ATACseq默认线程数
+                        console.log('使用默认线程数:', threadNum);
+                    } else {
+                        threadNum = threadNum.toString();
+                    }
+                    
+                    // 构建请求体（使用toolParams中的动态路径和唯一标识符）
+                    const body = {
+                        ref: 'main',
+                        inputs: {
+                            INPUT_PATH: toolParams.input_path, // 动态输入路径
+                            OUTPUT_PATH: toolParams.output_path, // 新增：动态输出路径
+                            REF_PATH: toolParams.ref_path,
+                            JOB_NAME: globalParams.job_name,
+                            THREAD_NUM: threadNum,
+                            RUN_LOCATION: globalParams.run_location,
+                            UNIQUE_ID: toolParams.unique_id // 新增：传递唯一标识符到工作流
+                        }
+                    };
+
+                    console.log('ATACseq触发工作流的参数（含动态路径和唯一标识符）:', body);
+                    const response = await fetch(url, { 
+                        method: 'POST', 
+                        headers: headers, 
+                        body: JSON.stringify(body) 
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                    }
+
+                    // 等待8秒后获取runId
+                    console.log('等待ATACseq工作流启动...');
+                    await new Promise(resolve => setTimeout(resolve, 8000));
+
+                    // 获取runId（带重试）
+                    const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, token);
+                    if (!runId) {
+                        throw new Error('Failed to get run ID / 获取运行ID失败');
+                    }
+
+                    resolve(runId);
+                } catch (error) {
+                    console.error('ATACseq触发工作流失败:', error);
+                    reject(error);
+                }
+            });
+        }
+
+        // 获取runId（带重试）
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
-            const MAX_RETRIES = 5; // Reduce the number of retries
-            const INITIAL_DELAY = 0; // Initial delay (already waiting externally for 8 seconds)
-            const RETRY_DELAY = 3000; // Each retry interval is 3 seconds
+            const MAX_RETRIES = 5;
+            const INITIAL_DELAY = 0;
+            const RETRY_DELAY = 3000;
             
             for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-                // Calculate the current delay
                 const delay = INITIAL_DELAY + (attempt - 1) * RETRY_DELAY;
                 if (delay > 0) {
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
                 
-                showStatus(`Getting run ID (attempt ${attempt}/${MAX_RETRIES})...<br>正在获取运行ID(尝试 ${attempt}/${MAX_RETRIES})...`, 'loading');
-                
+                console.log(`ATACseq获取runId（尝试 ${attempt}/${MAX_RETRIES}）`);
                 try {
                     const runId = await getLatestRunId(owner, repo, workflowId, token);
                     if (runId) {
-                        console.log(`Successfully obtained run ID: ${runId}`);
+                        console.log(`ATACseq成功获取runId: ${runId}`);
                         return runId;
                     }
                 } catch (error) {
-                    console.log(`Attempt ${attempt} failed:`, error.message);
+                    console.log(`尝试 ${attempt} 失败:`, error.message);
                 }
             }
             
             throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
         }
 
-        // Obtain the specific implementation of the latest runId
+        // 获取最新runId
         async function getLatestRunId(owner, repo, workflowId, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
             const headers = {
@@ -319,38 +636,31 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             
             const data = await response.json();
-            
-            // Obtain the current timestamp instead of using the trigger time
             const currentTime = Date.now();
-            
-            // Check the running records returned by the API
             const runs = data.workflow_runs || [];
+            
             if (runs.length === 0) {
-                console.warn('No workflow runs found in the response');
+                console.warn('ATACseq: No workflow runs found / 未找到工作流运行记录');
                 return null;
             }
             
-            // Obtain the latest operation record (the first one)
+            // 查找最近的有效运行
             const latestRun = runs[0];
             const latestRunTime = new Date(latestRun.created_at).getTime();
             const timeDifference = currentTime - latestRunTime;
             
-            // Verification time window: Only records created within 15 seconds are accepted (avoid matching historical records)
-            if (timeDifference < 15000) { // Records within 15 seconds are considered valid
-                console.log(`Found valid run: ID=${latestRun.id}, Created=${latestRun.created_at}, Age=${timeDifference/1000}s`);
+            if (timeDifference < 15000) {
+                console.log(`ATACseq找到有效运行: ID=${latestRun.id}, 创建时间=${latestRun.created_at}`);
                 return latestRun.id;
             }
             
-            console.warn(`Latest run too old (${timeDifference/1000}s ago), no valid run found`);
-            
-            // Try to find the records that better meet the conditions in the list
+            // 匹配触发时间范围内的运行
             for (const run of runs) {
                 const runTime = new Date(run.created_at).getTime();
                 const age = currentTime - runTime;
                 
-                // Look for the records created after the trigger time
-                if (runTime > workflowTriggerTime && age < 20000) { // Records within 20 seconds
-                    console.log(`Found alternative run: ID=${run.id}, Created=${run.created_at}, Age=${age/1000}s`);
+                if (runTime > workflowTriggerTime && age < 20000) {
+                    console.log(`ATACseq找到匹配运行: ID=${run.id}, 创建时间=${run.created_at}`);
                     return run.id;
                 }
             }
@@ -358,7 +668,7 @@
             return null;
         }
 
-        // Display status function
+        // 显示状态函数
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
@@ -367,4 +677,4 @@
         }
     </script>
 </body>
-</html>
+</html>    
