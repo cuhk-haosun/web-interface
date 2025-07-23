@@ -257,7 +257,7 @@
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 window.open(
-                    `../shared/logs.html?owner=${encodeURIComponent(currentRunInfo.owner)}&repo=${encodeURIComponent(currentRunInfo.repo)}&runId=${encodeURIComponent(currentRunInfo.runId)}`,
+                    `/shared/logs.html?owner=${encodeURIComponent(currentRunInfo.owner)}&repo=${encodeURIComponent(currentRunInfo.repo)}&runId=${encodeURIComponent(currentRunInfo.runId)}`,
                     '_blank'
                 );
             } else {
