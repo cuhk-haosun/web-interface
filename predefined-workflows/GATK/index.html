@@ -58,6 +58,13 @@
         #processButton:hover {
             background: #28A398; /* Darker deep green on hover */
         }
+        #statusButton {
+            display: none;
+            background: #0d6efd; /* Blue status check button */
+        }
+        #statusButton:hover {
+            background: #0b5ed7;
+        }
         #resultsButton {
             display: none;
             background: #17a2b8;
@@ -103,6 +110,15 @@
         }
         .required {
             color: #dc3545;
+        }
+        .status-details {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            background-color: #f0f7ff;
+            border: 1px solid #cce5ff;
+            display: none;
         }
         @media (max-width: 600px) {
             .form-row {
@@ -178,9 +194,11 @@
         </div>
         
         <button id="processButton">GATK Workflow / GATK分析流程</button>
+        <button id="statusButton">Check Run Status / 查看运行状态</button>
         <button id="resultsButton">See Results / 查看结果</button>
         
         <div id="status"></div>
+        <div id="statusDetails" class="status-details"></div>
     </div>
 
     <script>
@@ -188,15 +206,19 @@
         let currentRunInfo = {
             owner: 'cuhk-haosun',
             repo: 'code-docker-GATK',
-            runId: null
+            runId: null,
+            token: null
         };
 
-        let workflowTriggerTime = 0;
+        let workflowTriggerTime = 0; // Global variable, recording the trigger time of the workflow
 
         document.getElementById('processButton').addEventListener('click', async function() {
-            // Reset the status of the result button
+            // Reset button status
+            document.getElementById('statusButton').style.display = 'none';
             document.getElementById('resultsButton').style.display = 'none';
+            document.getElementById('statusDetails').style.display = 'none';
             currentRunInfo.runId = null;
+            currentRunInfo.token = null;
             
             // Obtain the form value
             const inputPath = document.getElementById('inputPath').value.trim();
@@ -207,7 +229,6 @@
             const runLocation = document.getElementById('runLocation').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
     
-            // Verify the required fields
             if (!inputPath || !outputPath || !refPath || !jobName || !threadNum || !runLocation || !githubToken) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
@@ -244,9 +265,15 @@
                 // 3. Obtain runId (with retry and status update)
                 const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
                 
-                // 4. The button for storing running information and displaying results
-                currentRunInfo = { owner: repoOwner, repo: repoName, runId };
+                // 4. Store the operation information and display the buttons
+                currentRunInfo = { 
+                    owner: repoOwner, 
+                    repo: repoName, 
+                    runId,
+                    token: githubToken
+                };
                 showStatus(`Workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
+                document.getElementById('statusButton').style.display = 'block';
                 document.getElementById('resultsButton').style.display = 'block';
                 
             } catch (error) {
@@ -267,9 +294,27 @@
             }
         });
 
-        // Result button click event - Jump to the shared log page
+        // Status button click event
+        document.getElementById('statusButton').addEventListener('click', async function() {
+            if (!currentRunInfo.runId || !currentRunInfo.token) {
+                showStatus('No valid run information / 没有有效的运行信息', 'error');
+                document.getElementById('statusDetails').style.display = 'none';
+                return;
+            }
+
+            try {
+                showStatus('Checking run status... / 正在查询运行状态...', 'loading');
+                await checkRunStatus();
+            } catch (error) {
+                showStatus(`Failed to check status: ${error.message} / 检查状态失败: ${error.message}`, 'error');
+                document.getElementById('statusDetails').style.display = 'none';
+            }
+        });
+
+        // Result button click event - Jump to the GitHub Actions runtime record page
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
+                // Directly concatenate the official URL of GitHub Actions
                 const githubActionsUrl = `https://github.com/${currentRunInfo.owner}/${currentRunInfo.repo}/actions/runs/${currentRunInfo.runId}`;
                 window.open(githubActionsUrl, '_blank');
             } else {
@@ -277,9 +322,65 @@
             }
         });
 
+        // Check the operating status
+        async function checkRunStatus() {
+            const { owner, repo, runId, token } = currentRunInfo;
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const status = data.status; // queued, in_progress, completed
+            const conclusion = data.conclusion; // success, failure等
+            const startTime = new Date(data.created_at).toLocaleString();
+            const updateTime = new Date(data.updated_at).toLocaleString();
+
+            // State text mapping
+            let statusText, statusClass;
+            switch (status) {
+                case 'queued':
+                    statusText = '排队中 (Queued)';
+                    statusClass = 'loading';
+                    break;
+                case 'in_progress':
+                    statusText = '运行中 (In Progress)';
+                    statusClass = 'loading';
+                    break;
+                case 'completed':
+                    statusText = conclusion === 'success' ? '成功 (Success)' : `失败 (${conclusion})`;
+                    statusClass = conclusion === 'success' ? 'success' : 'error';
+                    break;
+                default:
+                    statusText = `未知状态 (${status})`;
+                    statusClass = 'error';
+            }
+
+            // Display status and details
+            showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
+            document.getElementById('statusDetails').innerHTML = `
+                <strong>Run Details / 运行详情:</strong><br>
+                - Run ID: ${runId}<br>
+                - Start Time / 开始时间: ${startTime}<br>
+                - Last Update / 最后更新: ${updateTime}<br>
+                - Conclusion / 结果: ${conclusion || 'N/A'}
+            `;
+            document.getElementById('statusDetails').style.display = 'block';
+
+            return status;
+        }
+
         // Trigger the workflow function
         async function triggerWorkflow(owner, repo, workflowId, inputs, token) {
-            workflowTriggerTime = Date.now();
+            workflowTriggerTime = Date.now(); // Trigger the workflow function
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
             const headers = {
                 'Content-Type': 'application/json',
@@ -296,7 +397,7 @@
             }
         }
 
-        //  runId acquisition function with retry mechanism
+        // runId acquisition function with retry mechanism
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
             const MAX_RETRIES = 5;
             const INITIAL_DELAY = 0;
