@@ -182,12 +182,6 @@
         </div>
         
         <div class="form-group">
-            <label for="uniqueId">Unique Identifier <span class="required">*</span>:</label>
-            <input type="text" id="uniqueId" placeholder="e.g. gatk_12345" required>
-            <small>Unique identifier for this analysis run / 此分析运行的唯一标识符</small>
-        </div>
-        
-        <div class="form-group">
             <label for="githubToken">Secret key <span class="required">*</span>:</label>
             <input type="password" id="githubToken" placeholder="Enter your GitHub PAT with 'repo' scope" required>
             <div class="token-guide">
@@ -221,8 +215,7 @@
             repo: 'code-docker-GATK',
             runId: null,
             token: null,
-            statusInterval: null,
-            uniqueId: null
+            statusInterval: null
         };
 
         let workflowTriggerTime = 0;
@@ -252,35 +245,30 @@
                 console.log('GATK加载全局参数:', globalParams);
                 console.log('GATK加载工具参数（含动态路径）:', toolParams);
 
-                // Map parameters to the form (prioritize the dynamic path in the tool parameters)
+                // Map parameters to the form
                 const paramMap = {
                     input_path: 'inputPath',
                     output_path: 'outputPath',
                     ref_path: 'refPath',
                     job_name: 'jobName',
                     run_location: 'runLocation',
-                    token: 'githubToken',
-                    unique_id: 'uniqueId'
+                    token: 'githubToken'
                 };
 
-                // Fill in the parameters and disable editing (dynamic path obtained from toolParams)
+                // Fill in the parameters and disable editing
                 for (const [globalKey, formId] of Object.entries(paramMap)) {
                     const inputElement = document.getElementById(formId);
-                    // Give priority to using the dynamic paths in the tool parameters
                     const value = toolParams[globalKey] || globalParams[globalKey];
                     if (inputElement && value) {
                         console.log(`GATK填充动态参数: ${formId} = ${value}`);
                         inputElement.value = value;
-                        inputElement.disabled = true; // Disable manual editing in workflow mode
+                        inputElement.disabled = true;
                     }
                 }
 
-                // Specific parameters of the filling tool (such as the number of threads, etc
-                for (const [key, value] of Object.entries(toolParams)) {
-                    const inputElement = document.getElementById(key);
-                    if (inputElement) {
-                        inputElement.value = value;
-                    }
+                // Fill in the thread number parameter
+                if (toolParams.thread_num) {
+                    document.getElementById('threadNum').value = toolParams.thread_num;
                 }
 
                 window.parent.postMessage({
@@ -289,7 +277,7 @@
                 }, window.location.origin);
             }
 
-            // 2. Handle the request to save parameters (save dynamic paths)
+            // 2. Handle requests for saving parameters
             if (data.action === 'saveParameters') {
                 const params = {
                     input_path: document.getElementById('inputPath').value,
@@ -298,11 +286,10 @@
                     job_name: document.getElementById('jobName').value,
                     thread_num: document.getElementById('threadNum').value,
                     run_location: document.getElementById('runLocation').value,
-                    token: document.getElementById('githubToken').value,
-                    unique_id: document.getElementById('uniqueId').value
+                    token: document.getElementById('githubToken').value
                 };
 
-                console.log('GATK保存参数（含动态路径和唯一标识符）:', params);
+                console.log('GATK保存参数:', params);
                 window.parent.postMessage({
                     action: 'parametersSaved',
                     toolId: data.toolId,
@@ -310,27 +297,23 @@
                 }, window.location.origin);
             }
 
-            // 3. Handle execution commands (using dynamic paths)
+            // 3. Handle execution commands
             if (data.action === 'execute') {
                 console.log('GATK收到执行命令:', data);
                 const { 
                     input_path: inputPath, 
                     output_path: outputPath, 
                     ref_path: refPath,
-                    thread_num: threadNum, 
-                    unique_id: uniqueId
+                    thread_num: threadNum
                 } = data.parameters;
                 const { token, run_location: runLocation, job_name: jobName } = data.globalParameters;
-
-                currentRunInfo.uniqueId = uniqueId;
 
                 triggerGATKWorkflow(
                     { 
                         input_path: inputPath, 
                         output_path: outputPath,
                         ref_path: refPath,
-                        thread_num: threadNum, 
-                        unique_id: uniqueId
+                        thread_num: threadNum
                     },
                     { token, run_location: runLocation, job_name: jobName }
                 )
@@ -341,8 +324,7 @@
                         toolId: data.toolId,
                         success: true,
                         runId: runId,
-                        message: 'Workflow executed successfully',
-                        uniqueId: uniqueId
+                        message: 'Workflow executed successfully'
                     }, window.location.origin);
                 })
                 .catch(error => {
@@ -357,9 +339,9 @@
             }
         });
 
-        // Row button click event (handling path when used independently)
+        // Run the button click event
         document.getElementById('processButton').addEventListener('click', async function() {
-            // Reset the button status and timer
+            //  Reset the button status and timer
             document.getElementById('statusButton').style.display = 'none';
             document.getElementById('resultsButton').style.display = 'none';
             currentRunInfo.runId = null;
@@ -367,7 +349,7 @@
                 clearInterval(currentRunInfo.statusInterval);
             }
             
-            // Obtain the form values (including manually entered paths and unique identifiers)
+            // Obtain the form values
             const inputPath = document.getElementById('inputPath').value.trim();
             const outputPath = document.getElementById('outputPath').value.trim();
             const refPath = document.getElementById('refPath').value.trim();
@@ -375,19 +357,11 @@
             const threadNum = document.getElementById('threadNum').value.trim();
             const runLocation = document.getElementById('runLocation').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
-            const uniqueId = document.getElementById('uniqueId').value.trim();
     
-            if (!inputPath || !outputPath || !refPath || !jobName || !threadNum || !runLocation || !githubToken || !uniqueId) {
+            if (!inputPath || !outputPath || !refPath || !jobName || !threadNum || !runLocation || !githubToken) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
             }
-    
-            if (!/^[a-zA-Z0-9_-]+$/.test(uniqueId)) {
-                showStatus('Unique identifier can only contain letters, numbers, underscores and hyphens / 唯一标识符只能包含字母、数字、下划线和连字符', 'error');
-                return;
-            }
-    
-            currentRunInfo.uniqueId = uniqueId;
     
             try {
                 const runId = await triggerGATKWorkflow(
@@ -395,8 +369,7 @@
                         input_path: inputPath,
                         output_path: outputPath,
                         ref_path: refPath,
-                        thread_num: threadNum,
-                        unique_id: uniqueId
+                        thread_num: threadNum
                     },
                     { 
                         job_name: jobName, 
@@ -415,17 +388,14 @@
             }
         });
 
-        // Status button click event (check running status)
         document.getElementById('statusButton').addEventListener('click', async function() {
             if (!currentRunInfo.runId || !currentRunInfo.token) {
                 showStatus('No valid run information / 没有有效的运行信息', 'error');
                 return;
             }
 
-            // Check the status immediately
             await checkRunStatus();
             
-            // Start polling (once every 10 seconds)
             if (currentRunInfo.statusInterval) {
                 clearInterval(currentRunInfo.statusInterval);
             }
@@ -438,7 +408,6 @@
             }, 10000);
         });
 
-        // Result button click event
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 window.open(
@@ -450,7 +419,6 @@
             }
         });
 
-        // Check the operating status
         async function checkRunStatus() {
             const { owner, repo, runId, token } = currentRunInfo;
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
@@ -473,7 +441,6 @@
                 const startTime = new Date(data.created_at).toLocaleString();
                 const updateTime = new Date(data.updated_at).toLocaleString();
 
-                // State text mapping
                 let statusText, statusClass;
                 switch (status) {
                     case 'queued':
@@ -493,11 +460,9 @@
                         statusClass = 'error';
                 }
 
-                // Display status and details
                 showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
                 document.getElementById('statusDetails').innerHTML = `
                     <strong>Run Details / 运行详情:</strong><br>
-                    - Unique Identifier / 唯一标识符: ${currentRunInfo.uniqueId || 'N/A'}<br>
                     - Run ID: ${runId}<br>
                     - Start Time / 开始时间: ${startTime}<br>
                     - Last Update / 最后更新: ${updateTime}<br>
@@ -511,7 +476,7 @@
             }
         }
 
-        // Core function: Trigger the GATK workflow (using dynamic paths and unique identifiers)
+        // Core function: Triggers the GATK workflow
         async function triggerGATKWorkflow(toolParams, globalParams) {
             return new Promise(async (resolve, reject) => {
                 try {
@@ -534,6 +499,7 @@
                         'Authorization': `token ${token}`
                     };
 
+                    // Number of processing threads
                     let threadNum = toolParams.thread_num?.trim();
                     if (!threadNum || isNaN(parseInt(threadNum, 10)) || parseInt(threadNum, 10) < 1) {
                         threadNum = "32";
@@ -542,6 +508,7 @@
                         threadNum = threadNum.toString();
                     }
                     
+                    // Construct the request body
                     const body = {
                         ref: 'main',
                         inputs: {
@@ -550,12 +517,11 @@
                             REF_PATH: toolParams.ref_path,
                             JOB_NAME: globalParams.job_name,
                             THREAD_NUM: threadNum,
-                            RUN_LOCATION: globalParams.run_location,
-                            UNIQUE_ID: toolParams.unique_id
+                            RUN_LOCATION: globalParams.run_location
                         }
                     };
 
-                    console.log('GATK触发工作流的参数（含动态路径和唯一标识符）:', body);
+                    console.log('GATK触发工作流的参数:', body);
                     const response = await fetch(url, { 
                         method: 'POST', 
                         headers: headers, 
@@ -567,11 +533,9 @@
                         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
                     }
 
-                    // Wait for 8 seconds to get the runId
                     console.log('等待GATK工作流启动...');
                     await new Promise(resolve => setTimeout(resolve, 8000));
 
-                    // Get runId (with retry)
                     const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, token);
                     if (!runId) {
                         throw new Error('Failed to get run ID / 获取运行ID失败');
@@ -585,7 +549,6 @@
             });
         }
 
-        //  Get runId (with retry)
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
             const MAX_RETRIES = 5;
             const INITIAL_DELAY = 0;
