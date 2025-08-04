@@ -239,7 +239,7 @@
         
                 // 2. Wait for 8 seconds and then start getting the runId
                 showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
-                await new Promise(resolve => setTimeout(resolve, 8000)); // 等待8秒
+                await new Promise(resolve => setTimeout(resolve, 8000));
                 
                 // 3. Obtain runId (with retry and status update)
                 const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
@@ -270,10 +270,8 @@
         // Result button click event - Jump to the shared log page
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
-                window.open(
-                    `/shared/logs.html?owner=${encodeURIComponent(currentRunInfo.owner)}&repo=${encodeURIComponent(currentRunInfo.repo)}&runId=${encodeURIComponent(currentRunInfo.runId)}`,
-                    '_blank'
-                );
+                const githubActionsUrl = `https://github.com/${currentRunInfo.owner}/${currentRunInfo.repo}/actions/runs/${currentRunInfo.runId}`;
+                window.open(githubActionsUrl, '_blank');
             } else {
                 showStatus('No valid run information available / 没有有效的运行信息', 'error');
             }
