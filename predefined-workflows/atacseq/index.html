@@ -117,7 +117,6 @@
         .required {
             color: #dc3545;
         }
-        /* 新增状态详情样式 */
         .status-details {
             margin-top: 10px;
             padding: 10px;
@@ -138,7 +137,7 @@
 </head>
 <body>
     <div class="container">
-      <div style="text-align: center; margin-bottom: 20px; padding: 0 10px;">
+        <div style="text-align: center; margin-bottom: 20px; padding: 0 10px;">
             <img src="images/atacseq.logo.png" 
                  alt="ATACseq Logo" 
                  style="width: 100%; max-width: 1642px; height: auto;">
@@ -148,44 +147,40 @@
         
         <div class="form-group">
             <label for="inputPath">Input path (FASTQ files) <span class="required">*</span>:</label>
-            <input type="text" id="inputPath" placeholder="e.g. /data/atacseq/fastq" required>
+            <input type="text" id="inputPath" placeholder="e.g. /pool/sun.ghrunner/zx/ylw/20250123.ATAC" required>
+            <small>Path containing FASTQ files / 包含FASTQ文件的路径</small>
         </div>
         
         <div class="form-group">
             <label for="refPath">Reference genome path <span class="required">*</span>:</label>
-            <input type="text" id="refPath" placeholder="e.g. /data/reference/genome" required>
-            <small>Path to reference genome files / 参考基因组文件路径</small>
+            <input type="text" id="refPath" placeholder="e.g. /pool/sun/archive/refgenome/mouse/mm39/" required>
+            <small>Path to reference genome FA files / 参考基因组FA文件路径</small>
         </div>
         
-        <!-- 新增：输出路径 -->
         <div class="form-group">
-            <label for="outputPath">Output path <span class="required">*</span>:</label>
-            <input type="text" id="outputPath" placeholder="e.g. /data/atacseq/results" required>
+            <label for="genomeIndex">Genome index name <span class="required">*</span>:</label>
+            <input type="text" id="genomeIndex" placeholder="e.g. BWA-MEM2" value="BWA-MEM2" required>
+            <small>Name of reference genome index / 参考基因组索引名称</small>
         </div>
         
         <div class="form-row">
             <div class="form-group">
                 <label for="jobName">Job name <span class="required">*</span>:</label>
-                <input type="text" id="jobName" placeholder="e.g. atacseq_analysis_2025" required>
+                <input type="text" id="jobName" placeholder="e.g. 20250123.ATAC" required>
+                <small>Base name for the jobs / 任务基础名称</small>
             </div>
             
             <div class="form-group">
                 <label for="threadNum">Thread number <span class="required">*</span>:</label>
-                <input type="number" id="threadNum" placeholder="e.g. 32" min="1" required>
+                <input type="number" id="threadNum" placeholder="e.g. 32" min="1" value="32" required>
+                <small>Number of threads for processing / 处理线程数</small>
             </div>
         </div>
         
         <div class="form-group">
             <label for="runLocation">Run location <span class="required">*</span>:</label>
-            <input type="text" id="runLocation" placeholder="e.g. pipeline" required>
+            <input type="text" id="runLocation" placeholder="e.g. pipeline" value="pipeline" required>
             <small>Specify the runner group (e.g. pipeline) / 指定运行器组(如 pipeline)</small>
-        </div>
-        
-        <!-- 新增：统一的独立标识符输入 -->
-        <div class="form-group">
-            <label for="uniqueId">Unique Identifier <span class="required">*</span>:</label>
-            <input type="text" id="uniqueId" placeholder="e.g. atacseq_12345" required>
-            <small>Unique identifier for this analysis run / 此分析运行的唯一标识符</small>
         </div>
         
         <div class="form-group">
@@ -217,26 +212,22 @@
     </div>
 
     <script>
-        // 全局变量（新增状态管理相关）
         let currentRunInfo = {
             owner: 'cuhk-haosun',
             repo: 'code-leiyong',
             runId: null,
-            token: null, // 保存Token用于状态查询
-            statusInterval: null, // 轮询定时器ID
-            uniqueId: null // 新增：唯一标识符
+            token: null,
+            statusInterval: null
         };
 
         let workflowTriggerTime = 0;
         let isWorkflowMode = false;
 
-        // 工具准备就绪，通知主页面
         document.addEventListener('DOMContentLoaded', function() {
             console.log('ATACseq工具页面加载完成，通知主页面');
             window.parent.postMessage({ action: 'toolReady' }, window.location.origin);
         });
 
-        // 监听主页面消息（完善动态路径处理）
         window.addEventListener('message', function(event) {
             console.log('ATACseq收到消息:', event.data);
             
@@ -247,43 +238,27 @@
 
             const data = event.data;
             
-            // 1. 处理参数加载（接收动态路径）
             if (data.action === 'loadParameters') {
                 isWorkflowMode = true;
                 const globalParams = data.globalParameters || {};
                 const toolParams = data.parameters || {};
 
-                console.log('ATACseq加载全局参数:', globalParams);
-                console.log('ATACseq加载工具参数（含动态路径）:', toolParams);
-
-                // 映射参数到表单（优先使用工具参数中的动态路径）
                 const paramMap = {
                     input_path: 'inputPath',
-                    output_path: 'outputPath',
                     ref_path: 'refPath',
+                    genome_index: 'genomeIndex',
                     job_name: 'jobName',
+                    thread_num: 'threadNum',
                     run_location: 'runLocation',
-                    token: 'githubToken',
-                    unique_id: 'uniqueId' // 新增：映射唯一标识符
+                    token: 'githubToken'
                 };
 
-                // 填充参数并禁用编辑（动态路径从toolParams获取）
                 for (const [globalKey, formId] of Object.entries(paramMap)) {
                     const inputElement = document.getElementById(formId);
-                    // 优先使用工具参数中的动态路径（如Step1/Step2）
                     const value = toolParams[globalKey] || globalParams[globalKey];
                     if (inputElement && value) {
-                        console.log(`ATACseq填充动态参数: ${formId} = ${value}`);
                         inputElement.value = value;
-                        inputElement.disabled = true; // 工作流模式下禁用手动编辑
-                    }
-                }
-
-                // 填充工具特有参数（线程数等）
-                for (const [key, value] of Object.entries(toolParams)) {
-                    const inputElement = document.getElementById(key);
-                    if (inputElement) {
-                        inputElement.value = value;
+                        inputElement.disabled = true;
                     }
                 }
 
@@ -293,20 +268,17 @@
                 }, window.location.origin);
             }
 
-            // 2. 处理保存参数请求（保存动态路径）
             if (data.action === 'saveParameters') {
                 const params = {
-                    input_path: document.getElementById('inputPath').value, // 动态输入路径
-                    output_path: document.getElementById('outputPath').value, // 动态输出路径
+                    input_path: document.getElementById('inputPath').value,
                     ref_path: document.getElementById('refPath').value,
+                    genome_index: document.getElementById('genomeIndex').value,
                     job_name: document.getElementById('jobName').value,
                     thread_num: document.getElementById('threadNum').value,
                     run_location: document.getElementById('runLocation').value,
-                    token: document.getElementById('githubToken').value,
-                    unique_id: document.getElementById('uniqueId').value // 新增：保存唯一标识符
+                    token: document.getElementById('githubToken').value
                 };
 
-                console.log('ATACseq保存参数（含动态路径和唯一标识符）:', params);
                 window.parent.postMessage({
                     action: 'parametersSaved',
                     toolId: data.toolId,
@@ -314,42 +286,33 @@
                 }, window.location.origin);
             }
 
-            // 3. 处理执行命令（使用动态路径）
             if (data.action === 'execute') {
                 console.log('ATACseq收到执行命令:', data);
-                // 从工具参数中提取动态路径
                 const { 
                     input_path: inputPath, 
-                    output_path: outputPath, 
                     ref_path: refPath,
-                    thread_num: threadNum, 
-                    unique_id: uniqueId // 新增：获取唯一标识符
+                    genome_index: genomeIndex,
+                    thread_num: threadNum
                 } = data.parameters;
                 const { token, run_location: runLocation, job_name: jobName } = data.globalParameters;
 
-                // 保存唯一标识符
-                currentRunInfo.uniqueId = uniqueId;
-
-                // 调用触发函数时传入动态路径和唯一标识符
                 triggerATACseqWorkflow(
                     { 
                         input_path: inputPath, 
-                        output_path: outputPath,
                         ref_path: refPath,
-                        thread_num: threadNum, 
-                        unique_id: uniqueId // 新增：传递唯一标识符
+                        genome_index: genomeIndex,
+                        thread_num: threadNum
                     },
                     { token, run_location: runLocation, job_name: jobName }
                 )
                 .then(runId => {
-                    currentRunInfo.token = token; // 保存Token用于状态查询
+                    currentRunInfo.token = token;
                     window.parent.postMessage({
                         action: 'executionComplete',
                         toolId: data.toolId,
                         success: true,
                         runId: runId,
-                        message: 'Workflow executed successfully',
-                        uniqueId: uniqueId // 新增：传递唯一标识符
+                        message: 'Workflow executed successfully'
                     }, window.location.origin);
                 })
                 .catch(error => {
@@ -364,9 +327,7 @@
             }
         });
 
-        // 运行按钮点击事件（独立使用时处理路径）
         document.getElementById('processButton').addEventListener('click', async function() {
-            // 重置按钮状态和定时器
             document.getElementById('statusButton').style.display = 'none';
             document.getElementById('resultsButton').style.display = 'none';
             currentRunInfo.runId = null;
@@ -374,39 +335,26 @@
                 clearInterval(currentRunInfo.statusInterval);
             }
             
-            // 获取表单值（含手动输入的路径和唯一标识符）
             const inputPath = document.getElementById('inputPath').value.trim();
-            const outputPath = document.getElementById('outputPath').value.trim(); // 新增：获取输出路径
             const refPath = document.getElementById('refPath').value.trim();
+            const genomeIndex = document.getElementById('genomeIndex').value.trim();
             const jobName = document.getElementById('jobName').value.trim();
             const threadNum = document.getElementById('threadNum').value.trim();
             const runLocation = document.getElementById('runLocation').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
-            const uniqueId = document.getElementById('uniqueId').value.trim(); // 新增：获取唯一标识符
     
-            // 验证必填字段
-            if (!inputPath || !outputPath || !refPath || !jobName || !threadNum || !runLocation || !githubToken || !uniqueId) {
+            if (!inputPath || !refPath || !genomeIndex || !jobName || !threadNum || !runLocation || !githubToken) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
             }
-    
-            // 验证唯一标识符格式（仅允许字母、数字、下划线和连字符）
-            if (!/^[a-zA-Z0-9_-]+$/.test(uniqueId)) {
-                showStatus('Unique identifier can only contain letters, numbers, underscores and hyphens / 唯一标识符只能包含字母、数字、下划线和连字符', 'error');
-                return;
-            }
-    
-            // 保存唯一标识符
-            currentRunInfo.uniqueId = uniqueId;
     
             try {
                 const runId = await triggerATACseqWorkflow(
                     { 
                         input_path: inputPath,
-                        output_path: outputPath, // 新增：传递输出路径
                         ref_path: refPath,
-                        thread_num: threadNum,
-                        unique_id: uniqueId // 新增：传递唯一标识符
+                        genome_index: genomeIndex,
+                        thread_num: threadNum
                     },
                     { 
                         job_name: jobName, 
@@ -416,7 +364,7 @@
                 );
                 
                 currentRunInfo.runId = runId;
-                currentRunInfo.token = githubToken; // 保存Token
+                currentRunInfo.token = githubToken;
                 showStatus(`ATACseq workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
                 document.getElementById('statusButton').style.display = 'block';
                 document.getElementById('resultsButton').style.display = 'block';
@@ -425,17 +373,14 @@
             }
         });
 
-        // 新增：状态按钮点击事件（检查运行状态）
         document.getElementById('statusButton').addEventListener('click', async function() {
             if (!currentRunInfo.runId || !currentRunInfo.token) {
                 showStatus('No valid run information / 没有有效的运行信息', 'error');
                 return;
             }
 
-            // 立即查询一次状态
             await checkRunStatus();
             
-            // 启动轮询（每10秒一次）
             if (currentRunInfo.statusInterval) {
                 clearInterval(currentRunInfo.statusInterval);
             }
@@ -448,19 +393,15 @@
             }, 10000);
         });
 
-        // 结果按钮点击事件
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
-                window.open(
-                    `/shared/logs.html?owner=${encodeURIComponent(currentRunInfo.owner)}&repo=${encodeURIComponent(currentRunInfo.repo)}&runId=${encodeURIComponent(currentRunInfo.runId)}`,
-                    '_blank'
-                );
+                const githubActionsUrl = `https://github.com/${currentRunInfo.owner}/${currentRunInfo.repo}/actions/runs/${currentRunInfo.runId}`;
+                window.open(githubActionsUrl, '_blank');
             } else {
                 showStatus('No valid run information available / 没有有效的运行信息', 'error');
             }
         });
 
-        // 新增：检查运行状态
         async function checkRunStatus() {
             const { owner, repo, runId, token } = currentRunInfo;
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
@@ -469,7 +410,8 @@
                 const response = await fetch(url, {
                     headers: {
                         'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json'
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Cache-Control': 'no-cache'
                     }
                 });
 
@@ -479,11 +421,10 @@
 
                 const data = await response.json();
                 const status = data.status; // queued, in_progress, completed
-                const conclusion = data.conclusion; // success, failure等
+                const conclusion = data.conclusion;
                 const startTime = new Date(data.created_at).toLocaleString();
                 const updateTime = new Date(data.updated_at).toLocaleString();
 
-                // 状态文本映射
                 let statusText, statusClass;
                 switch (status) {
                     case 'queued':
@@ -503,11 +444,9 @@
                         statusClass = 'error';
                 }
 
-                // 显示状态和详情
                 showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
                 document.getElementById('statusDetails').innerHTML = `
                     <strong>Run Details / 运行详情:</strong><br>
-                    - Unique Identifier / 唯一标识符: ${currentRunInfo.uniqueId || 'N/A'}<br>
                     - Run ID: ${runId}<br>
                     - Start Time / 开始时间: ${startTime}<br>
                     - Last Update / 最后更新: ${updateTime}<br>
@@ -521,7 +460,6 @@
             }
         }
 
-        // 核心函数：触发ATACseq工作流（使用动态路径和唯一标识符）
         async function triggerATACseqWorkflow(toolParams, globalParams) {
             return new Promise(async (resolve, reject) => {
                 try {
@@ -544,30 +482,27 @@
                         'Authorization': `token ${token}`
                     };
 
-                    // 处理线程数（确保为数字）
                     let threadNum = toolParams.thread_num?.trim();
                     if (!threadNum || isNaN(parseInt(threadNum, 10)) || parseInt(threadNum, 10) < 1) {
-                        threadNum = "32"; // ATACseq默认线程数
+                        threadNum = "32";
                         console.log('使用默认线程数:', threadNum);
                     } else {
                         threadNum = threadNum.toString();
                     }
                     
-                    // 构建请求体（使用toolParams中的动态路径和唯一标识符）
                     const body = {
                         ref: 'main',
                         inputs: {
-                            INPUT_PATH: toolParams.input_path, // 动态输入路径
-                            OUTPUT_PATH: toolParams.output_path, // 新增：动态输出路径
+                            INPUT_PATH: toolParams.input_path,
                             REF_PATH: toolParams.ref_path,
+                            GENOME_INDEX: toolParams.genome_index,
                             JOB_NAME: globalParams.job_name,
                             THREAD_NUM: threadNum,
-                            RUN_LOCATION: globalParams.run_location,
-                            UNIQUE_ID: toolParams.unique_id // 新增：传递唯一标识符到工作流
+                            RUN_LOCATION: globalParams.run_location
                         }
                     };
 
-                    console.log('ATACseq触发工作流的参数（含动态路径和唯一标识符）:', body);
+                    console.log('ATACseq触发工作流的参数:', body);
                     const response = await fetch(url, { 
                         method: 'POST', 
                         headers: headers, 
@@ -579,11 +514,8 @@
                         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
                     }
 
-                    // 等待8秒后获取runId
-                    console.log('等待ATACseq工作流启动...');
                     await new Promise(resolve => setTimeout(resolve, 8000));
 
-                    // 获取runId（带重试）
                     const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, token);
                     if (!runId) {
                         throw new Error('Failed to get run ID / 获取运行ID失败');
@@ -597,7 +529,6 @@
             });
         }
 
-        // 获取runId（带重试）
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
             const MAX_RETRIES = 5;
             const INITIAL_DELAY = 0;
@@ -624,7 +555,6 @@
             throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
         }
 
-        // 获取最新runId
         async function getLatestRunId(owner, repo, workflowId, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
             const headers = {
@@ -644,7 +574,6 @@
                 return null;
             }
             
-            // 查找最近的有效运行
             const latestRun = runs[0];
             const latestRunTime = new Date(latestRun.created_at).getTime();
             const timeDifference = currentTime - latestRunTime;
@@ -654,7 +583,6 @@
                 return latestRun.id;
             }
             
-            // 匹配触发时间范围内的运行
             for (const run of runs) {
                 const runTime = new Date(run.created_at).getTime();
                 const age = currentTime - runTime;
@@ -668,7 +596,6 @@
             return null;
         }
 
-        // 显示状态函数
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
@@ -677,4 +604,4 @@
         }
     </script>
 </body>
-</html>    
+</html>
