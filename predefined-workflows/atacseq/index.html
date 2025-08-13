@@ -37,10 +37,6 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
-        input:disabled {
-            background-color: #f5f5f5;
-            cursor: not-allowed;
-        }
         button {
             color: white;
             border: none;
@@ -64,7 +60,7 @@
         }
         #statusButton {
             display: none;
-            background: #0d6efd; /* Blue status check button */
+            background: #0d6efd;
         }
         #statusButton:hover {
             background: #0b5ed7;
@@ -100,11 +96,9 @@
         .form-row {
             display: flex;
             gap: 15px;
-            flex-wrap: wrap;
         }
         .form-row .form-group {
             flex: 1;
-            min-width: 200px;
         }
         small {
             color: #666;
@@ -124,13 +118,11 @@
             font-size: 0.9em;
             background-color: #f0f7ff;
             border: 1px solid #cce5ff;
+            display: none;
         }
         @media (max-width: 600px) {
             .form-row {
                 flex-direction: column;
-            }
-            .form-row .form-group {
-                min-width: 100%;
             }
         }
     </style>
@@ -147,40 +139,38 @@
         
         <div class="form-group">
             <label for="inputPath">Input path (FASTQ files) <span class="required">*</span>:</label>
-            <input type="text" id="inputPath" placeholder="e.g. /pool/sun.ghrunner/zx/ylw/20250123.ATAC" required>
-            <small>Path containing FASTQ files / 包含FASTQ文件的路径</small>
+            <input type="text" id="inputPath" placeholder="e.g. /data/atacseq/fastq" required>
+            <small>Path containing FASTQ files</small>
         </div>
         
         <div class="form-group">
             <label for="refPath">Reference genome path <span class="required">*</span>:</label>
-            <input type="text" id="refPath" placeholder="e.g. /pool/sun/archive/refgenome/mouse/mm39/" required>
-            <small>Path to reference genome FA files / 参考基因组FA文件路径</small>
+            <input type="text" id="refPath" placeholder="e.g. /data/reference/genome" required>
+            <small>Path to reference genome FA files</small>
         </div>
         
         <div class="form-group">
             <label for="genomeIndex">Genome index name <span class="required">*</span>:</label>
             <input type="text" id="genomeIndex" placeholder="e.g. BWA-MEM2" value="BWA-MEM2" required>
-            <small>Name of reference genome index / 参考基因组索引名称</small>
+            <small>Name of reference genome index</small>
         </div>
         
         <div class="form-row">
             <div class="form-group">
                 <label for="jobName">Job name <span class="required">*</span>:</label>
-                <input type="text" id="jobName" placeholder="e.g. 20250123.ATAC" required>
-                <small>Base name for the jobs / 任务基础名称</small>
+                <input type="text" id="jobName" placeholder="e.g. atacseq_analysis_2025" required>
             </div>
             
             <div class="form-group">
                 <label for="threadNum">Thread number <span class="required">*</span>:</label>
-                <input type="number" id="threadNum" placeholder="e.g. 32" min="1" value="32" required>
-                <small>Number of threads for processing / 处理线程数</small>
+                <input type="number" id="threadNum" placeholder="e.g. 32" min="1" required>
             </div>
         </div>
         
         <div class="form-group">
             <label for="runLocation">Run location <span class="required">*</span>:</label>
-            <input type="text" id="runLocation" placeholder="e.g. pipeline" value="pipeline" required>
-            <small>Specify the runner group (e.g. pipeline) / 指定运行器组(如 pipeline)</small>
+            <input type="text" id="runLocation" placeholder="e.g. pipeline" required>
+            <small>Specify the runner group (e.g. pipeline)</small>
         </div>
         
         <div class="form-group">
@@ -203,7 +193,7 @@
             </div>
         </div>
         
-        <button id="processButton">ATACseq Workflow / ATACseq分析流程</button>
+        <button id="processButton">Sequence Alignment Workflow (BWA) / 序列比对流程（BWA）</button>
         <button id="statusButton">Check Run Status / 查看运行状态</button>
         <button id="resultsButton">See Results / 查看结果</button>
         
@@ -212,129 +202,25 @@
     </div>
 
     <script>
+        // Global variable for storing operational information
         let currentRunInfo = {
             owner: 'cuhk-haosun',
             repo: 'code-leiyong',
             runId: null,
-            token: null,
-            statusInterval: null
+            token: null
         };
 
-        let workflowTriggerTime = 0;
-        let isWorkflowMode = false;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('ATACseq工具页面加载完成，通知主页面');
-            window.parent.postMessage({ action: 'toolReady' }, window.location.origin);
-        });
-
-        window.addEventListener('message', function(event) {
-            console.log('ATACseq收到消息:', event.data);
-            
-            if (event.origin !== window.location.origin) {
-                console.warn('拒绝来自未知源的消息:', event.origin);
-                return;
-            }
-
-            const data = event.data;
-            
-            if (data.action === 'loadParameters') {
-                isWorkflowMode = true;
-                const globalParams = data.globalParameters || {};
-                const toolParams = data.parameters || {};
-
-                const paramMap = {
-                    input_path: 'inputPath',
-                    ref_path: 'refPath',
-                    genome_index: 'genomeIndex',
-                    job_name: 'jobName',
-                    thread_num: 'threadNum',
-                    run_location: 'runLocation',
-                    token: 'githubToken'
-                };
-
-                for (const [globalKey, formId] of Object.entries(paramMap)) {
-                    const inputElement = document.getElementById(formId);
-                    const value = toolParams[globalKey] || globalParams[globalKey];
-                    if (inputElement && value) {
-                        inputElement.value = value;
-                        inputElement.disabled = true;
-                    }
-                }
-
-                window.parent.postMessage({
-                    action: 'toolReady',
-                    toolId: data.toolId
-                }, window.location.origin);
-            }
-
-            if (data.action === 'saveParameters') {
-                const params = {
-                    input_path: document.getElementById('inputPath').value,
-                    ref_path: document.getElementById('refPath').value,
-                    genome_index: document.getElementById('genomeIndex').value,
-                    job_name: document.getElementById('jobName').value,
-                    thread_num: document.getElementById('threadNum').value,
-                    run_location: document.getElementById('runLocation').value,
-                    token: document.getElementById('githubToken').value
-                };
-
-                window.parent.postMessage({
-                    action: 'parametersSaved',
-                    toolId: data.toolId,
-                    parameters: params
-                }, window.location.origin);
-            }
-
-            if (data.action === 'execute') {
-                console.log('ATACseq收到执行命令:', data);
-                const { 
-                    input_path: inputPath, 
-                    ref_path: refPath,
-                    genome_index: genomeIndex,
-                    thread_num: threadNum
-                } = data.parameters;
-                const { token, run_location: runLocation, job_name: jobName } = data.globalParameters;
-
-                triggerATACseqWorkflow(
-                    { 
-                        input_path: inputPath, 
-                        ref_path: refPath,
-                        genome_index: genomeIndex,
-                        thread_num: threadNum
-                    },
-                    { token, run_location: runLocation, job_name: jobName }
-                )
-                .then(runId => {
-                    currentRunInfo.token = token;
-                    window.parent.postMessage({
-                        action: 'executionComplete',
-                        toolId: data.toolId,
-                        success: true,
-                        runId: runId,
-                        message: 'Workflow executed successfully'
-                    }, window.location.origin);
-                })
-                .catch(error => {
-                    window.parent.postMessage({
-                        action: 'executionComplete',
-                        toolId: data.toolId,
-                        success: false,
-                        runId: null,
-                        message: error.message
-                    }, window.location.origin);
-                });
-            }
-        });
+        let workflowTriggerTime = 0; // Global variable to record workflow trigger time
 
         document.getElementById('processButton').addEventListener('click', async function() {
+            // Reset button status
             document.getElementById('statusButton').style.display = 'none';
             document.getElementById('resultsButton').style.display = 'none';
+            document.getElementById('statusDetails').style.display = 'none';
             currentRunInfo.runId = null;
-            if (currentRunInfo.statusInterval) {
-                clearInterval(currentRunInfo.statusInterval);
-            }
+            currentRunInfo.token = null;
             
+            // Get form values
             const inputPath = document.getElementById('inputPath').value.trim();
             const refPath = document.getElementById('refPath').value.trim();
             const genomeIndex = document.getElementById('genomeIndex').value.trim();
@@ -343,56 +229,90 @@
             const runLocation = document.getElementById('runLocation').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
     
+            // Validate required fields
             if (!inputPath || !refPath || !genomeIndex || !jobName || !threadNum || !runLocation || !githubToken) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
             }
     
             try {
-                const runId = await triggerATACseqWorkflow(
-                    { 
-                        input_path: inputPath,
-                        ref_path: refPath,
-                        genome_index: genomeIndex,
-                        thread_num: threadNum
-                    },
-                    { 
-                        job_name: jobName, 
-                        run_location: runLocation, 
-                        token: githubToken 
-                    }
-                );
+                const repoOwner = 'cuhk-haosun';
+                const repoName = 'code-leiyong';
+                const workflowId = 'atacseq.yaml';
+        
+                // 1. Trigger workflow
+                showStatus('Triggering workflow... / 正在触发工作流...', 'loading');
                 
-                currentRunInfo.runId = runId;
-                currentRunInfo.token = githubToken;
-                showStatus(`ATACseq workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
+                // Process thread number
+                let threadNumValue = threadNum;
+                if (!threadNumValue || isNaN(parseInt(threadNumValue, 10)) || parseInt(threadNumValue, 10) < 1) {
+                    threadNumValue = "32";
+                    console.log('Using default thread number:', threadNumValue);
+                }
+                
+                await triggerWorkflow(repoOwner, repoName, workflowId, {
+                    INPUT_PATH: inputPath,
+                    REF_PATH: refPath,
+                    GENOME_INDEX: genomeIndex,
+                    JOB_NAME: jobName,
+                    THREAD_NUM: threadNumValue,
+                    RUN_LOCATION: runLocation
+                }, githubToken);
+        
+                // 2. Wait 8 seconds before getting run ID
+                showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
+                await new Promise(resolve => setTimeout(resolve, 8000));
+                
+                // 3. Get run ID with retry mechanism
+                const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
+                
+                // 4. Store run info and display buttons
+                currentRunInfo = { 
+                    owner: repoOwner, 
+                    repo: repoName, 
+                    runId,
+                    token: githubToken
+                };
+                showStatus(`Workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
                 document.getElementById('statusButton').style.display = 'block';
                 document.getElementById('resultsButton').style.display = 'block';
+                
             } catch (error) {
-                showStatus(`Error: ${error.message}`, 'error');
+                console.error('Error:', error);
+                let errorMsg = `Error: ${error.message}`;
+                
+                if (error.message.includes('401')) {
+                    errorMsg = 'Authentication failed. Please check your GitHub Token. / 认证失败，请检查GitHub Token';
+                } else if (error.message.includes('404')) {
+                    errorMsg = 'Repository or workflow not found. / 仓库或工作流未找到';
+                } else if (error.message.includes('403')) {
+                    errorMsg = 'Permission denied. Token may not have enough permissions. / 权限不足，Token可能缺少必要权限';
+                } else if (error.message.includes('Failed to get run ID')) {
+                    errorMsg = 'Workflow started but failed to get run ID. Please check Actions manually. / 工作流已启动但获取ID失败，请手动检查Actions';
+                }
+                
+                showStatus(errorMsg, 'error');
             }
         });
 
+        // Status button click event
         document.getElementById('statusButton').addEventListener('click', async function() {
             if (!currentRunInfo.runId || !currentRunInfo.token) {
                 showStatus('No valid run information / 没有有效的运行信息', 'error');
+                document.getElementById('statusDetails').style.display = 'none';
                 return;
             }
 
-            await checkRunStatus();
-            
-            if (currentRunInfo.statusInterval) {
-                clearInterval(currentRunInfo.statusInterval);
+            try {
+                showStatus('Checking run status... / 正在查询运行状态...', 'loading');
+                await checkRunStatus();
+            } catch (error) {
+                showStatus(`Failed to check status: ${error.message} / 检查状态失败: ${error.message}`, 'error');
+                document.getElementById('statusDetails').style.display = 'none';
             }
-            currentRunInfo.statusInterval = setInterval(async () => {
-                const status = await checkRunStatus();
-                if (status === 'completed') {
-                    clearInterval(currentRunInfo.statusInterval);
-                    currentRunInfo.statusInterval = null;
-                }
-            }, 10000);
         });
 
+        // Results button click event - Jump to GitHub Actions run page
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 const githubActionsUrl = `https://github.com/${currentRunInfo.owner}/${currentRunInfo.repo}/actions/runs/${currentRunInfo.runId}`;
@@ -402,133 +322,82 @@
             }
         });
 
+        // Check run status function
         async function checkRunStatus() {
             const { owner, repo, runId, token } = currentRunInfo;
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
 
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Cache-Control': 'no-cache'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
                 }
+            });
 
-                const data = await response.json();
-                const status = data.status; // queued, in_progress, completed
-                const conclusion = data.conclusion;
-                const startTime = new Date(data.created_at).toLocaleString();
-                const updateTime = new Date(data.updated_at).toLocaleString();
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-                let statusText, statusClass;
-                switch (status) {
-                    case 'queued':
-                        statusText = '排队中 (Queued)';
-                        statusClass = 'loading';
-                        break;
-                    case 'in_progress':
-                        statusText = '运行中 (In Progress)';
-                        statusClass = 'loading';
-                        break;
-                    case 'completed':
-                        statusText = conclusion === 'success' ? '成功 (Success)' : `失败 (${conclusion})`;
-                        statusClass = conclusion === 'success' ? 'success' : 'error';
-                        break;
-                    default:
-                        statusText = `未知状态 (${status})`;
-                        statusClass = 'error';
-                }
+            const data = await response.json();
+            const status = data.status; // Possible values: queued, in_progress, completed
+            const conclusion = data.conclusion; // Possible values: success, failure, etc.
+            const startTime = new Date(data.created_at).toLocaleString();
+            const updateTime = new Date(data.updated_at).toLocaleString();
 
-                showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
-                document.getElementById('statusDetails').innerHTML = `
-                    <strong>Run Details / 运行详情:</strong><br>
-                    - Run ID: ${runId}<br>
-                    - Start Time / 开始时间: ${startTime}<br>
-                    - Last Update / 最后更新: ${updateTime}<br>
-                    - Conclusion / 结果: ${conclusion || 'N/A'}
-                `;
+            // Map status to display text and style
+            let statusText, statusClass;
+            switch (status) {
+                case 'queued':
+                    statusText = 'Queued / 排队中';
+                    statusClass = 'loading';
+                    break;
+                case 'in_progress':
+                    statusText = 'In Progress / 运行中';
+                    statusClass = 'loading';
+                    break;
+                case 'completed':
+                    statusText = conclusion === 'success' ? 'Success / 成功' : `Failed (${conclusion}) / 失败 (${conclusion})`;
+                    statusClass = conclusion === 'success' ? 'success' : 'error';
+                    break;
+                default:
+                    statusText = `Unknown (${status}) / 未知状态 (${status})`;
+                    statusClass = 'error';
+            }
 
-                return status;
-            } catch (error) {
-                showStatus(`Failed to check status: ${error.message} / 检查状态失败: ${error.message}`, 'error');
-                return null;
+            // Display status and details
+            showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
+            document.getElementById('statusDetails').innerHTML = `
+                <strong>Run Details / 运行详情:</strong><br>
+                - Run ID: ${runId}<br>
+                - Start Time / 开始时间: ${startTime}<br>
+                - Last Update / 最后更新: ${updateTime}<br>
+                - Conclusion / 结果: ${conclusion || 'N/A'}
+            `;
+            document.getElementById('statusDetails').style.display = 'block';
+
+            return status;
+        }
+
+        // Trigger workflow function
+        async function triggerWorkflow(owner, repo, workflowId, inputs, token) {
+            workflowTriggerTime = Date.now();
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json',
+                'Authorization': `token ${token}`
+            };
+            const body = { ref: 'main', inputs };
+            
+            const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
         }
 
-        async function triggerATACseqWorkflow(toolParams, globalParams) {
-            return new Promise(async (resolve, reject) => {
-                try {
-                    const repoOwner = 'cuhk-haosun';
-                    const repoName = 'code-leiyong';
-                    const workflowId = 'atacseq.yaml';
-                    const token = globalParams.token;
-
-                    if (!token) {
-                        reject(new Error('Missing GitHub Token / 缺少GitHub Token'));
-                        return;
-                    }
-
-                    workflowTriggerTime = Date.now();
-
-                    const url = `https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows/${workflowId}/dispatches`;
-                    const headers = {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Authorization': `token ${token}`
-                    };
-
-                    let threadNum = toolParams.thread_num?.trim();
-                    if (!threadNum || isNaN(parseInt(threadNum, 10)) || parseInt(threadNum, 10) < 1) {
-                        threadNum = "32";
-                        console.log('使用默认线程数:', threadNum);
-                    } else {
-                        threadNum = threadNum.toString();
-                    }
-                    
-                    const body = {
-                        ref: 'main',
-                        inputs: {
-                            INPUT_PATH: toolParams.input_path,
-                            REF_PATH: toolParams.ref_path,
-                            GENOME_INDEX: toolParams.genome_index,
-                            JOB_NAME: globalParams.job_name,
-                            THREAD_NUM: threadNum,
-                            RUN_LOCATION: globalParams.run_location
-                        }
-                    };
-
-                    console.log('ATACseq触发工作流的参数:', body);
-                    const response = await fetch(url, { 
-                        method: 'POST', 
-                        headers: headers, 
-                        body: JSON.stringify(body) 
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-                    }
-
-                    await new Promise(resolve => setTimeout(resolve, 8000));
-
-                    const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, token);
-                    if (!runId) {
-                        throw new Error('Failed to get run ID / 获取运行ID失败');
-                    }
-
-                    resolve(runId);
-                } catch (error) {
-                    console.error('ATACseq触发工作流失败:', error);
-                    reject(error);
-                }
-            });
-        }
-
+        // Run ID acquisition with retry mechanism
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
             const MAX_RETRIES = 5;
             const INITIAL_DELAY = 0;
@@ -540,21 +409,23 @@
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
                 
-                console.log(`ATACseq获取runId（尝试 ${attempt}/${MAX_RETRIES}）`);
+                showStatus(`Getting run ID (attempt ${attempt}/${MAX_RETRIES})...<br>正在获取运行ID(尝试 ${attempt}/${MAX_RETRIES})...`, 'loading');
+                
                 try {
                     const runId = await getLatestRunId(owner, repo, workflowId, token);
                     if (runId) {
-                        console.log(`ATACseq成功获取runId: ${runId}`);
+                        console.log(`Successfully obtained run ID: ${runId}`);
                         return runId;
                     }
                 } catch (error) {
-                    console.log(`尝试 ${attempt} 失败:`, error.message);
+                    console.log(`Attempt ${attempt} failed:`, error.message);
                 }
             }
             
             throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
         }
 
+        // Get latest run ID implementation
         async function getLatestRunId(owner, repo, workflowId, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
             const headers = {
@@ -567,10 +438,10 @@
             
             const data = await response.json();
             const currentTime = Date.now();
-            const runs = data.workflow_runs || [];
             
+            const runs = data.workflow_runs || [];
             if (runs.length === 0) {
-                console.warn('ATACseq: No workflow runs found / 未找到工作流运行记录');
+                console.warn('No workflow runs found in the response');
                 return null;
             }
             
@@ -579,16 +450,18 @@
             const timeDifference = currentTime - latestRunTime;
             
             if (timeDifference < 15000) {
-                console.log(`ATACseq找到有效运行: ID=${latestRun.id}, 创建时间=${latestRun.created_at}`);
+                console.log(`Found valid run: ID=${latestRun.id}, Created=${latestRun.created_at}, Age=${timeDifference/1000}s`);
                 return latestRun.id;
             }
+            
+            console.warn(`Latest run too old (${timeDifference/1000}s ago), no valid run found`);
             
             for (const run of runs) {
                 const runTime = new Date(run.created_at).getTime();
                 const age = currentTime - runTime;
                 
                 if (runTime > workflowTriggerTime && age < 20000) {
-                    console.log(`ATACseq找到匹配运行: ID=${run.id}, 创建时间=${run.created_at}`);
+                    console.log(`Found alternative run: ID=${run.id}, Created=${run.created_at}, Age=${age/1000}s`);
                     return run.id;
                 }
             }
@@ -596,6 +469,7 @@
             return null;
         }
 
+        // Status display function
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
