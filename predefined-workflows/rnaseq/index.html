@@ -249,10 +249,8 @@
         // Result button click event
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
-                window.open(
-                    `/shared/logs.html?owner=${encodeURIComponent(currentRunInfo.owner)}&repo=${encodeURIComponent(currentRunInfo.repo)}&runId=${encodeURIComponent(currentRunInfo.runId)}`,
-                    '_blank'
-                );
+                const githubActionsUrl = `https://github.com/${encodeURIComponent(currentRunInfo.owner)}/${encodeURIComponent(currentRunInfo.repo)}/actions/runs/${encodeURIComponent(currentRunInfo.runId)}`;
+                window.open(githubActionsUrl, '_blank');
             } else {
                 showStatus('No valid run information available / 没有有效的运行信息', 'error');
             }
