@@ -5,199 +5,362 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cancer Risk Predictor Workflow Trigger</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        .container {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="password"], input[type="number"], select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 0;
+        }
+        
+        .header {
+            background-color: #fff;
+            padding: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: grid;
+            place-items: center;
+            width: 100%;
+        }
+        
+        .header img {
+            max-width: 100%;
+            height: auto;
+            max-height: 150px;
+            object-fit: contain;
+        }
+        
+        .main-content {
+            width: 100%;
+            padding: 30px;
+            display: grid;
+            grid-template-columns: minmax(300px, 1200px);
+            justify-content: center;
+        }
+        
+        .container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #34495e;
+            font-size: 1.05rem;
+        }
+        
+        input[type="text"], input[type="password"], input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            background-color: #fafafa;
+        }
+        
+        input[type="text"]:focus, 
+        input[type="password"]:focus, 
+        input[type="number"]:focus, 
+        select:focus {
+            border-color: #32C1B5;
+            outline: none;
+            background-color: #fff;
+        }
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        @media (min-width: 768px) {
+            .button-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
         button {
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
+            padding: 14px 20px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-            width: 100%;
-            transition: all 0.3s;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-height: 50px;
         }
+        
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
+        
         #processButton {
-            background: #32C1B5; /* Deep green color */
+            background: linear-gradient(135deg, #32C1B5, #28A398);
         }
+        
         #processButton:hover {
-            background: #28A398; /* Darker deep green on hover */
+            background: linear-gradient(135deg, #28A398, #1f857a);
         }
+        
         #statusButton {
             display: none;
-            background: #0d6efd; /* Blue status check button */
+            background: linear-gradient(135deg, #0d6efd, #0b5ed7);
         }
+        
         #statusButton:hover {
-            background: #0b5ed7;
+            background: linear-gradient(135deg, #0b5ed7, #0a58ca);
         }
+        
         #resultsButton {
             display: none;
-            background: #17a2b8;
+            background: linear-gradient(135deg, #17a2b8, #138496);
         }
+        
         #resultsButton:hover {
-            background: #138496;
+            background: linear-gradient(135deg, #138496, #117a8b);
         }
+        
         #status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 4px;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 8px;
             display: none;
+            font-size: 1rem;
+            line-height: 1.5;
         }
+        
         .success {
             background: #d4edda;
             color: #155724;
+            border-left: 4px solid #28a745;
             display: block;
         }
+        
         .error {
             background: #f8d7da;
             color: #721c24;
+            border-left: 4px solid #dc3545;
             display: block;
         }
+        
         .loading {
             background: #fff3cd;
             color: #856404;
+            border-left: 4px solid #ffc107;
             display: block;
         }
+        
         .form-row {
-            display: flex;
-            gap: 15px;
+            display: grid;
+            gap: 20px;
         }
-        .form-row .form-group {
-            flex: 1;
+        
+        @media (min-width: 768px) {
+            .form-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
+        
         small {
-            color: #666;
+            color: #7f8c8d;
             font-size: 0.9em;
-        }
-        .token-guide {
+            display: block;
             margin-top: 5px;
-            font-size: 0.85em;
         }
-        .required {
-            color: #dc3545;
-        }
-        .status-details {
+        
+        .token-guide {
             margin-top: 10px;
             padding: 10px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            background-color: #f0f7ff;
-            border: 1px solid #cce5ff;
-            display: none;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #32C1B5;
         }
-        @media (max-width: 600px) {
-            .form-row {
-                flex-direction: column;
+        
+        .token-guide a {
+            color: #32C1B5;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .token-guide a:hover {
+            text-decoration: underline;
+        }
+        
+        .required {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .status-details {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            display: none;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px;
+            }
+            
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .header {
+                padding: 15px 0;
+            }
+            
+            .header img {
+                max-height: 120px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+                margin-bottom: 20px;
+            }
+            
+            button {
+                padding: 12px 15px;
+                font-size: 0.95rem;
+            }
+        }
+        
+        @media (min-width: 1400px) {
+            .main-content {
+                padding: 40px;
+            }
+            
+            .container {
+                padding: 50px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div style="text-align: center; margin-bottom: 20px; padding: 0 10px;">
-            <img src="images/FastQC-fastp-BWA-GATK.logo.png" 
-                 alt="GATK-Pipeline Logo" 
-                 style="width: 100%; max-width: 1642px; height: auto;">
-        </div>
-        <h1>Cancer Risk Predictor Workflow Trigger</h1>
-        
-        <div class="form-group">
-            <label for="inputPath">Input path <span class="required">*</span>:</label>
-            <input type="text" id="inputPath" placeholder="/pool/sun/ghrunner/lyx/20250729_GATK_pipeline_test" required>
-            <small>Path containing FASTQ files / 包含FASTQ文件的路径</small>
-        </div>
-        
-        <div class="form-group">
-            <label for="refPath">Reference genome path <span class="required">*</span>:</label>
-            <input type="text" id="refPath" placeholder="/pool/sun/ghrunner/lyx/ref/hg38/" required>
-            <small>Path to reference genome FA files / 参考基因组FA文件路径</small>
-        </div>
-        
-        <div class="form-row">
+    <div class="header">
+        <img src="images/FastQC-fastp-BWA-GATK.logo.png" 
+             alt="GATK-Pipeline Logo">
+    </div>
+    
+    <div class="main-content">
+        <div class="container">
+            <h1>Cancer Risk Predictor Workflow Trigger</h1>
+            
             <div class="form-group">
-                <label for="jobName">Job name <span class="required">*</span>:</label>
-                <input type="text" id="jobName" placeholder="20250816.GATK" required>
-                <small>Base name for the jobs / 任务基础名称</small>
+                <label for="inputPath">Input path <span class="required">*</span>:</label>
+                <input type="text" id="inputPath" placeholder="/pool/sun/ghrunner/lyx/20250729_GATK_pipeline_test" required>
+                <small>Path containing FASTQ files / 包含FASTQ文件的路径</small>
             </div>
             
             <div class="form-group">
-                <label for="threadNum">Thread number <span class="required">*</span>:</label>
-                <input type="number" id="threadNum" placeholder="96" min="1" required>
-                <small>Number of threads for processing / 处理线程数</small>
+                <label for="refPath">Reference genome path <span class="required">*</span>:</label>
+                <input type="text" id="refPath" placeholder="/pool/sun/ghrunner/lyx/ref/hg38/" required>
+                <small>Path to reference genome FA files / 参考基因组FA文件路径</small>
             </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="runLocation">Run location <span class="required">*</span>:</label>
-            <input type="text" id="runLocation" placeholder="pipeline" required>
-            <small>Location of the runtime environment / 运行环境位置</small>
-        </div>
-        
-        <div class="form-group">
-            <label for="githubToken">Secret key <span class="required">*</span>:</label>
-            <input type="password" id="githubToken" placeholder="Enter your GitHub PAT with 'repo' scope" required>
-            <div class="token-guide">
-                <small>
-                    Required for private repositories. Create token with "repo" scope at:
-                    <a href="https://github.com/settings/tokens/new?scopes=repo&description=GATK+Pipeline+Workflow+Trigger" target="_blank">
-                        GitHub Token Settings
-                    </a>
-                </small>
-                <br>
-                <small>
-                    私有仓库必须提供Token，请创建具有"repo"权限的Token:
-                    <a href="https://github.com/settings/tokens/new?scopes=repo&description=GATK+Pipeline+Workflow+Trigger" target="_blank">
-                        GitHub Token 创建页面
-                    </a>
-                </small>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="jobName">Job name <span class="required">*</span>:</label>
+                    <input type="text" id="jobName" placeholder="20250816.GATK" required>
+                    <small>Base name for the jobs / 任务基础名称</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="threadNum">Thread number <span class="required">*</span>:</label>
+                    <input type="number" id="threadNum" placeholder="96" min="1" required>
+                    <small>Number of threads for processing / 处理线程数</small>
+                </div>
             </div>
+            
+            <div class="form-group">
+                <label for="runLocation">Run location <span class="required">*</span>:</label>
+                <input type="text" id="runLocation" placeholder="pipeline" required>
+                <small>Location of the runtime environment / 运行环境位置</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="githubToken">Secret key <span class="required">*</span>:</label>
+                <input type="password" id="githubToken" placeholder="Enter your GitHub PAT with 'repo' scope" required>
+                <div class="token-guide">
+                    <small>
+                        Required for private repositories. Create token with "repo" scope at:
+                        <a href="https://github.com/settings/tokens/new?scopes=repo&description=GATK+Pipeline+Workflow+Trigger" target="_blank">
+                            GitHub Token Settings
+                        </a>
+                    </small>
+                    <br><br>
+                    <small>
+                        私有仓库必须提供Token，请创建具有"repo"权限的Token:
+                        <a href="https://github.com/settings/tokens/new?scopes=repo&description=GATK+Pipeline+Workflow+Trigger" target="_blank">
+                            GitHub Token 创建页面
+                        </a>
+                    </small>
+                </div>
+            </div>
+            
+            <div class="button-grid">
+                <button id="processButton">Cancer Risk Predictor / 癌症风险预测</button>
+                <button id="statusButton">Check Run Status / 查看运行状态</button>
+                <button id="resultsButton">See Results / 查看结果</button>
+            </div>
+            
+            <div id="status"></div>
+            <div id="statusDetails" class="status-details"></div>
         </div>
-        
-        <button id="processButton">Cancer Risk Predictor / 癌症风险预测</button>
-        <button id="statusButton">Check Run Status / 查看运行状态</button>
-        <button id="resultsButton">See Results / 查看结果</button>
-        
-        <div id="status"></div>
-        <div id="statusDetails" class="status-details"></div>
     </div>
 
     <script>
-        // Global variable for storing operational information
         let currentRunInfo = {
             owner: 'cuhk-haosun',
             repo: 'code-leiyong',
@@ -205,17 +368,17 @@
             token: null
         };
 
-        let workflowTriggerTime = 0; // Global variable to record workflow trigger time
+        let workflowTriggerTime = 0; // 记录工作流触发时间
 
         document.getElementById('processButton').addEventListener('click', async function() {
-            // Reset button status
+            // 重置按钮状态
             document.getElementById('statusButton').style.display = 'none';
             document.getElementById('resultsButton').style.display = 'none';
             document.getElementById('statusDetails').style.display = 'none';
             currentRunInfo.runId = null;
             currentRunInfo.token = null;
             
-            // Get form values
+            // 获取表单值
             const inputPath = document.getElementById('inputPath').value.trim();
             const refPath = document.getElementById('refPath').value.trim();
             const jobName = document.getElementById('jobName').value.trim();
@@ -223,7 +386,7 @@
             const runLocation = document.getElementById('runLocation').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
     
-            // Validate required fields
+            // 验证必填字段
             if (!inputPath || !refPath || !jobName || !threadNum || !runLocation || !githubToken) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
@@ -234,10 +397,10 @@
                 const repoName = 'code-leiyong';
                 const workflowId = 'gatk.yaml';
         
-                // 1. Trigger workflow
+                // 1. 触发工作流
                 showStatus('Triggering workflow... / 正在触发工作流...', 'loading');
                 
-                // Process thread number
+                // 处理线程数
                 let threadNumValue = threadNum;
                 if (!threadNumValue || isNaN(parseInt(threadNumValue, 10)) || parseInt(threadNumValue, 10) < 1) {
                     threadNumValue = "96";
@@ -252,14 +415,14 @@
                     RUN_LOCATION: runLocation
                 }, githubToken);
         
-                // 2. Wait 8 seconds before getting run ID
+                // 2. 等待8秒再获取运行ID
                 showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
                 await new Promise(resolve => setTimeout(resolve, 8000));
                 
-                // 3. Get run ID with retry mechanism
+                // 3. 使用重试机制获取运行ID
                 const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
                 
-                // 4. Store run info and display buttons
+                // 4. 存储运行信息并显示按钮
                 currentRunInfo = { 
                     owner: repoOwner, 
                     repo: repoName, 
@@ -267,6 +430,8 @@
                     token: githubToken
                 };
                 showStatus(`Workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
+                
+                // 在大屏幕上并排显示，在小屏幕上堆叠显示
                 document.getElementById('statusButton').style.display = 'block';
                 document.getElementById('resultsButton').style.display = 'block';
                 
@@ -288,7 +453,7 @@
             }
         });
 
-        // Status button click event
+        // 状态按钮点击事件
         document.getElementById('statusButton').addEventListener('click', async function() {
             if (!currentRunInfo.runId || !currentRunInfo.token) {
                 showStatus('No valid run information / 没有有效的运行信息', 'error');
@@ -305,7 +470,7 @@
             }
         });
 
-        // Results button click event - Jump to GitHub Actions run page
+        // 结果按钮点击事件 - 跳转到GitHub Actions运行页面
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
                 const githubActionsUrl = `https://github.com/${currentRunInfo.owner}/${currentRunInfo.repo}/actions/runs/${currentRunInfo.runId}`;
@@ -315,7 +480,7 @@
             }
         });
 
-        // Check run status function
+        // 检查运行状态函数
         async function checkRunStatus() {
             const { owner, repo, runId, token } = currentRunInfo;
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
@@ -332,12 +497,12 @@
             }
 
             const data = await response.json();
-            const status = data.status; // Possible values: queued, in_progress, completed
-            const conclusion = data.conclusion; // Possible values: success, failure, etc.
+            const status = data.status; // 可能的值: queued, in_progress, completed
+            const conclusion = data.conclusion; // 可能的值: success, failure, 等
             const startTime = new Date(data.created_at).toLocaleString();
             const updateTime = new Date(data.updated_at).toLocaleString();
 
-            // Map status to display text and style
+            // 将状态映射到显示文本和样式
             let statusText, statusClass;
             switch (status) {
                 case 'queued':
@@ -357,7 +522,7 @@
                     statusClass = 'error';
             }
 
-            // Display status and details
+            // 显示状态和详情
             showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
             document.getElementById('statusDetails').innerHTML = `
                 <strong>Run Details / 运行详情:</strong><br>
@@ -371,7 +536,7 @@
             return status;
         }
 
-        // Trigger workflow function
+        // 触发工作流函数
         async function triggerWorkflow(owner, repo, workflowId, inputs, token) {
             workflowTriggerTime = Date.now();
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
@@ -390,7 +555,7 @@
             }
         }
 
-        // Run ID acquisition with retry mechanism
+        // 带有重试机制的运行ID获取
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
             const MAX_RETRIES = 5;
             const INITIAL_DELAY = 0;
@@ -418,7 +583,7 @@
             throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
         }
 
-        // Get latest run ID implementation
+        // 获取最新运行ID的实现
         async function getLatestRunId(owner, repo, workflowId, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
             const headers = {
@@ -462,7 +627,7 @@
             return null;
         }
 
-        // Status display function
+        // 状态显示函数
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
