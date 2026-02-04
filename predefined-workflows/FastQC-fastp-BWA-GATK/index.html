@@ -25,10 +25,10 @@
             gap: 0;
         }
         
-        /* 页眉区域 */
+        /* 页眉区域 - 简化版 */
         .header {
             background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
-            padding: 0;
+            padding: 15px 0;
             width: 100%;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             position: sticky;
@@ -43,33 +43,65 @@
             margin: 0 auto;
             padding: 0 20px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* Logo区域 - 左边 */
+        .logo-area {
+            display: flex;
             align-items: center;
         }
         
         .logo-wrapper {
-            width: 100%;
-            padding: 15px 0;
-            text-align: center;
+            max-width: 250px; /* 控制logo最大宽度 */
         }
         
         .logo-wrapper img {
             width: 100%;
-            max-width: 1400px;
             height: auto;
-            max-height: 120px;
+            max-height: 70px; /* 控制logo高度 */
             object-fit: contain;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
         }
         
-        /* 主要内容区域 - 改为两栏布局 */
+        /* 页眉文字区域 - 右边 */
+        .header-text {
+            color: white;
+            text-align: right;
+            padding-left: 20px;
+            flex: 1;
+        }
+        
+        .header-text h2 {
+            color: #FFD700; /* 金色标题 */
+            margin-bottom: 8px;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        .header-text p {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            opacity: 0.95;
+            margin-bottom: 5px;
+        }
+        
+        .software-version {
+            font-size: 1rem;
+            color: #32C1B5;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+        
+        /* 主要内容区域 */
         .main-content {
             width: 100%;
             max-width: 1800px;
             margin: 30px auto;
             padding: 0 20px;
             display: grid;
-            grid-template-columns: 1fr 1.2fr; /* 左边表单窄一些，右边说明宽一些 */
+            grid-template-columns: 1fr 1.2fr;
             gap: 30px;
             flex-grow: 1;
         }
@@ -115,10 +147,6 @@
             cursor: pointer;
             transition: all 0.3s ease;
             text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
         }
         
         .tab-btn:hover {
@@ -434,18 +462,27 @@
             }
         }
         
+        @media (max-width: 992px) {
+            .header-container {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .logo-wrapper {
+                max-width: 200px;
+            }
+            
+            .header-text {
+                text-align: center;
+                padding-left: 0;
+            }
+        }
+        
         @media (max-width: 768px) {
             .main-content {
                 padding: 0 15px;
                 margin: 20px auto;
-            }
-            
-            .header-container {
-                padding: 0 15px;
-            }
-            
-            .logo-wrapper img {
-                max-height: 100px;
             }
             
             .form-section, .info-section {
@@ -485,18 +522,35 @@
             .form-row {
                 grid-template-columns: 1fr;
             }
+            
+            .header-text h2 {
+                font-size: 1.2rem;
+            }
+            
+            .header-text p {
+                font-size: 1rem;
+            }
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <!-- 页眉区域 -->
     <header class="header">
         <div class="header-container">
-            <div class="logo-wrapper">
-                <img src="images/fastQC-fastp-BWA-GATK.logo.v2.png" 
-                     alt="GATK-Pipeline Logo"
-                     title="Cancer Risk Predictor Workflow">
+            <!-- Logo在左边 -->
+            <div class="logo-area">
+                <div class="logo-wrapper">
+                    <img src="images/fastQC-fastp-BWA-GATK.logo.v2.png" 
+                         alt="GATK-Pipeline Logo"
+                         title="Cancer Risk Predictor Workflow">
+                </div>
+            </div>
+            
+            <!-- 文字在右边 -->
+            <div class="header-text">
+                <p><strong>核心分析软件包版本：</strong>fastp 1.1.0， Bwa-mem2-v2.3，gatk 4.6.2.0</p>
+                <p><strong>基本分析参数：</strong>默认参数</p>
+                <p><strong>流程简介：</strong>该流程首先对原始Fastq数据进行质量控制（FastQC），随后经修剪（fastp），基因组比对（BWA）和变异检测（GATK），系统识别测序数据中的基因组变异。</p>
             </div>
         </div>
     </header>
@@ -506,71 +560,57 @@
         <!-- 左边栏：表单 -->
         <section class="form-section">
             <h1 style="color: #1a2980; margin-bottom: 30px; font-size: 2rem;">
-                <i class="fas fa-dna"></i> Cancer Risk Predictor
+                Cancer Risk Predictor
             </h1>
             
             <div class="form-group">
-                <label for="inputPath"><i class="fas fa-folder-open"></i> Input path <span class="required">*</span>:</label>
+                <label for="inputPath">Input path <span class="required">*</span>:</label>
                 <input type="text" id="inputPath" placeholder="/pool/sun/ghrunner/lyx/20250729_GATK_pipeline_test" required>
                 <small>Path containing FASTQ files / 包含FASTQ文件的路径</small>
             </div>
             
             <div class="form-group">
-                <label for="refPath"><i class="fas fa-dna"></i> Reference genome path <span class="required">*</span>:</label>
+                <label for="refPath">Reference genome path <span class="required">*</span>:</label>
                 <input type="text" id="refPath" placeholder="/pool/sun/ghrunner/lyx/ref/hg38/" required>
                 <small>Path to reference genome FA files / 参考基因组FA文件路径</small>
             </div>
             
             <div class="form-row">
                 <div class="form-group">
-                    <label for="jobName"><i class="fas fa-tasks"></i> Job name <span class="required">*</span>:</label>
+                    <label for="jobName">Job name <span class="required">*</span>:</label>
                     <input type="text" id="jobName" placeholder="20250816.GATK" required>
                     <small>Base name for the jobs / 任务基础名称</small>
                 </div>
                 
                 <div class="form-group">
-                    <label for="threadNum"><i class="fas fa-microchip"></i> Thread number <span class="required">*</span>:</label>
+                    <label for="threadNum">Thread number <span class="required">*</span>:</label>
                     <input type="number" id="threadNum" placeholder="96" min="1" required>
                     <small>Number of threads for processing / 处理线程数</small>
                 </div>
             </div>
             
             <div class="form-group">
-                <label for="runLocation"><i class="fas fa-server"></i> Run location <span class="required">*</span>:</label>
+                <label for="runLocation">Run location <span class="required">*</span>:</label>
                 <input type="text" id="runLocation" placeholder="pipeline" required>
                 <small>Location of the runtime environment / 运行环境位置</small>
             </div>
             
             <div class="form-group">
-                <label for="githubToken"><i class="fas fa-key"></i> Secret key <span class="required">*</span>:</label>
-                <input type="password" id="githubToken" placeholder="Enter your GitHub PAT with 'repo' scope" required>
-                <div class="token-guide">
-                    <small>
-                        <i class="fas fa-info-circle"></i> Required for private repositories. Create token with "repo" scope at:
-                        <a href="https://github.com/settings/tokens/new?scopes=repo&description=GATK+Pipeline+Workflow+Trigger" target="_blank">
-                            GitHub Token Settings
-                        </a>
-                    </small>
-                    <br><br>
-                    <small>
-                        <i class="fas fa-info-circle"></i> 私有仓库必须提供Token，请创建具有"repo"权限的Token:
-                        <a href="https://github.com/settings/tokens/new?scopes=repo&description=GATK+Pipeline+Workflow+Trigger" target="_blank">
-                            GitHub Token 创建页面
-                        </a>
-                    </small>
-                </div>
+                <label for="githubToken">Secret key <span class="required">*</span>:</label>
+                <input type="password" id="githubToken" placeholder="Enter your Secret Key" required>
+                <!-- 已删除Token提示信息 -->
             </div>
             
             <!-- 操作按钮 -->
             <div class="action-buttons">
                 <button id="processButton">
-                    <i class="fas fa-play-circle"></i> Start Workflow / 启动工作流
+                    Start Workflow / 启动工作流
                 </button>
                 <button id="statusButton">
-                    <i class="fas fa-sync-alt"></i> Check Status / 查看状态
+                    Check Status / 查看状态
                 </button>
                 <button id="resultsButton">
-                    <i class="fas fa-chart-bar"></i> View Results / 查看结果
+                    View Results / 查看结果
                 </button>
             </div>
             
@@ -582,13 +622,13 @@
         <section class="info-section">
             <div class="info-tabs">
                 <button class="tab-btn active" data-tab="details">
-                    <i class="fas fa-book"></i> Detailed Guide<br>详细说明
+                    Detailed Guide<br>详细说明
                 </button>
                 <button class="tab-btn" data-tab="faq">
-                    <i class="fas fa-question-circle"></i> FAQ<br>常见问题
+                    F&Q<br>常见问题
                 </button>
                 <button class="tab-btn" data-tab="examples">
-                    <i class="fas fa-code"></i> Examples<br>实例数据
+                    Examples<br>实例数据
                 </button>
             </div>
             
@@ -596,29 +636,47 @@
                 <!-- 详细说明标签 -->
                 <div id="details" class="tab-pane active">
                     <div class="info-content">
-                        <h2><i class="fas fa-book-open"></i> Detailed Guide 详细说明</h2>
+                        <h2>Detailed Guide 详细说明</h2>
                         
-                        <h3><i class="fas fa-cogs"></i> Workflow Overview 工作流概览</h3>
+                        <h3>Workflow Overview 工作流概览</h3>
                         <p>This tool triggers a comprehensive genomic analysis pipeline for cancer risk prediction. The workflow includes:</p>
                         <ul>
                             <li><strong>Quality Control</strong>: FastQC for initial quality assessment</li>
-                            <li><strong>Read Trimming</strong>: fastp for adapter trimming and quality filtering</li>
-                            <li><strong>Alignment</strong>: BWA-MEM for mapping reads to reference genome</li>
-                            <li><strong>Variant Calling</strong>: GATK best practices pipeline</li>
+                            <li><strong>Read Trimming</strong>: fastp 1.1.0 for adapter trimming and quality filtering</li>
+                            <li><strong>Alignment</strong>: BWA-MEM2 v2.3 for mapping reads to reference genome</li>
+                            <li><strong>Variant Calling</strong>: GATK 4.6.2.0 best practices pipeline</li>
                             <li><strong>Analysis</strong>: Variant annotation and risk prediction</li>
                         </ul>
                         
-                        <h3><i class="fas fa-folder"></i> Input Requirements 输入要求</h3>
+                        <h3>Input Requirements 输入要求</h3>
                         <p><strong>FASTQ Files:</strong> Should be in the specified input directory. Both single-end and paired-end reads are supported.</p>
                         <p><strong>File naming convention:</strong> <code>sample_R1.fastq.gz</code>, <code>sample_R2.fastq.gz</code> for paired-end</p>
-                        
-                        <h3><i class="fas fa-database"></i> Reference Genome 参考基因组</h3>
-                        <p>The reference directory should contain:</p>
+                        <h3>Input Requirements 输入要求</h3>
+                        <p><strong>FASTQ Files Format:</strong> Must be compressed with <code>.fastq.gz</code> extension ( <code>.fq.gz</code> is not supported ). Both single-end and paired-end reads are supported.</p>
+                        <p><strong>Directory Structure:</strong> All FASTQ files must be placed in a root folder named <code>fastq</code>. Each sample's files need to be stored in a separate subdirectory under <code>fastq</code> (required for parallel running).</p>
+                        <p><strong>File Naming Convention:</strong> Paired-end reads should be named <code>R1.fastq.gz</code> and <code>R2.fastq.gz</code> in the sample subdirectory. Example structure:</p>
+                        <pre>
+                        fastq/sample1/R1.fastq.gz
+                        fastq/sample1/R2.fastq.gz
+                        fastq/sample2/R1.fastq.gz
+                        fastq/sample2/R2.fastq.gz
+                        </pre>
+                        <p><strong>Folder Permission:</strong> The root <code>fastq</code> folder must be set to permissions <code>757</code> or <code>777</code> to allow read and write access for the Docker container.</p>
+                        <h3>Reference Genome 参考基因组</h3>
+                        <p>The reference directory (<code>/mnt/d1/pool/sun/ghrunner/lyx/ref/hg38/</code>) must contain the following hg38 files for <code>fastq-fastp-bwa-gatk</code> pipeline, with <strong>index files paired</strong> (required for BWA and GATK running):</p>
                         <ol>
-                            <li>FASTA file (e.g., <code>hg38.fa</code>)</li>
-                            <li>Index files for BWA and GATK</li>
-                            <li>Known variant databases (dbsnp, 1000G, etc.)</li>
-                            <li>Target regions BED file (if applicable)</li>
+                            <li><strong>FASTA sequence + BWA/GATK indexes</strong> (core for genome alignment)
+                                <br><code>hg38.fa</code>, <code>hg38.fa.amb</code>, <code>hg38.fa.ann</code>, <code>hg38.fa.pac</code>, <code>hg38.fa.fai</code>
+                            </li>
+                            <li><strong>GATK required sequence dictionary</strong>
+                                <br><code>hg38.dict</code> (or <code>Homo_sapiens_assembly38.dict</code>, both are applicable)
+                            </li>
+                            <li><strong>Known variant databases (compressed VCF + tabix index <code>.tbi</code>)</strong> (for GATK base quality recalibration and variant filtering)
+                                <ul>
+                                    <li>dbSNP database: <code>dbSNP.hg38.vcf.gz</code> + <code>dbSNP.hg38.vcf.gz.tbi</code></li>
+                                    <li>1000G gold standard indels: <code>Mills_and_1000G_gold_standard.indels.hg38.vcf.gz</code> + <code>Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi</code></li>
+                                </ul>
+                            </li>
                         </ol>
                     </div>
                 </div>
@@ -626,66 +684,86 @@
                 <!-- 常见问题标签 -->
                 <div id="faq" class="tab-pane">
                     <div class="info-content">
-                        <h2><i class="fas fa-question-circle"></i> Frequently Asked Questions 常见问题</h2>
+                        <h2>Frequently Asked Questions 常见问题</h2>
                         
-                        <h3><i class="fas fa-key"></i> Authentication Issues 认证问题</h3>
-                        <p><strong>Q: Why do I need a GitHub Token?</strong><br>
-                        A: The workflow runs on GitHub Actions. A token with "repo" scope is required to trigger workflows and access private repositories.</p>
+                        <h3>Authentication Issues 认证问题</h3>
+                        <p><strong>Q: My Secret Key is not working, what should I do?</strong><br>
+                        A: It's possible that your key has expired. Please seek help at contact support in the footer.</p>
                         
-                        <p><strong>Q: My token is not working, what should I do?</strong><br>
-                        A: Ensure your token has the "repo" scope. Generate a new token if needed. Tokens expire after certain periods.</p>
-                        
-                        <h3><i class="fas fa-exclamation-triangle"></i> Common Errors 常见错误</h3>
+                        <h3>Common Errors 常见错误</h3>
                         <p><strong>Q: "Workflow not found" error</strong><br>
                         A: Check that the workflow file <code>gatk.yaml</code> exists in the repository and you have permission to access it.</p>
                         
                         <p><strong>Q: "Path does not exist" error</strong><br>
-                        A: Verify that all input paths exist and are accessible from the workflow environment. Use absolute paths.</p>
+                        A: Verify that all input paths exist and are accessible from the workflow environment. Use absolute paths. And please check if the input format complies with the requirements.</p>
                         
-                        <h3><i class="fas fa-clock"></i> Performance Tips 性能提示</h3>
-                        <p><strong>Thread number:</strong> Set appropriate thread count based on your server capacity. Higher threads = faster processing but more resource usage.</p>
-                        <p><strong>Job naming:</strong> Use descriptive names to easily identify runs in GitHub Actions dashboard.</p>
+                        <p><strong>Q: Task fails at a certain step</strong><br>
+                        A: All files in the same batch must successfully complete the current step to proceed to the next one. Please manually remove the erroneous files.</p>
+                        
+                        <p><strong>Q: Where to find the results</strong><br>
+                        A: Intermediate output files for each step will be automatically created in the input path. If you want to run a single step independently, please select the corresponding individual analysis tool on the home page.</p>
+                        
+                        <p><strong>Q: Can I input the thread number arbitrarily</strong><br>
+                        A: Thread numbers exceeding the upper limit will be automatically handled by the system, so no need to worry.</p>
+                        
                     </div>
                 </div>
                 
                 <!-- 实例数据标签 -->
                 <div id="examples" class="tab-pane">
                     <div class="info-content">
-                        <h2><i class="fas fa-code"></i> Example Configuration 实例配置</h2>
+                        <h2>Example Configuration 实例配置</h2>
                         
-                        <h3><i class="fas fa-folder-open"></i> Example Input Path 示例输入路径</h3>
+                        <h3>Example Input Path 示例输入路径</h3>
                         <div class="example-block">
                             <span class="comment"># Typical project structure 典型项目结构</span><br>
-                            /pool/sun/ghrunner/lyx/<span class="path">20250729_GATK_pipeline_test</span>/<br>
-                            ├── sample1_<span class="value">R1.fastq.gz</span><br>
-                            ├── sample1_<span class="value">R2.fastq.gz</span><br>
-                            ├── sample2_<span class="value">R1.fastq.gz</span><br>
-                            └── sample2_<span class="value">R2.fastq.gz</span>
+                            /pool/sun/ghrunner/lyx/20250729_GATK_pipeline_test/fastq<span class="path"></span>/<br>
+                            ├── sample1/sample1.<span class="value">R1.fastq.gz</span><br>
+                            ├── sample1/sample1.<span class="value">R2.fastq.gz</span><br>
+                            ├── sample2/sample2.<span class="value">R1.fastq.gz</span><br>
+                            └── sample2/sample2.<span class="value">R2.fastq.gz</span>
                         </div>
                         
-                        <h3><i class="fas fa-database"></i> Example Reference Setup 示例参考设置</h3>
+                        <h3>Example Output 示例输出</h3>
                         <div class="example-block">
-                            <span class="comment"># Reference directory structure 参考目录结构</span><br>
-                            /pool/sun/ghrunner/lyx/<span class="path">ref/hg38</span>/<br>
-                            ├── <span class="value">hg38.fa</span><br>
-                            ├── <span class="value">hg38.fa.fai</span><br>
-                            ├── <span class="value">hg38.dict</span><br>
-                            ├── <span class="value">hg38.fa.amb</span> <span class="comment"># BWA index files</span><br>
-                            ├── <span class="value">hg38.fa.ann</span><br>
-                            ├── <span class="value">hg38.fa.bwt</span><br>
-                            ├── <span class="value">hg38.fa.pac</span><br>
-                            └── <span class="value">hg38.fa.sa</span>
+                            <span class="comment"># Main output directory structure 主输出目录结构</span><br>
+                            /pool/sun/ghrunner/lyx/<span class="path">20250729_GATK_pipeline_test/vcf</span>/<br>
+                            ├── <span class="value">sample1/</span><br>
+                            │   ├── <span class="value">sample1_RG.sorted/</span><br>
+                            │   └── <span class="value">rg_added_bams/</span><br>
+                            ├── <span class="value">sample2/</span><br>
+                            │   ├── <span class="value">sample2_RG.sorted/</span><br>
+                            │   └── <span class="value">rg_added_bams/</span><br>
+                            ├── <span class="value">DNA-25M-1-test/</span><br>
+                            │   ├── <span class="value">DNA-25M-1-test_RG.sorted/</span><br>
+                            │   │   ├── DNA-25M-1-test_RG.sorted.dedup.bai<br>
+                            │   │   ├── DNA-25M-1-test_RG.sorted.dedup.bam<br>
+                            │   │   ├── DNA-25M-1-test_RG.sorted.dup_metrics.txt<br>
+                            │   │   ├── DNA-25M-1-test_RG.sorted.g.vcf.gz<br>
+                            │   │   ├── DNA-25M-1-test_RG.sorted.g.vcf.gz.tbi<br>
+                            │   │   ├── DNA-25M-1-test_RG.sorted.recal.bai<br>
+                            │   │   ├── DNA-25M-1-test_RG.sorted.recal.bam<br>
+                            │   │   └── DNA-25M-1-test_RG.sorted.recal_data.table<br>
+                            │   └── <span class="value">rg_added_bams/</span><br>
+                            │       ├── DNA-25M-1-test_RG.sorted.bam<br>
+                            │       └── DNA-25M-1-test_RG.sorted.bam.bai<br>
+                            └── <span class="value">sample2/</span><br>
+                                ├── <span class="value">sample2_RG.sorted/</span><br>
+                                └── <span class="value">rg_added_bams/</span><br>
+                            <br>
+                            <span class="comment"># Intermediate steps output note</span><br>
+                            Results of intermediate steps (quality control, trimming, genome alignment) will also generate output with a similar directory structure.
                         </div>
                         
-                        <h3><i class="fas fa-cogs"></i> Complete Example 完整示例</h3>
+                        <h3>Complete Input Parameters Example 完整输入参数示例</h3>
                         <div class="example-block">
                             <span class="comment"># All parameters filled 所有参数示例</span><br>
                             Input path: <span class="path">/pool/sun/ghrunner/lyx/20250729_GATK_pipeline_test</span><br>
                             Reference path: <span class="path">/pool/sun/ghrunner/lyx/ref/hg38</span><br>
-                            Job name: <span class="value">20250816_GATK_test_run</span><br>
+                            Job name: <span class="value">test_run</span><br>
                             Thread number: <span class="value">64</span><br>
                             Run location: <span class="value">pipeline</span><br>
-                            Token: <span class="comment">[your GitHub Personal Access Token]</span>
+                            Token: <span class="comment">[your Secret Key]</span>
                         </div>
                     </div>
                 </div>
@@ -696,10 +774,10 @@
     <!-- 页脚 -->
     <footer class="footer">
         <div class="footer-content">
-            <p>Cancer Risk Predictor Workflow © 2024</p>
+            <p>Cancer Risk Predictor Workflow © 2026</p>
             <div class="footer-links">
-                <a href="mailto:]https://github.com/cuhk-haosun">
-                    <i class="fas fa-envelope"></i> Contact Support
+                <a href="https://github.com/cuhk-haosun">
+                    Contact Support
                 </a>
             </div>
             <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
@@ -722,37 +800,30 @@
         // 标签切换功能
         document.querySelectorAll('.tab-btn').forEach(button => {
             button.addEventListener('click', function() {
-                // 移除所有标签的active类
                 document.querySelectorAll('.tab-btn').forEach(btn => {
                     btn.classList.remove('active');
                 });
                 
-                // 添加当前标签的active类
                 this.classList.add('active');
                 
-                // 获取目标标签ID
                 const tabId = this.getAttribute('data-tab');
                 
-                // 隐藏所有标签内容
                 document.querySelectorAll('.tab-pane').forEach(pane => {
                     pane.classList.remove('active');
                 });
                 
-                // 显示目标标签内容
                 document.getElementById(tabId).classList.add('active');
             });
         });
 
         // 主工作流按钮
         document.getElementById('processButton').addEventListener('click', async function() {
-            // 重置按钮状态
             document.getElementById('statusButton').style.display = 'none';
             document.getElementById('resultsButton').style.display = 'none';
             document.getElementById('statusDetails').style.display = 'none';
             currentRunInfo.runId = null;
             currentRunInfo.token = null;
             
-            // 获取表单值
             const inputPath = document.getElementById('inputPath').value.trim();
             const refPath = document.getElementById('refPath').value.trim();
             const jobName = document.getElementById('jobName').value.trim();
@@ -760,7 +831,6 @@
             const runLocation = document.getElementById('runLocation').value.trim();
             const githubToken = document.getElementById('githubToken').value.trim();
     
-            // 验证必填字段
             if (!inputPath || !refPath || !jobName || !threadNum || !runLocation || !githubToken) {
                 showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
                 return;
@@ -771,10 +841,8 @@
                 const repoName = 'code-leiyong';
                 const workflowId = 'gatk.yaml';
         
-                // 1. 触发工作流
                 showStatus('Triggering workflow... / 正在触发工作流...', 'loading');
                 
-                // 处理线程数
                 let threadNumValue = threadNum;
                 if (!threadNumValue || isNaN(parseInt(threadNumValue, 10)) || parseInt(threadNumValue, 10) < 1) {
                     threadNumValue = "96";
@@ -788,14 +856,11 @@
                     RUN_LOCATION: runLocation
                 }, githubToken);
         
-                // 2. 等待8秒再获取运行ID
                 showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
                 await new Promise(resolve => setTimeout(resolve, 8000));
                 
-                // 3. 使用重试机制获取运行ID
                 const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
                 
-                // 4. 存储运行信息并显示按钮
                 currentRunInfo = { 
                     owner: repoOwner, 
                     repo: repoName, 
@@ -804,7 +869,6 @@
                 };
                 showStatus(`Workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
                 
-                // 显示状态和结果按钮
                 document.getElementById('statusButton').style.display = 'flex';
                 document.getElementById('resultsButton').style.display = 'flex';
                 
@@ -813,13 +877,13 @@
                 let errorMsg = `Error: ${error.message}`;
                 
                 if (error.message.includes('401')) {
-                    errorMsg = 'Authentication failed. Please check your GitHub Token. / 认证失败，请检查GitHub Token';
+                    errorMsg = 'Authentication failed. Please check your Secret Key. / 认证失败，请检查密钥';
                 } else if (error.message.includes('404')) {
                     errorMsg = 'Repository or workflow not found. / 仓库或工作流未找到';
                 } else if (error.message.includes('403')) {
-                    errorMsg = 'Permission denied. Token may not have enough permissions. / 权限不足，Token可能缺少必要权限';
+                    errorMsg = 'Permission denied. Secret Key may Overdue. / 权限不足，密钥可能过期';
                 } else if (error.message.includes('Failed to get run ID')) {
-                    errorMsg = 'Workflow started but failed to get run ID. Please check Actions manually. / 工作流已启动但获取ID失败，请手动检查Actions';
+                    errorMsg = 'Workflow started but failed to get run ID. Please check Actions manually. / 工作流已启动但获取ID失败，请手动检查';
                 }
                 
                 showStatus(errorMsg, 'error');
@@ -859,7 +923,7 @@
             window.open(issueUrl, '_blank');
         }
 
-        // 其他功能函数（保持不变）
+        // 其他功能函数
         async function checkRunStatus() {
             const { owner, repo, runId, token } = currentRunInfo;
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
@@ -903,10 +967,10 @@
             showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
             document.getElementById('statusDetails').innerHTML = `
                 <strong>Run Details / 运行详情:</strong><br>
-                <i class="fas fa-id-badge"></i> Run ID: ${runId}<br>
-                <i class="fas fa-clock"></i> Start Time / 开始时间: ${startTime}<br>
-                <i class="fas fa-sync-alt"></i> Last Update / 最后更新: ${updateTime}<br>
-                <i class="fas fa-flag"></i> Conclusion / 结果: ${conclusion || 'N/A'}
+                Run ID: ${runId}<br>
+                Start Time / 开始时间: ${startTime}<br>
+                Last Update / 最后更新: ${updateTime}<br>
+                Conclusion / 结果: ${conclusion || 'N/A'}
             `;
             document.getElementById('statusDetails').style.display = 'block';
 
