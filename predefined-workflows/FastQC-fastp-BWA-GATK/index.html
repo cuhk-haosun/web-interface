@@ -68,7 +68,7 @@
         /* 页眉文字区域 - 右边 */
         .header-text {
             color: white;
-            text-align: right;
+            text-align: left;
             padding-left: 20px;
             flex: 1;
         }
@@ -540,7 +540,7 @@
             <!-- Logo在左边 -->
             <div class="logo-area">
                 <div class="logo-wrapper">
-                    <img src="images/fastQC-fastp-BWA-GATK.logo.v2.png" 
+                    <img src="images/fastQC-fastp-BWA-GATK.logo.v3.png" 
                          alt="GATK-Pipeline Logo"
                          title="Cancer Risk Predictor Workflow">
                 </div>
@@ -649,17 +649,14 @@
                         </ul>
                         
                         <h3>Input Requirements 输入要求</h3>
-                        <p><strong>FASTQ Files:</strong> Should be in the specified input directory. Both single-end and paired-end reads are supported.</p>
-                        <p><strong>File naming convention:</strong> <code>sample_R1.fastq.gz</code>, <code>sample_R2.fastq.gz</code> for paired-end</p>
-                        <h3>Input Requirements 输入要求</h3>
                         <p><strong>FASTQ Files Format:</strong> Must be compressed with <code>.fastq.gz</code> extension ( <code>.fq.gz</code> is not supported ). Both single-end and paired-end reads are supported.</p>
                         <p><strong>Directory Structure:</strong> All FASTQ files must be placed in a root folder named <code>fastq</code>. Each sample's files need to be stored in a separate subdirectory under <code>fastq</code> (required for parallel running).</p>
                         <p><strong>File Naming Convention:</strong> Paired-end reads should be named <code>R1.fastq.gz</code> and <code>R2.fastq.gz</code> in the sample subdirectory. Example structure:</p>
                         <pre>
-                        fastq/sample1/R1.fastq.gz
-                        fastq/sample1/R2.fastq.gz
-                        fastq/sample2/R1.fastq.gz
-                        fastq/sample2/R2.fastq.gz
+                        fastq/sample1/sample1.R1.fastq.gz
+                        fastq/sample1/sample1.R2.fastq.gz
+                        fastq/sample2/sample2.R1.fastq.gz
+                        fastq/sample2/sample2.R2.fastq.gz
                         </pre>
                         <p><strong>Folder Permission:</strong> The root <code>fastq</code> folder must be set to permissions <code>757</code> or <code>777</code> to allow read and write access for the Docker container.</p>
                         <h3>Reference Genome 参考基因组</h3>
