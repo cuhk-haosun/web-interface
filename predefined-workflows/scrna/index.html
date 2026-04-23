@@ -385,7 +385,7 @@
         }
         
         .toolbar-btn {
-            background: linear-gradient(135deg, #32C1B5, #1a9c8f);
+            background: #d4f7f4;
             padding: 8px 16px;
             min-height: auto;
             font-size: 0.85rem;
@@ -469,12 +469,12 @@
                 <h3 style="color: #1a2980; margin-bottom: 15px;"> Basic Parameters</h3>
                 <div class="form-group">
                     <label for="inputPath">INPUT_PATH <span class="required">*</span>:</label>
-                    <input type="text" id="inputPath" placeholder="/pool/sunhao.intern/sxx/inputdata" value="/pool/sunhao.intern/sxx/inputdata" required>
+                    <input type="text" id="inputPath" placeholder="/pool/sunhao.intern/sxx/testdata" value="/pool/sunhao.intern/sxx/testdata" required>
                     <small>Input path for the files</small>
                 </div>
                 <div class="form-group">
                     <label for="outputPath">OUTPUT_PATH <span class="required">*</span>:</label>
-                    <input type="text" id="outputPath" placeholder="/pool/sunhao.intern/sxx/output/t2" value="/pool/sunhao.intern/sxx/output/t2" required>
+                    <input type="text" id="outputPath" placeholder="/pool/sunhao.intern/sxx/output/t1" value="/pool/sunhao.intern/sxx/output/t1" required>
                     <small>Output path for the files</small>
                 </div>
                 <div class="form-row">
@@ -525,8 +525,8 @@
                 <div class="form-group">
                     <label>SAMPLE_QC(Sample-specific thresholds):</label>
                     <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-                        <button type="button" id="addSampleBtn" class="toolbar-btn" style="background: linear-gradient(135deg, #32C1B5, #1a9c8f);">+ Add Sample</button>
-                        <button type="button" id="clearAllBtn" class="toolbar-btn" style="background: linear-gradient(135deg, #32C1B5, #1a9c8f);">x Clear All</button>
+                        <button type="button" id="addSampleBtn" class="toolbar-btn" style="background: #87d8ee;">+ Add Sample</button>
+                        <button type="button" id="clearAllBtn" class="toolbar-btn" style="background: #87d8ee;">x Clear All</button>
                     </div>
                     <div class="qc-table-container">
                         <table class="qc-table">
@@ -712,19 +712,22 @@
                         <h2>Detailed Guide</h2>
                         <h3>Pipeline Overview</h3>
                         <p><strong>This tool is a pipeline for processing and analyzing scRNAseq data. People can use the default parameters or choose parameters by themselves. The pipeline includes steps:</strong></p>
-                        <p> Data Loading---Quality Control---Normalization+Feature selection---Diamensionality Reduction---Batch Correction---Clustering---Marker Identification---Annotation---Cell Compositional Analysis</p>
+                        <p> Data Loading---Quality Control---Normalization+Feature Selection---Diamensionality Reduction---Batch Correction---Clustering---Marker Identification---Annotation---Cell Compositional Analysis</p>
                         <h3>Input Requirements </h3>
                         <p><strong>Directory Structure:</strong><br> 
-                            (1) Under the root input directory, each group should have its own folder. The names of folder should be consistent with the desired group names. For example, "covid" and "normal"<br>
-                            (2) Under each group's folder, each sample should have its own folder.. The names of folder should be consistent with the desired sample ids. For example, "nCov_1" and "Normal_1"<br>
-                            (3) The sample folders contain the data files for that sample.</p>
+                            <strong>(1)</strong> Under the root input directory, each group should have its own folder. The names of folders should be consistent with the desired group names. For example, "covid" and "normal"<br>
+                            <strong>(2)</strong> Under each group's folder, each sample should have its own folder. The names of folders should be consistent with the desired sample ids. For example, "nCoV_1" and "Normal_1"<br>
+                            <strong>(3)</strong> Each sample folder contain the data files for that sample. Please see the specific structure example in the "Examples". </p>
                         <p><strong>Files Format:</strong> This pipeline supports MEX format files and HDF5 format files. The recommended MEX format file should contain three compressed files, which must be named <code>barcodes.tsv.gz</code>, <code>features.tsv.gz</code> and <code>matrix.mtx.gz</code>. HDF5 format files need to end with <code>.h5</code>.</p>
                         <p><strong>Folder Permission:</strong> The root input folder must be set to permissions <code>757</code> or <code>777</code> to allow read and write access for the Docker container.</p>
                         <h3>Output Structure</h3>
-                        <p>The output includes 11 plots in png format, 2 csv files, 1 html file and 1 rds file. All these files are in the output directory. The specific structure can be seen in the Examples.</p>
-                        <h3>Tips</h3>
-                        <p><strong>Parameters:</strong> All the parameters can be used with the default values directly.</p>
+                        <p><strong>Output Path:</strong> All files are in the output directory. </p>
+                        <p><strong>File Content:</strong> The output includes 11 <code>png</code> plots, 2 <code>csv</code> files, 1 <code>html</code> file and 1 <code>rds</code> file. The specific structure can be seen in the "Examples".</p>
+                        <h3>Parameter Tips</h3>
+                        <p><strong>Use:</strong> The default parameters can be used directly for analysis. Please check all blanks have values and just click start button to run the pipeline.</p>
+                        <p><strong>Sample_QC:</strong> If want to set a separate quality control threshold for a sample, please click the "Add Sample" button to do so.</p>
                         <p><strong>JOB_NAME:</strong> It can only contain a-z, A-Z, 0-9, _, ., -</p>
+                        <p><strong>GitHub PAT:</strong> Required for private repositories. Create token with "repo" scope at: GitHub Token Settings.</p>
                     </div>
                 </div>
                 <div id="faq" class="tab-pane">
@@ -733,13 +736,17 @@
                         <h3>Authentication Issues</h3>
                         <p><strong>Q: My Secret Key(Token) is not working, what should I do?</strong><br>
                         A: Check your Secret Key. It may have expired.</p>
-                        <h3>Common Errors</h3>
+                        <h3>Common Problems</h3>
                         <p><strong>Q: "Workflow not found" error</strong><br>
-                        A: Check that the workflow file gatk.yaml exists in the repository and you have permission to access it.</p>
+                        A: Check that the workflow file run-scrna.yaml exists in the repository and you have permission to access it.</p>
                         <p><strong>Q: "Path does not exist" error</strong><br>
                         A: Verify that all input paths exist and are accessible from the workflow environment. Use absolute paths. And please check if the input format complies with the requirements.</p>
                         <p><strong>Q: "Please fill all required fields" error</strong><br>
-                        A: This reminds that there are some blanks with * in the form that might not have been filled in. Especially, check if the Token has been filled in.</p>
+                        A: This reminds that there are some blanks in the form that might not have been filled in. Especially, check if the Token has been filled in.</p>
+                        <p><strong>Q: "No space left" error</strong><br>
+                        A: Please wait a second and try again.</p>
+                        <p><strong>Q: Why sample qc does not work? </strong><br>
+                        A: Maybe the sample name is wrong. Please check the sample name.</p>
                     </div>
                 </div>
                 <div id="examples" class="tab-pane">  
@@ -750,13 +757,13 @@
                             <span class="comment"># Input structure example </span><br>
                             <span class="path">/pool/sunhao.intern/sxx/testdata</span>/<br>
                             ├── <span class="path">covid/</span><br>
-                            │&nbsp;&nbsp;&nbsp;&nbsp;└──<span class="path">nCov_1/</span><br>
-                            │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──<span class="path">barcodes.tsv.gz</span><br>
+                            │&nbsp;&nbsp;&nbsp;&nbsp;└──<span class="path">nCoV_1/</span><br>
+                            │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──barcodes.tsv.gz<br>
                             │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──features.tsv.gz<br>
                             │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──matrix.mtx.gz<br>
                             └── <span class="path">normal/</span><br>
                             &nbsp;&nbsp;&nbsp;&nbsp;└──<span class="path">Normal_1/</span><br>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──<span class="path">barcodes.tsv.gz</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──barcodes.tsv.gz<br>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──features.tsv.gz<br>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──matrix.mtx.gz
                         </div>
@@ -776,7 +783,7 @@
                             ├── <span class="value">09_Markers_heatmap.png</span><br>
                             ├── <span class="value">10_Annotation_Umap_plot.png</span><br>
                             ├── <span class="value">11_Cell_Composition_plot.png</span><br>
-                            ├── <span class="value">scRNAseq_analysis_report</span><br>
+                            ├── <span class="value">scRNAseq_analysis_report.html</span><br>
                             ├── <span class="value">Markers_list.csv</span><br>
                             ├── <span class="value">Compositional analysis.csv</span><br>
                             └── <span class="value">final_object.rds</span><br>
