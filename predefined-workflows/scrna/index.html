@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cancer Risk Predictor Workflow Trigger</title>
+    <title>scRNA-seq Analysis Pipeline Trigger</title>
     <style>
-        /* 重置和基础样式 */
+        /* ========== Reset and base styles ========== */
         * {
             margin: 0;
             padding: 0;
@@ -14,18 +14,17 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
+            font-weight:200;
+            line-height: 1.3;    
             background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
             min-height: 100vh;
             color: #333;
-            
-            /* 网格布局 - 三部分 */
             display: grid;
-            grid-template-rows: auto 1fr auto;
+            grid-template-rows: auto 1fr auto;   
             gap: 0;
         }
         
-        /* 页眉区域 - 简化版 */
+        /* ========== Header part ========== */
         .header {
             background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
             padding: 15px 0;
@@ -47,75 +46,48 @@
             align-items: center;
         }
         
-        /* Logo区域 - 左边 */
-        .logo-area {
-            display: flex;
-            align-items: center;
-        }
-        
-        .logo-wrapper {
-            max-width: 250px; /* 控制logo最大宽度 */
-        }
-        
-        .logo-wrapper img {
-            width: 100%;
-            height: auto;
-            max-height: 70px; /* 控制logo高度 */
-            object-fit: contain;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-        }
-        
-        /* 页眉文字区域 - 右边 */
         .header-text {
             color: white;
-            text-align: left;
+            text-align: center;
             padding-left: 20px;
             flex: 1;
         }
         
-        .header-text h2 {
-            color: #FFD700; /* 金色标题 */
+        .header-text h1 {
+            color: white;
             margin-bottom: 8px;
-            font-size: 1.4rem;
-            font-weight: 600;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
         
-        .header-text p {
-            font-size: 1.1rem;
+        .header-text .subtitle {
+            font-size: 0.95rem;
             line-height: 1.5;
-            opacity: 0.95;
-            margin-bottom: 5px;
+            opacity: 0.85;
+            margin-bottom: 0;
         }
         
-        .software-version {
-            font-size: 1rem;
-            color: #32C1B5;
-            font-weight: 500;
-            margin-top: 8px;
-        }
-        
-        /* 主要内容区域 */
+        /* ========== Main content part ========== */
         .main-content {
             width: 100%;
             max-width: 1800px;
             margin: 30px auto;
             padding: 0 20px;
             display: grid;
-            grid-template-columns: 1fr 1.2fr;
+            grid-template-columns: 1.2fr 1fr;
             gap: 30px;
             flex-grow: 1;
         }
         
-        /* 左边表单区域 */
         .form-section {
-            background: white;
-            padding: 40px;
+            background: rgb(255, 254, 254);
+            padding: 50px;
             border-radius: 16px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
             border: 1px solid #e1e8ed;
         }
         
-        /* 右边说明区域 */
         .info-section {
             background: white;
             padding: 40px;
@@ -126,7 +98,7 @@
             flex-direction: column;
         }
         
-        /* 右边区域的标签按钮组 */
+        /* ========== Button part ========== */
         .info-tabs {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -136,7 +108,7 @@
             padding-bottom: 20px;
         }
         
-        .tab-btn {
+        .tab-btn {     
             padding: 16px 10px;
             background: #f8fafc;
             border: 2px solid #e1e8ed;
@@ -149,33 +121,32 @@
             text-align: center;
         }
         
-        .tab-btn:hover {
+        .tab-btn:hover {   
             background: #e3f2fd;
             border-color: #32C1B5;
             color: #1a2980;
             transform: translateY(-2px);
         }
         
-        .tab-btn.active {
+        .tab-btn.active {     
             background: linear-gradient(135deg, #32C1B5, #1a9c8f);
             border-color: #32C1B5;
             color: white;
             box-shadow: 0 4px 12px rgba(50, 193, 181, 0.3);
         }
         
-        /* 标签内容区域 */
         .tab-content {
             flex-grow: 1;
             overflow-y: auto;
             padding: 10px;
         }
         
-        .tab-pane {
+        .tab-pane {   
             display: none;
             animation: fadeIn 0.5s ease;
         }
         
-        .tab-pane.active {
+        .tab-pane.active {  
             display: block;
         }
         
@@ -184,22 +155,22 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* 表单样式 */
+        /* ========== Form part ========== */
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 7px;
         }
         
-        label {
+        label {  
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             font-weight: 600;
             color: #2c3e50;
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
         
-        input[type="text"], input[type="password"], input[type="number"], select {
+        input[type="text"], input[type="password"], input[type="number"], select, textarea {
             width: 100%;
-            padding: 16px;
+            padding: 13px;  
             border: 2px solid #e1e8ed;
             border-radius: 10px;
             font-size: 1.05rem;
@@ -207,17 +178,15 @@
             background: #f8fafc;
         }
         
-        input[type="text"]:focus, 
-        input[type="password"]:focus, 
-        input[type="number"]:focus, 
-        select:focus {
+        input:focus, select:focus, textarea:focus {
             border-color: #32C1B5;
             outline: none;
             background: white;
             box-shadow: 0 0 0 4px rgba(50, 193, 181, 0.1);
         }
+
         
-        /* 按钮组 */
+        /* ========== Button group ========== */
         .action-buttons {
             display: grid;
             gap: 15px;
@@ -258,20 +227,12 @@
             background: linear-gradient(135deg, #0d6efd, #0a58ca);
         }
         
-        #statusButton:hover {
-            background: linear-gradient(135deg, #0a58ca, #084298);
-        }
-        
         #resultsButton {
             display: none;
             background: linear-gradient(135deg, #17a2b8, #138496);
         }
         
-        #resultsButton:hover {
-            background: linear-gradient(135deg, #138496, #11707a);
-        }
-        
-        /* 状态显示 */
+        /* ========== Status ========== */
         #status {
             margin-top: 30px;
             padding: 25px;
@@ -299,7 +260,6 @@
             border-left: 6px solid #ffc107;
         }
         
-        /* 表单行布局 */
         .form-row {
             display: grid;
             gap: 20px;
@@ -313,18 +273,11 @@
         
         small {
             color: #6c757d;
-            font-size: 0.95em;
+            font-size: 0.9em;
             display: block;
-            margin-top: 8px;
+            margin-top: 5px;
             line-height: 1.5;
-        }
-        
-        .token-guide {
-            margin-top: 15px;
-            padding: 20px;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 12px;
-            border-left: 5px solid #32C1B5;
+            font-weight: normal;
         }
         
         .required {
@@ -343,7 +296,7 @@
             display: none;
         }
         
-        /* 右边标签内容样式 */
+        /* ========== Right label content ========== */
         .info-content {
             height: 100%;
         }
@@ -399,22 +352,58 @@
             overflow-x: auto;
         }
         
-        .example-block .comment {
-            color: #6c757d;
-            font-style: italic;
+        /* ========== Sample qc form part ========== */
+        .qc-table-container {
+            overflow-x: auto;
+            margin-top: 15px;
+            border: 1px solid #e1e8ed;
+            border-radius: 10px;
         }
         
-        .example-block .path {
-            color: #198754;
-            font-weight: bold;
+        .qc-table {
+            width: 100%;
+            border-collapse: collapse;
         }
         
-        .example-block .value {
-            color: #0d6efd;
-            font-weight: bold;
+        .qc-table th {
+            background: #e5f0f5;
+            color: rgb(1, 4, 39);
+            padding: 10px 8px;
+            text-align: left;
+            font-size: 0.8rem;
         }
         
-        /* 页脚 */
+        .qc-table td {
+            padding: 8px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        .qc-table input {
+            width: 95%;
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .toolbar-btn {
+            background: linear-gradient(135deg, #32C1B5, #1a9c8f);
+            padding: 8px 16px;
+            min-height: auto;
+            font-size: 0.85rem;
+            display: inline-flex;
+        }
+        
+        .remove-btn {
+            background: #dc3545;
+            padding: 4px 10px;
+            min-height: auto;
+            font-size: 0.8rem;
+        }
+        
+        .remove-btn:hover {
+            background: #c82333;
+        }
+        
+        /* ========== Footer part ========== */
         .footer {
             background: linear-gradient(90deg, #1a2980 0%, #26d0ce 100%);
             color: white;
@@ -442,325 +431,356 @@
             color: white;
             text-decoration: none;
             font-weight: 600;
-            transition: opacity 0.3s;
         }
         
-        .footer a:hover {
-            opacity: 0.9;
-            text-decoration: underline;
-        }
-        
-        /* 响应式调整 */
         @media (max-width: 1200px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 30px;
-            }
-            
-            .form-section, .info-section {
-                padding: 30px;
-            }
+            .main-content { grid-template-columns: 1fr; gap: 30px; }
+            .form-section, .info-section { padding: 30px; }
         }
-        
-        @media (max-width: 992px) {
-            .header-container {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-            
-            .logo-wrapper {
-                max-width: 200px;
-            }
-            
-            .header-text {
-                text-align: center;
-                padding-left: 0;
-            }
-        }
-        
+
         @media (max-width: 768px) {
-            .main-content {
-                padding: 0 15px;
-                margin: 20px auto;
-            }
-            
-            .form-section, .info-section {
-                padding: 25px;
-            }
-            
-            .info-tabs {
-                grid-template-columns: 1fr;
-            }
-            
-            .tab-btn {
-                padding: 14px;
-                font-size: 1rem;
-            }
-            
-            button {
-                padding: 16px 20px;
-                font-size: 1rem;
-                min-height: 55px;
-            }
-            
-            .footer-links {
-                flex-direction: column;
-                gap: 15px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .form-section, .info-section {
-                padding: 20px;
-            }
-            
-            input[type="text"], input[type="password"], input[type="number"], select {
-                padding: 14px;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .header-text h2 {
-                font-size: 1.2rem;
-            }
-            
-            .header-text p {
-                font-size: 1rem;
-            }
+            .main-content { padding: 0 15px; margin: 20px auto;}
+            .form-section, .info-section { padding: 25px; }
+            .info-tabs { grid-template-columns: 1fr; }
+            button {padding: 16px 20px; font-size: 1rem; min-height: 55px}
         }
     </style>
 </head>
 <body>
-    <!-- 页眉区域 -->
+    <!-- ========== Header Area ========== -->
     <header class="header">
         <div class="header-container">
-            <!-- Logo在左边 -->
-            <div class="logo-area">
-                <div class="logo-wrapper">
-                    <img src="images/fastQC-fastp-BWA-GATK.logo.v3.png" 
-                         alt="GATK-Pipeline Logo"
-                         title="Cancer Risk Predictor Workflow">
-                </div>
-            </div>
-            
-            <!-- 文字在右边 -->
             <div class="header-text">
-                <p><strong>核心分析软件包版本：</strong>fastp 1.1.0， Bwa-mem2-v2.3，gatk 4.6.2.0</p>
-                <p><strong>基本分析参数：</strong>默认参数</p>
-                <p><strong>流程简介：</strong>该流程首先对原始Fastq数据进行质量控制（FastQC），随后经修剪（fastp），基因组比对（BWA）和变异检测（GATK），系统识别测序数据中的基因组变异。</p>
+                <h1><strong>scRNA-seq Analysis Pipeline</h1>
+                <p class="subtitle">This tool is a pipeline that can analyze the scRNA-seq data.</p>
             </div>
         </div>
     </header>
     
-    <!-- 主要内容区域 - 两栏布局 -->
+    <!-- ========== Main Content Area ========== -->
     <main class="main-content">
-        <!-- 左边栏：表单 -->
+        <!-- Left: Form -->
         <section class="form-section">
             <h1 style="color: #1a2980; margin-bottom: 30px; font-size: 2rem;">
-                Cancer Risk Predictor
+                Pipeline Parameters:
             </h1>
             
-            <div class="form-group">
-                <label for="inputPath">Input path <span class="required">*</span>:</label>
-                <input type="text" id="inputPath" placeholder="/pool/sun/ghrunner/lyx/20250729_GATK_pipeline_test" required>
-                <small>Path containing FASTQ files / 包含FASTQ文件的路径</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="refPath">Reference genome path <span class="required">*</span>:</label>
-                <input type="text" id="refPath" placeholder="/pool/sun/ghrunner/lyx/ref/hg38/" required>
-                <small>Path to reference genome FA files / 参考基因组FA文件路径</small>
-            </div>
-            
-            <div class="form-row">
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <h3 style="color: #1a2980; margin-bottom: 15px;"> Basic Parameters</h3>
                 <div class="form-group">
-                    <label for="jobName">Job name <span class="required">*</span>:</label>
-                    <input type="text" id="jobName" placeholder="20250816.GATK" required>
-                    <small>Base name for the jobs / 任务基础名称</small>
+                    <label for="inputPath">INPUT_PATH <span class="required">*</span>:</label>
+                    <input type="text" id="inputPath" placeholder="/pool/sunhao.intern/sxx/inputdata" value="/pool/sunhao.intern/sxx/inputdata" required>
+                    <small>Input path for the files</small>
+                </div>
+                <div class="form-group">
+                    <label for="outputPath">OUTPUT_PATH <span class="required">*</span>:</label>
+                    <input type="text" id="outputPath" placeholder="/pool/sunhao.intern/sxx/output/t2" value="/pool/sunhao.intern/sxx/output/t2" required>
+                    <small>Output path for the files</small>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="jobName">JOB_NAME <span class="required">*</span>:</label>
+                        <input type="text" id="jobName" placeholder="scrna.analysis" value="scrna.analysis" required>
+                        <small>Base name for the jobs</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="runLocation">RUN_LOCATION <span class="required">*</span>:</label>
+                        <input type="text" id="runLocation" placeholder="pipeline" value="pipeline" required>
+                        <small>Location of the runtime environment</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <h3 style="color: #1a2980; margin-bottom: 15px;"> Quality Control Parameters</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mtPattern">MT_PATTERN:</label>
+                        <input type="text" id="mtPattern" value="^MT-">
+                        <small> Species of the sample: ^MT-=human,^mt-=mouse</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="minFeatures">MIN_FEATURES:</label>
+                        <input type="number" id="minFeatures" value="200">
+                        <small>Minimum number of features</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxFeatures">MAX_FEATURES:</label>
+                        <input type="number" id="maxFeatures" value="6000">
+                        <small>Maximum number of features</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxCount">MAX_COUNT:</label>
+                        <input type="number" id="maxCount" value="50000">
+                        <small>Maximum UMI count</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxPercentMt">MAX_PERCENT_MT:</label>
+                        <input type="number" id="maxPercentMt" value="10" step="1">
+                        <small>Maximum mitochondrial percentage (%)</small>
+                    </div>
                 </div>
                 
+
                 <div class="form-group">
-                    <label for="threadNum">Thread number <span class="required">*</span>:</label>
-                    <input type="number" id="threadNum" placeholder="96" min="1" required>
-                    <small>Number of threads for processing / 处理线程数</small>
+                    <label>SAMPLE_QC(Sample-specific thresholds):</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <button type="button" id="addSampleBtn" class="toolbar-btn" style="background: linear-gradient(135deg, #32C1B5, #1a9c8f);">+ Add Sample</button>
+                        <button type="button" id="clearAllBtn" class="toolbar-btn" style="background: linear-gradient(135deg, #32C1B5, #1a9c8f);">x Clear All</button>
+                    </div>
+                    <div class="qc-table-container">
+                        <table class="qc-table">
+                            <thead>
+                                <tr><th>Sample Name</th><th>MIN_FEATURES</th><th>MAX_FEATURES</th><th>MAX_COUNT</th><th>MAX_PERCENT_MT</th><th>Action</th></tr>
+                            </thead>
+                            <tbody id="samplesTbody"></tbody>
+                        </table>
+                    </div>
+                    <input type="hidden" id="sampleQcJson" value="{}">
+                    <small>Add a threshold if need to do quality control for a certain sample. Empty=use global defaults. Sample name= sample folder name.</small>
                 </div>
             </div>
             
-            <div class="form-group">
-                <label for="runLocation">Run location <span class="required">*</span>:</label>
-                <input type="text" id="runLocation" placeholder="pipeline" required>
-                <small>Location of the runtime environment / 运行环境位置</small>
+            <!-- Normalization & Feature Selection -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <h3 style="color: #1a2980; margin-bottom: 15px;"> Normalization & Feature Selection</h3>
+                <div class="form-row">
+
+                    <div class="form-group">
+                        <label for="normalizationMethod">NORMALIZATION_METHOD:</label>
+                        <select id="normalizationMethod">
+                            <option value="SCTransform" selected>SCTransform</option>
+                            <option value="NormalizeData">NormalizeData</option>
+                        </select>
+                        <small>Normalization method</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="varsToRegress">VARS_TO_REGRESS:</label>
+                        <select id="varsToRegress">
+                            <option value="NULL" selected>NULL</option>
+                            <option value="nCount_RNA">nCount_RNA</option>
+                            <option value="nFeature_RNA">nFeature_RNA</option>
+                            <option value="percent.mt">percent.mt</option>
+                        </select>
+                        <small>Variables to regress during scaling</small>
+                    </div>
+                </div>
             </div>
             
-            <div class="form-group">
-                <label for="githubToken">Secret key <span class="required">*</span>:</label>
-                <input type="password" id="githubToken" placeholder="Enter your Secret Key" required>
-                <!-- 已删除Token提示信息 -->
+            <!-- Dimensionality Reduction -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <h3 style="color: #1a2980; margin-bottom: 15px;"> Dimensionality Reduction</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pcaNpcs">PCA_NPCS:</label>
+                        <input type="number" id="pcaNpcs" value="50">
+                        <small>Number of PCs for PCA</small>
+                    </div>
+                </div>
             </div>
             
-            <!-- 操作按钮 -->
+            <!-- Batch Correction -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <h3 style="color: #1a2980; margin-bottom: 15px;"> Batch Correction</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="correctionMethod">CORRECTION_METHOD:</label>
+                        <select id="correctionMethod">
+                            <option value="HarmonyIntegration" selected>HarmonyIntegration</option>
+                            <option value="CCAIntegration">CCAIntegration</option>
+                            <option value="RPCAIntegration">RPCAIntegration</option>
+                            <option value="FastMNNIntegration">FastMNNIntegration</option>
+                        </select>
+                        <small>Batch correction method</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="dims">DIMS:</label>
+                        <input type="number" id="dims" value="15">
+                        <small>Dimensions used in analysis</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Clustering -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <h3 style="color: #1a2980; margin-bottom: 15px;"> Clustering</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clusterResolution">CLUSTER_RESOLUTION:</label>
+                        <input type="number" id="clusterResolution" value="0.8" step="0.1">
+                        <small>Clustering resolution</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="clusterAlgorithm">CLUSTER_ALGORITHM:</label>
+                        <select id="clusterAlgorithm">
+                            <option value="1" selected>Louvain (1)</option>
+                            <option value="4">Leiden (4)</option>
+                        </select>
+                        <small>Algorithm: 1=Louvain, 4=Leiden</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Marker Identification -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <h3 style="color: #1a2980; margin-bottom: 15px;"> Marker Identification</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="minPct">MIN_PCT:</label>
+                        <input type="number" id="minPct" value="0.25" step="0.05">
+                        <small>Minimum percentage in markers identification</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="logfcThreshold">LOGFC_THRESHOLD:</label>
+                        <input type="number" id="logfcThreshold" value="0.25" step="0.05">
+                        <small>Log fold change threshold</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="markerTestUse">MARKER_TEST_USE:</label>
+                        <select id="markerTestUse">
+                            <option value="wilcox" selected>wilcox</option>
+                            <option value="bimod">bimod</option>
+                            <option value="roc">roc</option>
+                            <option value="t">t</option>
+                            <option value="MAST">MAST</option>
+                            <option value="DESeq2">DESeq2</option>
+                            <option value="LR">LR</option>
+                            <option value="poisson">poisson</option>
+                            <option value="negbinom">negbinom</option>
+                        </select>
+                        <small>Algorithm for marker identification</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Annotation -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <h3 style="color: #1a2980; margin-bottom: 15px;"> Annotation</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="refDb">REF_DB:</label>
+                        <select id="refDb">
+                            <option value="MonacoImmuneData" selected>MonacoImmuneData</option>
+                            <option value="HumanPrimaryCellAtlasData">HumanPrimaryCellAtlasData</option>
+                            <option value="MouseRNAseqData">MouseRNAseqData</option>
+                            <option value="DatabaseImmuneCellExpressionData">DatabaseImmuneCellExpressionData</option>
+                            <option value="BlueprintEncodeData">BlueprintEncodeData</option>
+                            <option value="ImmGenData">ImmGenData</option>
+                        </select>
+                        <small>SingleR reference database</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="labelType">LABEL_TYPE:</label>
+                        <select id="labelType">
+                            <option value="main" selected>main</option>
+                            <option value="fine">fine</option>
+                        </select>
+                        <small>SingleR label type to use</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Secret Key -->
+            <div class="form-group">
+                <label for="githubToken">GitHub Personal Access Token <span class="required">*</span>:</label>
+                <input type="password" id="githubToken" placeholder="Enter your GitHub PAT with 'repo' scope" required>
+            </div>
+            
+            <!-- ========== Right Button ========== -->
             <div class="action-buttons">
-                <button id="processButton">
-                    Start Workflow / 启动工作流
-                </button>
-                <button id="statusButton">
-                    Check Status / 查看状态
-                </button>
-                <button id="resultsButton">
-                    View Results / 查看结果
-                </button>
+                <button id="processButton">Start Workflow </button>
+                <button id="statusButton">Check Status </button>
+                <button id="resultsButton">View Results </button>
             </div>
             
             <div id="status"></div>
             <div id="statusDetails" class="status-details"></div>
         </section>
         
-        <!-- 右边栏：说明文档 -->
+        <!-- ========== Right: Information ========== -->
         <section class="info-section">
             <div class="info-tabs">
-                <button class="tab-btn active" data-tab="details">
-                    Detailed Guide<br>详细说明
-                </button>
-                <button class="tab-btn" data-tab="faq">
-                    F&Q<br>常见问题
-                </button>
-                <button class="tab-btn" data-tab="examples">
-                    Examples<br>实例数据
-                </button>
+                <button class="tab-btn active" data-tab="details">Detailed Guide</button>
+                <button class="tab-btn" data-tab="examples">Examples</button>
+                <button class="tab-btn" data-tab="faq">Some Questions</button>
             </div>
-            
             <div class="tab-content">
-                <!-- 详细说明标签 -->
                 <div id="details" class="tab-pane active">
                     <div class="info-content">
-                        <h2>Detailed Guide 详细说明</h2>
-                        
-                        <h3>Workflow Overview 工作流概览</h3>
-                        <p>This tool triggers a comprehensive genomic analysis pipeline for cancer risk prediction. The workflow includes:</p>
-                        <ul>
-                            <li><strong>Quality Control</strong>: FastQC for initial quality assessment</li>
-                            <li><strong>Read Trimming</strong>: fastp 1.1.0 for adapter trimming and quality filtering</li>
-                            <li><strong>Alignment</strong>: BWA-MEM2 v2.3 for mapping reads to reference genome</li>
-                            <li><strong>Variant Calling</strong>: GATK 4.6.2.0 best practices pipeline</li>
-                            <li><strong>Analysis</strong>: Variant annotation and risk prediction</li>
-                        </ul>
-                        
-                        <h3>Input Requirements 输入要求</h3>
-                        <p><strong>FASTQ Files Format:</strong> Must be compressed with <code>.fastq.gz</code> extension ( <code>.fq.gz</code> is not supported ). Both single-end and paired-end reads are supported.</p>
-                        <p><strong>Directory Structure:</strong> All FASTQ files must be placed in a root folder named <code>fastq</code>. Each sample's files need to be stored in a separate subdirectory under <code>fastq</code> (required for parallel running).</p>
-                        <p><strong>File Naming Convention:</strong> Paired-end reads should be named <code>R1.fastq.gz</code> and <code>R2.fastq.gz</code> in the sample subdirectory. Example structure:</p>
-                        <pre>
-                        fastq/sample1/sample1.R1.fastq.gz
-                        fastq/sample1/sample1.R2.fastq.gz
-                        fastq/sample2/sample2.R1.fastq.gz
-                        fastq/sample2/sample2.R2.fastq.gz
-                        </pre>
-                        <p><strong>Folder Permission:</strong> The root <code>fastq</code> folder must be set to permissions <code>757</code> or <code>777</code> to allow read and write access for the Docker container.</p>
-                        <h3>Reference Genome 参考基因组</h3>
-                        <p>The reference directory (<code>/mnt/d1/pool/sun/ghrunner/lyx/ref/hg38/</code>) must contain the following hg38 files for <code>fastq-fastp-bwa-gatk</code> pipeline, with <strong>index files paired</strong> (required for BWA and GATK running):</p>
-                        <ol>
-                            <li><strong>FASTA sequence + BWA/GATK indexes</strong> (core for genome alignment)
-                                <br><code>hg38.fa</code>, <code>hg38.fa.amb</code>, <code>hg38.fa.ann</code>, <code>hg38.fa.pac</code>, <code>hg38.fa.fai</code>
-                            </li>
-                            <li><strong>GATK required sequence dictionary</strong>
-                                <br><code>hg38.dict</code> (or <code>Homo_sapiens_assembly38.dict</code>, both are applicable)
-                            </li>
-                            <li><strong>Known variant databases (compressed VCF + tabix index <code>.tbi</code>)</strong> (for GATK base quality recalibration and variant filtering)
-                                <ul>
-                                    <li>dbSNP database: <code>dbSNP.hg38.vcf.gz</code> + <code>dbSNP.hg38.vcf.gz.tbi</code></li>
-                                    <li>1000G gold standard indels: <code>Mills_and_1000G_gold_standard.indels.hg38.vcf.gz</code> + <code>Mills_and_1000G_gold_standard.indels.hg38.vcf.gz.tbi</code></li>
-                                </ul>
-                            </li>
-                        </ol>
+                        <h2>Detailed Guide</h2>
+                        <h3>Pipeline Overview</h3>
+                        <p><strong>This tool is a pipeline for processing and analyzing scRNAseq data. People can use the default parameters or choose parameters by themselves. The pipeline includes steps:</strong></p>
+                        <p> Data Loading---Quality Control---Normalization+Feature selection---Diamensionality Reduction---Batch Correction---Clustering---Marker Identification---Annotation---Cell Compositional Analysis</p>
+                        <h3>Input Requirements </h3>
+                        <p><strong>Directory Structure:</strong><br> 
+                            (1) Under the root input directory, each group should have its own folder. The names of folder should be consistent with the desired group names. For example, "covid" and "normal"<br>
+                            (2) Under each group's folder, each sample should have its own folder.. The names of folder should be consistent with the desired sample ids. For example, "nCov_1" and "Normal_1"<br>
+                            (3) The sample folders contain the data files for that sample.</p>
+                        <p><strong>Files Format:</strong> This pipeline supports MEX format files and HDF5 format files. The recommended MEX format file should contain three compressed files, which must be named <code>barcodes.tsv.gz</code>, <code>features.tsv.gz</code> and <code>matrix.mtx.gz</code>. HDF5 format files need to end with <code>.h5</code>.</p>
+                        <p><strong>Folder Permission:</strong> The root input folder must be set to permissions <code>757</code> or <code>777</code> to allow read and write access for the Docker container.</p>
+                        <h3>Output Structure</h3>
+                        <p>The output includes 11 plots in png format, 2 csv files, 1 html file and 1 rds file. All these files are in the output directory. The specific structure can be seen in the Examples.</p>
+                        <h3>Tips</h3>
+                        <p><strong>Parameters:</strong> All the parameters can be used with the default values directly.</p>
+                        <p><strong>JOB_NAME:</strong> It can only contain a-z, A-Z, 0-9, _, ., -</p>
                     </div>
                 </div>
-                
-                <!-- 常见问题标签 -->
                 <div id="faq" class="tab-pane">
                     <div class="info-content">
-                        <h2>Frequently Asked Questions 常见问题</h2>
-                        
-                        <h3>Authentication Issues 认证问题</h3>
-                        <p><strong>Q: My Secret Key is not working, what should I do?</strong><br>
-                        A: It's possible that your key has expired. Please seek help at contact support in the footer.</p>
-                        
-                        <h3>Common Errors 常见错误</h3>
+                        <h2>Frequently Asked Questions</h2>
+                        <h3>Authentication Issues</h3>
+                        <p><strong>Q: My Secret Key(Token) is not working, what should I do?</strong><br>
+                        A: Check your Secret Key. It may have expired.</p>
+                        <h3>Common Errors</h3>
                         <p><strong>Q: "Workflow not found" error</strong><br>
-                        A: Check that the workflow file <code>gatk.yaml</code> exists in the repository and you have permission to access it.</p>
-                        
+                        A: Check that the workflow file gatk.yaml exists in the repository and you have permission to access it.</p>
                         <p><strong>Q: "Path does not exist" error</strong><br>
                         A: Verify that all input paths exist and are accessible from the workflow environment. Use absolute paths. And please check if the input format complies with the requirements.</p>
-                        
-                        <p><strong>Q: Task fails at a certain step</strong><br>
-                        A: All files in the same batch must successfully complete the current step to proceed to the next one. Please manually remove the erroneous files.</p>
-                        
-                        <p><strong>Q: Where to find the results</strong><br>
-                        A: Intermediate output files for each step will be automatically created in the input path. If you want to run a single step independently, please select the corresponding individual analysis tool on the home page.</p>
-                        
-                        <p><strong>Q: Can I input the thread number arbitrarily</strong><br>
-                        A: Thread numbers exceeding the upper limit will be automatically handled by the system, so no need to worry.</p>
-                        
+                        <p><strong>Q: "Please fill all required fields" error</strong><br>
+                        A: This reminds that there are some blanks with * in the form that might not have been filled in. Especially, check if the Token has been filled in.</p>
                     </div>
                 </div>
-                
-                <!-- 实例数据标签 -->
-                <div id="examples" class="tab-pane">
+                <div id="examples" class="tab-pane">  
                     <div class="info-content">
-                        <h2>Example Configuration 实例配置</h2>
-                        
-                        <h3>Example Input Path 示例输入路径</h3>
+                        <h2>Example Configuration</h2>
+                        <h3>Example Input Path</h3>
                         <div class="example-block">
-                            <span class="comment"># Typical project structure 典型项目结构</span><br>
-                            /pool/sun/ghrunner/lyx/20250729_GATK_pipeline_test/fastq<span class="path"></span>/<br>
-                            ├── sample1/sample1.<span class="value">R1.fastq.gz</span><br>
-                            ├── sample1/sample1.<span class="value">R2.fastq.gz</span><br>
-                            ├── sample2/sample2.<span class="value">R1.fastq.gz</span><br>
-                            └── sample2/sample2.<span class="value">R2.fastq.gz</span>
+                            <span class="comment"># Input structure example </span><br>
+                            <span class="path">/pool/sunhao.intern/sxx/testdata</span>/<br>
+                            ├── <span class="path">covid/</span><br>
+                            │&nbsp;&nbsp;&nbsp;&nbsp;└──<span class="path">nCov_1/</span><br>
+                            │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──<span class="path">barcodes.tsv.gz</span><br>
+                            │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──features.tsv.gz<br>
+                            │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──matrix.mtx.gz<br>
+                            └── <span class="path">normal/</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;└──<span class="path">Normal_1/</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──<span class="path">barcodes.tsv.gz</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──features.tsv.gz<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──matrix.mtx.gz
                         </div>
                         
-                        <h3>Example Output 示例输出</h3>
+                        <h3>Example Output Structure</h3>
                         <div class="example-block">
-                            <span class="comment"># Main output directory structure 主输出目录结构</span><br>
-                            /pool/sun/ghrunner/lyx/<span class="path">20250729_GATK_pipeline_test/vcf</span>/<br>
-                            ├── <span class="value">sample1/</span><br>
-                            │   ├── <span class="value">sample1_RG.sorted/</span><br>
-                            │   └── <span class="value">rg_added_bams/</span><br>
-                            ├── <span class="value">sample2/</span><br>
-                            │   ├── <span class="value">sample2_RG.sorted/</span><br>
-                            │   └── <span class="value">rg_added_bams/</span><br>
-                            ├── <span class="value">DNA-25M-1-test/</span><br>
-                            │   ├── <span class="value">DNA-25M-1-test_RG.sorted/</span><br>
-                            │   │   ├── DNA-25M-1-test_RG.sorted.dedup.bai<br>
-                            │   │   ├── DNA-25M-1-test_RG.sorted.dedup.bam<br>
-                            │   │   ├── DNA-25M-1-test_RG.sorted.dup_metrics.txt<br>
-                            │   │   ├── DNA-25M-1-test_RG.sorted.g.vcf.gz<br>
-                            │   │   ├── DNA-25M-1-test_RG.sorted.g.vcf.gz.tbi<br>
-                            │   │   ├── DNA-25M-1-test_RG.sorted.recal.bai<br>
-                            │   │   ├── DNA-25M-1-test_RG.sorted.recal.bam<br>
-                            │   │   └── DNA-25M-1-test_RG.sorted.recal_data.table<br>
-                            │   └── <span class="value">rg_added_bams/</span><br>
-                            │       ├── DNA-25M-1-test_RG.sorted.bam<br>
-                            │       └── DNA-25M-1-test_RG.sorted.bam.bai<br>
-                            └── <span class="value">sample2/</span><br>
-                                ├── <span class="value">sample2_RG.sorted/</span><br>
-                                └── <span class="value">rg_added_bams/</span><br>
-                            <br>
-                            <span class="comment"># Intermediate steps output note</span><br>
-                            Results of intermediate steps (quality control, trimming, genome alignment) will also generate output with a similar directory structure.
-                        </div>
-                        
-                        <h3>Complete Input Parameters Example 完整输入参数示例</h3>
-                        <div class="example-block">
-                            <span class="comment"># All parameters filled 所有参数示例</span><br>
-                            Input path: <span class="path">/pool/sun/ghrunner/lyx/20250729_GATK_pipeline_test</span><br>
-                            Reference path: <span class="path">/pool/sun/ghrunner/lyx/ref/hg38</span><br>
-                            Job name: <span class="value">test_run</span><br>
-                            Thread number: <span class="value">64</span><br>
-                            Run location: <span class="value">pipeline</span><br>
-                            Token: <span class="comment">[your Secret Key]</span>
+                            <span class="comment"># Output content structure </span><br>
+                            <span class="path">/pool/sunhao.intern/output/t1</span>/<br>
+                            ├── <span class="value">01_QC_Before_vlnplot.png</span><br>
+                            ├── <span class="value">02_QC_After_vlnplot.png</span><br>
+                            ├── <span class="value">03_PCA_plot.png</span><br>
+                            ├── <span class="value">04_PCAheatmap_plot.png</span><br>
+                            ├── <span class="value">05_Elbow_plot.png</span><br>
+                            ├── <span class="value">06_Batch_Comparison_plot.png</span><br>
+                            ├── <span class="value">07_UMAP_plot.png</span><br>
+                            ├── <span class="value">08_TSNE_plot,png</span><br>
+                            ├── <span class="value">09_Markers_heatmap.png</span><br>
+                            ├── <span class="value">10_Annotation_Umap_plot.png</span><br>
+                            ├── <span class="value">11_Cell_Composition_plot.png</span><br>
+                            ├── <span class="value">scRNAseq_analysis_report</span><br>
+                            ├── <span class="value">Markers_list.csv</span><br>
+                            ├── <span class="value">Compositional analysis.csv</span><br>
+                            └── <span class="value">final_object.rds</span><br>
+  
                         </div>
                     </div>
                 </div>
@@ -768,211 +788,231 @@
         </section>
     </main>
     
-    <!-- 页脚 -->
+    <!-- ========== Footer Area ========== -->
     <footer class="footer">
         <div class="footer-content">
-            <p>Cancer Risk Predictor Workflow © 2026</p>
-            <div class="footer-links">
-                <a href="https://github.com/cuhk-haosun">
-                    Contact Support
-                </a>
-            </div>
-            <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
-                This tool triggers genomic analysis workflows for cancer risk prediction.
-            </p>
+            <p>scRNA-seq Analysis Pipeline © 2026</p>
+            <div class="footer-links"><a href="https://github.com/cuhk-haosun">Contact Support</a></div>
         </div>
     </footer>
 
     <script>
-        // 全局变量
-        let currentRunInfo = {
-            owner: 'cuhk-haosun',
-            repo: 'code-leiyong',
-            runId: null,
-            token: null
-        };
-
+        // ========== Global Vairable ==========
+        let currentRunInfo = { owner: 'cuhk-haosun', repo: 'code-docker-scrna', runId: null, token: null };
         let workflowTriggerTime = 0;
-
-        // 标签切换功能
-        document.querySelectorAll('.tab-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
+        
+        // ========== Sample qc form ==========
+        function addSampleRow(data = null) {
+            const tbody = document.getElementById('samplesTbody');
+            const row = document.createElement('tr');
+            const name = data ? data.name : '';
+            const minF = data && data.minF !== undefined ? data.minF : '';
+            const maxF = data && data.maxF !== undefined ? data.maxF : '';
+            const maxC = data && data.maxC !== undefined ? data.maxC : '';
+            const mtPct = data && data.mtPct !== undefined ? data.mtPct : '';
+            row.innerHTML = `<td><input type="text" class="sample-name" placeholder="e.g., sample1" value="${escapeHtml(name)}"></td>
+                <td><input type="number" class="sample-min-features" placeholder="MIN_FEATURES" value="${minF}"></td>
+                <td><input type="number" class="sample-max-features" placeholder="MAX_FEATURES" value="${maxF}"></td>
+                <td><input type="number" class="sample-max-count" placeholder="MAX_COUNT" value="${maxC}"></td>
+                <td><input type="number" class="sample-max-percent-mt" placeholder="MAX_PERCENT_MT" value="${mtPct}"></td>
+                <td style="text-align:center;"><button type="button" class="remove-btn" style="background:#dc3545; padding:4px 10px;">✖</button></td>`;
+            row.querySelector('.remove-btn').onclick = () => { row.remove(); updateSampleQcJson(); };
+            row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSampleQcJson));
+            tbody.appendChild(row);
+            updateSampleQcJson();
+        }
+        
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+        
+        function updateSampleQcJson() {
+            const samples = {};  
+            document.querySelectorAll('#samplesTbody tr').forEach(row => {
+                const name = row.querySelector('.sample-name')?.value.trim();
+                if (name && name !== '') {   
+                    const minF = row.querySelector('.sample-min-features')?.value;
+                    const maxF = row.querySelector('.sample-max-features')?.value;
+                    const maxC = row.querySelector('.sample-max-count')?.value;
+                    const mtPct = row.querySelector('.sample-max-percent-mt')?.value;
+                    samples[name] = {};
+                    if (minF && minF !== '') samples[name].min_features = parseInt(minF);
+                    if (maxF && maxF !== '') samples[name].max_features = parseInt(maxF);
+                    if (maxC && maxC !== '') samples[name].max_count = parseInt(maxC);
+                    if (mtPct && mtPct !== '') samples[name].max_percent_mt = parseInt(mtPct);
+                }
+            });
+            const normalJson = Object.keys(samples).length > 0 ? JSON.stringify(samples) : '{}';
+            const escapedJson = normalJson.replace(/"/g, '\\"');  // 转义"为\"，Docker命令行需要
+            document.getElementById('sampleQcJson').value = escapedJson;
+        }
+        
+        function clearAllSamples() { document.getElementById('samplesTbody').innerHTML = ''; updateSampleQcJson(); }
+        
+        // ========== Label change function ==========
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-                
-                const tabId = this.getAttribute('data-tab');
-                
-                document.querySelectorAll('.tab-pane').forEach(pane => {
-                    pane.classList.remove('active');
-                });
-                
-                document.getElementById(tabId).classList.add('active');
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                document.getElementById(this.dataset.tab).classList.add('active');
             });
         });
-
-        // 主工作流按钮
+        
+        // ========== Main workflow button ==========
         document.getElementById('processButton').addEventListener('click', async function() {
-            document.getElementById('statusButton').style.display = 'none';
+            document.getElementById('statusButton').style.display = 'none';      
             document.getElementById('resultsButton').style.display = 'none';
             document.getElementById('statusDetails').style.display = 'none';
             currentRunInfo.runId = null;
-            currentRunInfo.token = null;
             
             const inputPath = document.getElementById('inputPath').value.trim();
-            const refPath = document.getElementById('refPath').value.trim();
+            const outputPath = document.getElementById('outputPath').value.trim();
             const jobName = document.getElementById('jobName').value.trim();
-            const threadNum = document.getElementById('threadNum').value.trim();
             const runLocation = document.getElementById('runLocation').value.trim();
+            
+            const mtPattern = document.getElementById('mtPattern').value.trim() || '^MT-';
+            const minFeatures = document.getElementById('minFeatures').value || '200';
+            const maxFeatures = document.getElementById('maxFeatures').value || '6000';
+            const maxCount = document.getElementById('maxCount').value || '50000';
+            const maxPercentMt = document.getElementById('maxPercentMt').value || '10';
+            const sampleQcJson = document.getElementById('sampleQcJson').value;
+            
+            const normalizationMethod = document.getElementById('normalizationMethod').value;
+            const varsToRegress = document.getElementById('varsToRegress').value;
+            const pcaNpcs = document.getElementById('pcaNpcs').value || '50';
+            const correctionMethod = document.getElementById('correctionMethod').value;
+            
+            const dims = document.getElementById('dims').value || '15';
+            const clusterResolution = document.getElementById('clusterResolution').value || '0.8';
+            const clusterAlgorithm = document.getElementById('clusterAlgorithm').value;  
+            const minPct = document.getElementById('minPct').value || '0.25';
+            const logfcThreshold = document.getElementById('logfcThreshold').value || '0.25';
+            const markerTestUse = document.getElementById('markerTestUse').value;
+            
+            const refDb = document.getElementById('refDb').value;
+            const labelType = document.getElementById('labelType').value;
+            
             const githubToken = document.getElementById('githubToken').value.trim();
-    
-            if (!inputPath || !refPath || !jobName || !threadNum || !runLocation || !githubToken) {
-                showStatus('Please fill all required fields / 请填写所有必填字段', 'error');
+            
+            if (!inputPath || !outputPath || !jobName || !runLocation || !githubToken) {
+                showStatus('Please fill all required fields (*)', 'error');
                 return;
             }
-    
+            
             try {
                 const repoOwner = 'cuhk-haosun';
-                const repoName = 'code-leiyong';
-                const workflowId = 'gatk.yaml';
-        
-                showStatus('Triggering workflow... / 正在触发工作流...', 'loading');
+                const repoName = 'code-docker-scrna';
+                const workflowId = 'run-scrna.yaml';
                 
-                let threadNumValue = threadNum;
-                if (!threadNumValue || isNaN(parseInt(threadNumValue, 10)) || parseInt(threadNumValue, 10) < 1) {
-                    threadNumValue = "96";
-                }
+                showStatus('Triggering workflow...', 'loading');
                 
-                await triggerWorkflow(repoOwner, repoName, workflowId, {
+                await triggerWorkflow(repoOwner, repoName, workflowId, {    
                     INPUT_PATH: inputPath,
-                    REF_PATH: refPath,
+                    OUTPUT_PATH: outputPath,
                     JOB_NAME: jobName,
-                    THREAD_NUM: threadNumValue,
-                    RUN_LOCATION: runLocation
+                    RUN_LOCATION: runLocation,
+                    MT_PATTERN: mtPattern,
+                    MIN_FEATURES: minFeatures,
+                    MAX_FEATURES: maxFeatures,
+                    MAX_COUNT: maxCount,
+                    MAX_PERCENT_MT: maxPercentMt,
+                    SAMPLE_QC_JSON: sampleQcJson,
+                    NORMALIZATION_METHOD: normalizationMethod,
+                    VARS_TO_REGRESS: varsToRegress,
+                    PCA_NPCS: pcaNpcs,
+                    CORRECTION_METHOD: correctionMethod,
+                    DIMS: dims,
+                    CLUSTER_RESOLUTION: clusterResolution,
+                    CLUSTER_ALGORITHM: clusterAlgorithm,
+                    MIN_PCT: minPct,
+                    LOGFC_THRESHOLD: logfcThreshold,
+                    MARKER_TEST_USE: markerTestUse,
+                    REF_DB: refDb,
+                    LABEL_TYPE: labelType
                 }, githubToken);
-        
-                showStatus('Workflow triggered, waiting for run ID... / 工作流已触发，正在等待运行ID...', 'loading');
+                
+                showStatus('Workflow triggered, waiting for run ID...', 'loading');
                 await new Promise(resolve => setTimeout(resolve, 8000));
                 
                 const runId = await getRunIdWithRetry(repoOwner, repoName, workflowId, githubToken);
                 
-                currentRunInfo = { 
-                    owner: repoOwner, 
-                    repo: repoName, 
-                    runId,
-                    token: githubToken
-                };
-                showStatus(`Workflow started successfully! Run ID: ${runId}<br>工作流已成功启动! 运行ID: ${runId}`, 'success');
+                currentRunInfo = { owner: repoOwner, repo: repoName, runId, token: githubToken };
+                showStatus(`Workflow started successfully! Run ID: ${runId}`, 'success');
                 
                 document.getElementById('statusButton').style.display = 'flex';
                 document.getElementById('resultsButton').style.display = 'flex';
-                
+    
             } catch (error) {
                 console.error('Error:', error);
                 let errorMsg = `Error: ${error.message}`;
-                
-                if (error.message.includes('401')) {
-                    errorMsg = 'Authentication failed. Please check your Secret Key. / 认证失败，请检查密钥';
-                } else if (error.message.includes('404')) {
-                    errorMsg = 'Repository or workflow not found. / 仓库或工作流未找到';
-                } else if (error.message.includes('403')) {
-                    errorMsg = 'Permission denied. Secret Key may Overdue. / 权限不足，密钥可能过期';
-                } else if (error.message.includes('Failed to get run ID')) {
-                    errorMsg = 'Workflow started but failed to get run ID. Please check Actions manually. / 工作流已启动但获取ID失败，请手动检查';
-                }
-                
+                if (error.message.includes('401')) errorMsg = 'Authentication failed. Please check your Secret Key.';
+                else if (error.message.includes('404')) errorMsg = 'Repository or workflow not found.';
+                else if (error.message.includes('403')) errorMsg = 'Permission denied. Secret Key may be expired.';
+                else if (error.message.includes('Failed to get run ID')) errorMsg = 'Workflow started but failed to get run ID. Please check Actions manually.';
                 showStatus(errorMsg, 'error');
             }
         });
-
-        // 状态按钮
+        
+        // ========== Status button ==========
         document.getElementById('statusButton').addEventListener('click', async function() {
             if (!currentRunInfo.runId || !currentRunInfo.token) {
-                showStatus('No valid run information / 没有有效的运行信息', 'error');
+                showStatus('No valid run information', 'error');
                 document.getElementById('statusDetails').style.display = 'none';
                 return;
             }
-
             try {
-                showStatus('Checking run status... / 正在查询运行状态...', 'loading');
+                showStatus('Checking run status...', 'loading');
                 await checkRunStatus();
             } catch (error) {
-                showStatus(`Failed to check status: ${error.message} / 检查状态失败: ${error.message}`, 'error');
+                showStatus(`Failed to check status: ${error.message}`, 'error');
                 document.getElementById('statusDetails').style.display = 'none';
             }
         });
-
-        // 结果按钮
+        
+        // ========== Result Button ==========
         document.getElementById('resultsButton').addEventListener('click', function() {
             if (currentRunInfo.runId) {
-                const githubActionsUrl = `https://github.com/${currentRunInfo.owner}/${currentRunInfo.repo}/actions/runs/${currentRunInfo.runId}`;
-                window.open(githubActionsUrl, '_blank');
+                window.open(`https://github.com/${currentRunInfo.owner}/${currentRunInfo.repo}/actions/runs/${currentRunInfo.runId}`, '_blank');
             } else {
-                showStatus('No valid run information available / 没有有效的运行信息', 'error');
+                showStatus('No valid run information available', 'error');
             }
         });
-
-        // 报告问题功能
+        
         function showReportIssue() {
-            const issueUrl = `https://github.com/cuhk-haosun/code-leiyong/issues/new?title=Workflow+Issue&body=Run+ID:+${currentRunInfo.runId || 'N/A'}`;
+            const issueUrl = `https://github.com/cuhk-haosun/code-docker-scrna/issues/new?title=Workflow+Issue&body=Run+ID:+${currentRunInfo.runId || 'N/A'}`;
             window.open(issueUrl, '_blank');
         }
 
-        // 其他功能函数
+        // ========== Other functions ==========
         async function checkRunStatus() {
             const { owner, repo, runId, token } = currentRunInfo;
-            const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`;
-
-            const response = await fetch(url, {
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`, {
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
             });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             const status = data.status;
             const conclusion = data.conclusion;
             const startTime = new Date(data.created_at).toLocaleString();
             const updateTime = new Date(data.updated_at).toLocaleString();
-
+            
             let statusText, statusClass;
             switch (status) {
-                case 'queued':
-                    statusText = 'Queued / 排队中';
-                    statusClass = 'loading';
-                    break;
-                case 'in_progress':
-                    statusText = 'In Progress / 运行中';
-                    statusClass = 'loading';
-                    break;
-                case 'completed':
-                    statusText = conclusion === 'success' ? 'Success / 成功' : `Failed (${conclusion}) / 失败 (${conclusion})`;
-                    statusClass = conclusion === 'success' ? 'success' : 'error';
-                    break;
-                default:
-                    statusText = `Unknown (${status}) / 未知状态 (${status})`;
-                    statusClass = 'error';
+                case 'queued': statusText = 'Queued'; statusClass = 'loading'; break;
+                case 'in_progress': statusText = 'In Progress'; statusClass = 'loading'; break;
+                case 'completed': statusText = conclusion === 'success' ? 'Success' : `Failed (${conclusion})`; statusClass = conclusion === 'success' ? 'success' : 'error'; break;
+                default: statusText = `Unknown (${status})`; statusClass = 'error';
             }
-
-            showStatus(`Current Status: ${statusText} / 当前状态: ${statusText}`, statusClass);
+            showStatus(`Current Status: ${statusText}`, statusClass);
             document.getElementById('statusDetails').innerHTML = `
-                <strong>Run Details / 运行详情:</strong><br>
+                <strong>Run Details:</strong><br>
                 Run ID: ${runId}<br>
-                Start Time / 开始时间: ${startTime}<br>
-                Last Update / 最后更新: ${updateTime}<br>
-                Conclusion / 结果: ${conclusion || 'N/A'}
+                Start Time: ${startTime}<br>
+                Last Update: ${updateTime}<br>
+                Conclusion: ${conclusion || 'N/A'}
             `;
             document.getElementById('statusDetails').style.display = 'block';
-
             return status;
-        }
+        } 
 
         async function triggerWorkflow(owner, repo, workflowId, inputs, token) {
             workflowTriggerTime = Date.now();
@@ -983,91 +1023,55 @@
                 'Authorization': `token ${token}`
             };
             const body = { ref: 'main', inputs };
-            
             const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-            
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
         }
-
+        
         async function getRunIdWithRetry(owner, repo, workflowId, token) {
             const MAX_RETRIES = 5;
-            const INITIAL_DELAY = 0;
-            const RETRY_DELAY = 3000;
-            
             for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-                const delay = INITIAL_DELAY + (attempt - 1) * RETRY_DELAY;
-                if (delay > 0) {
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-                
-                showStatus(`Getting run ID (attempt ${attempt}/${MAX_RETRIES})...<br>正在获取运行ID(尝试 ${attempt}/${MAX_RETRIES})...`, 'loading');
-                
+                if (attempt > 1) await new Promise(resolve => setTimeout(resolve, 3000));
+                showStatus(`Getting run ID (attempt ${attempt}/${MAX_RETRIES})...`, 'loading');
                 try {
                     const runId = await getLatestRunId(owner, repo, workflowId, token);
-                    if (runId) {
-                        console.log(`Successfully obtained run ID: ${runId}`);
-                        return runId;
-                    }
+                    if (runId) return runId;
                 } catch (error) {
                     console.log(`Attempt ${attempt} failed:`, error.message);
                 }
             }
-            
-            throw new Error('Failed to get run ID after maximum attempts / 获取运行ID失败，已达最大重试次数');
+            throw new Error('Failed to get run ID after maximum attempts');
         }
-
+        
         async function getLatestRunId(owner, repo, workflowId, token) {
             const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=10&sort=created&direction=desc`;
-            const headers = {
-                'Accept': 'application/vnd.github.v3+json',
-                'Authorization': `token ${token}`
-            };
-            
+            const headers = { 'Accept': 'application/vnd.github.v3+json', 'Authorization': `token ${token}` };
             const response = await fetch(url, { headers });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
             const data = await response.json();
-            const currentTime = Date.now();
-            
             const runs = data.workflow_runs || [];
-            if (runs.length === 0) {
-                console.warn('No workflow runs found in the response');
-                return null;
-            }
-            
+            if (runs.length === 0) return null;
             const latestRun = runs[0];
-            const latestRunTime = new Date(latestRun.created_at).getTime();
-            const timeDifference = currentTime - latestRunTime;
-            
-            if (timeDifference < 15000) {
-                console.log(`Found valid run: ID=${latestRun.id}, Created=${latestRun.created_at}, Age=${timeDifference/1000}s`);
-                return latestRun.id;
-            }
-            
-            console.warn(`Latest run too old (${timeDifference/1000}s ago), no valid run found`);
-            
+            if ((Date.now() - new Date(latestRun.created_at).getTime()) < 15000) return latestRun.id;
             for (const run of runs) {
-                const runTime = new Date(run.created_at).getTime();
-                const age = currentTime - runTime;
-                
-                if (runTime > workflowTriggerTime && age < 20000) {
-                    console.log(`Found alternative run: ID=${run.id}, Created=${run.created_at}, Age=${age/1000}s`);
+                if (new Date(run.created_at).getTime() > workflowTriggerTime && (Date.now() - new Date(run.created_at).getTime()) < 20000)
                     return run.id;
-                }
             }
-            
             return null;
         }
-
+        
         function showStatus(message, type) {
             const statusElement = document.getElementById('status');
             statusElement.innerHTML = message;
             statusElement.className = type;
             statusElement.style.display = 'block';
         }
+        
+        
+        document.getElementById('addSampleBtn').addEventListener('click', () => addSampleRow());
+        document.getElementById('clearAllBtn').addEventListener('click', clearAllSamples);
     </script>
 </body>
 </html>
